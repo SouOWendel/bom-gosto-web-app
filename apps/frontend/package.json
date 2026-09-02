@@ -1,0 +1,10 @@
+{
+  "name": "@bom-gosto/frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo \"Iniciando frontend...\"",
+    "build": "echo \"Build do frontend\"",
+    "test": "echo \"Sem testes configurados no frontend\""
+  }
+}
