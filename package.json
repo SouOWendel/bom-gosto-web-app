@@ -1,21 +1,28 @@
 {
   "name": "bom-gosto-web-app",
   "version": "0.0.1",
-  "description": "Sistema de gerenciamento de confeitaria.",
-  "main": "index.js",
+  "description": "Sistema de gerenciamento para a Confeitaria Bom Gosto.",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "prepare": "husky",
-    "generate:types": "openapi-typescript apps/api/openapi.json -o packages/types/api.d.ts"
+    "start:frontend": "npm --prefix apps/frontend run start",
+    "build:frontend": "npm --prefix apps/frontend run build",
+    "test:frontend": "npm --prefix apps/frontend run test",
+    "generate:types": "openapi-typescript http://localhost:8000/api/schema/ -o apps/frontend/src/app/core/models/api.d.ts"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SouOWendel/bom-gosto-web-app.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "angular",
+    "django",
+    "postgresql",
+    "monorepo",
+    "pwa"
+  ],
+  "author": "Wendel Henrique Lima de Souza",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/SouOWendel/bom-gosto-web-app/issues"
   },
@@ -29,7 +36,10 @@
     "prettier": "^3.9.6"
   },
   "lint-staged": {
-    "*.{js,ts,html,css,scss,json,md}": [
+    "apps/frontend/**/*.{js,ts,html,css,scss,json,md}": [
+      "prettier --write"
+    ],
+    "*.{json,md}": [
       "prettier --write"
     ]
   }
