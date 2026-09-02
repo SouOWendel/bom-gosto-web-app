@@ -1,0 +1,36 @@
+{
+  "name": "bom-gosto-web-app",
+  "version": "0.0.1",
+  "description": "Sistema de gerenciamento de confeitaria.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky",
+    "generate:types": "openapi-typescript apps/api/openapi.json -o packages/types/api.d.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SouOWendel/bom-gosto-web-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/SouOWendel/bom-gosto-web-app/issues"
+  },
+  "homepage": "https://github.com/SouOWendel/bom-gosto-web-app#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.3.0",
+    "openapi-typescript": "^7.13.0",
+    "prettier": "^3.9.6"
+  },
+  "lint-staged": {
+    "*.{js,ts,html,css,scss,json,md}": [
+      "prettier --write"
+    ]
+  }
+}
