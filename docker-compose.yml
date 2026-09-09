@@ -1,7 +1,67 @@
 version: '3.9'
 
 services:
-  app:
-    build: .
+  # BANCO DE DADOS: PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: bom_gosto_db
+    restart: always
+    environment:
+      POSTGRES_DB: bom_gosto_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
     ports:
-      - '8000:8000'
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bom_gosto_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # BACKEND: API Rest Django
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile.dev
+    container_name: bom_gosto_backend
+    restart: always
+    volumes: # Mapeia localmente para o Hot Reload do DJANGO
+      - ./apps/backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=bom_gosto_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgrespassword
+      - DB_HOST=postgres
+      - DB_PORT=5432
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: python manage.py runserver 0.0.0.0:8000
+  
+  # FRONTEND: Angular PWA
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile.dev
+    container_name: bom_gosto_backend
+    restart: always
+    volumes: # Mapeia localmente para o Hot Reload do Angular
+      - ./apps/frontend:/app
+      - /app/node_modules
+    ports:
+      - "4200:4200"
+    environment:
+      - CHOKIDAR_USEPOLLING=true # Garante a detecção de alterações no Windows/WSL2
+    depends_on:
+      - backend
+    command: npm run start -- --host 0.0.0.0
+
+volumes:
+  postgres_data:
