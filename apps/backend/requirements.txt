@@ -1,0 +1,14 @@
+# Django & Rest Framework
+Django>=5.0,<6.0
+djangorestframework>=3.15.0
+django-cors-headers>=4.3.0
+
+# Database Driver
+psycopg2-binary>=2.9.9
+
+# Environment variables
+python-dotenv>=1.0.1
+
+# Testing
+pytest>=8.0.0
+pytest-django>=4.8.0
