@@ -1,10 +1,8 @@
-version: '3.9'
-
 services:
   # BANCO DE DADOS: PostgreSQL
   postgres:
     image: postgres:16-alpine
-    container_name: bom_gosto_db
+    container_name: bom-gosto-db
     restart: always
     environment:
       POSTGRES_DB: bom_gosto_db
@@ -13,7 +11,7 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d bom_gosto_db"]
@@ -26,7 +24,7 @@ services:
     build:
       context: ./apps/backend
       dockerfile: Dockerfile.dev
-    container_name: bom_gosto_backend
+    container_name: bom-gosto-backend
     restart: always
     volumes: # Mapeia localmente para o Hot Reload do DJANGO
       - ./apps/backend:/app
@@ -50,7 +48,7 @@ services:
     build:
       context: ./apps/frontend
       dockerfile: Dockerfile.dev
-    container_name: bom_gosto_backend
+    container_name: bom-gosto-frontend
     restart: always
     volumes: # Mapeia localmente para o Hot Reload do Angular
       - ./apps/frontend:/app
@@ -65,3 +63,4 @@ services:
 
 volumes:
   postgres_data:
+
