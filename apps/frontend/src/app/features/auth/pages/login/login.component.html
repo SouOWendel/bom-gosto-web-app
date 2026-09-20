@@ -1,0 +1,29 @@
+<div class="login-container">
+  <h2>Acessar Conta</h2>
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger" role="alert">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="form-field">
+      <label for="username">Usuário</label>
+      <input id="username" type="text" formControlName="username" />
+    </div>
+
+    <div class="form-field">
+      <label for="password">Senha</label>
+      <input id="password" type="password" formControlName="password" />
+    </div>
+
+    <button type="submit" [disabled]="form.invalid || loading()">
+      @if (loading()) {
+        <span>Entrando...</span>
+      } @else {
+        <span>Entrar</span>
+      }
+    </button>
+  </form>
+</div>
