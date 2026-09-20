@@ -8,15 +8,19 @@
   }
 
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
-    <div class="form-field">
-      <label for="login">Usuário</label>
-      <input id="login" type="text" formControlName="login" />
-    </div>
+    <app-input-text
+      inputId="login"
+      label="Usuário"
+      formControlName="login"
+    />
 
-    <div class="form-field">
-      <label for="senha">Senha</label>
-      <input id="senha" type="password" formControlName="senha" />
-    </div>
+    <app-input-text
+      inputId="senha"
+      label="Senha"
+      type="password"
+      autocomplete="current-password"
+      formControlName="senha"
+    />
 
     <button type="submit" [disabled]="form.invalid || loading()">
       @if (loading()) {
