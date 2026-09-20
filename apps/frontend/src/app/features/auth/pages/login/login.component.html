@@ -9,13 +9,13 @@
 
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
     <div class="form-field">
-      <label for="username">Usuário</label>
-      <input id="username" type="text" formControlName="username" />
+      <label for="login">Usuário</label>
+      <input id="login" type="text" formControlName="login" />
     </div>
 
     <div class="form-field">
-      <label for="password">Senha</label>
-      <input id="password" type="password" formControlName="password" />
+      <label for="senha">Senha</label>
+      <input id="senha" type="password" formControlName="senha" />
     </div>
 
     <button type="submit" [disabled]="form.invalid || loading()">

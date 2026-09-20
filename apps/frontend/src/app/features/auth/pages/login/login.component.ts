@@ -19,8 +19,8 @@ export class LoginComponent {
 	readonly errorMessage = signal<string | null>(null);
 
 	readonly form = this.fb.group({
-		username: ['', [Validators.required]],
-		password: ['', [Validators.required, Validators.minLength(6)]],
+		login: ['', [Validators.required]],
+		senha: ['', [Validators.required, Validators.minLength(6)]],
 	});
 
 	onSubmit() {
@@ -32,7 +32,7 @@ export class LoginComponent {
 		this.authService.login(this.form.getRawValue()).subscribe({
 			next: () => this.router.navigate(['/dashboard']),
 			error: (err) => {
-				this.errorMessage.set(err.error?.message || 'An error occurred during login.');
+				this.errorMessage.set(err.error?.detail || 'Não foi possível entrar.');
 				this.loading.set(false);
 			},
 		});
