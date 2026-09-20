@@ -1,22 +1,80 @@
-# POC de Autenticação (Back-end)
+# POC de Autenticacao
 
-## Escopo desta entrega
-Implementação da prova de conceito de autenticação no back-end com Django/DRF, sem integração com API externa e sem alterações no front-end.
+## Escopo
 
-## Regras de negócio atendidas
-- Login com usuário e senha.
-- Identificação de primeiro acesso.
-- Troca obrigatória de senha no primeiro acesso.
-- Logout seguro.
-- Sessão persistente no navegador até logout manual ou expiração configurada.
+Esta POC implementa autenticacao com Django REST Framework no back-end e Angular no front-end. A autenticacao usa a sessao do Django, armazenada em cookie, e nao JWT.
+
+O SQLite local fica em `apps/backend/db.sqlite3`. Os usuarios de login sao registros do modelo padrao `django.contrib.auth.models.User`; o status de primeiro acesso fica em `usuario_perfilusuario`.
+
+## Regras de negocio
+
+- Login com usuario e senha.
+- Identificacao de primeiro acesso.
+- Alteracao da senha atual.
+- Definicao de `primeiro_acesso = false` apos a troca de senha.
+- Logout no back-end, invalidando a sessao.
+- Persistencia da sessao ate o logout manual ou a expiracao configurada.
+
+## Preparar o ambiente
+
+Execute os comandos a partir das pastas indicadas.
+
+### Banco e usuario
+
+```powershell
+cd apps/backend
+python manage.py migrate
+python manage.py createsuperuser
+```
+
+O comando `createsuperuser` solicita o login, e-mail e senha. A senha deve ser criada pelo Django; nao insira senha diretamente com SQL.
+
+Para criar um usuario comum sem interacao:
+
+```powershell
+python manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_user(username='usuario', email='usuario@example.com', password='SenhaSegura123')"
+```
+
+### Iniciar os servidores
+
+Terminal do back-end:
+
+```powershell
+cd apps/backend
+python manage.py runserver
+```
+
+Terminal do front-end:
+
+```powershell
+cd apps/frontend
+npm start
+```
+
+O Angular fica em `http://localhost:4200` e o Django em `http://127.0.0.1:8000`. Durante o desenvolvimento, [proxy.conf.json](../apps/frontend/proxy.conf.json) encaminha `/api` do Angular para o Django.
+
+## Login pelo front-end
+
+1. Abra `http://localhost:4200/auth/login`.
+2. Informe o usuario criado no Django.
+3. Informe a senha.
+4. O front-end envia `POST /api/auth/login/` com `{ "login": "...", "senha": "..." }`.
+5. Em caso de sucesso, a sessao Django e mantida pelo navegador e o usuario e direcionado para `/dashboard`.
+
+Se `primeiro_acesso` for `true`, a senha deve ser alterada usando o endpoint de troca de senha antes de considerar o primeiro acesso concluido.
 
 ## Endpoints
-Base local: `http://127.0.0.1:8000/api`
+
+Base direta do back-end: `http://127.0.0.1:8000/api`
+
+Ao usar o front-end, utilize o prefixo `/api` com o proxy, por exemplo: `http://localhost:4200/api/auth/login/`.
 
 ### POST /auth/login/
-Autentica usuário e retorna status de primeiro acesso.
 
-Exemplo de body:
+Autentica o usuario e cria a sessao Django.
+
+Body:
+
 ```json
 {
   "login": "admin",
@@ -24,7 +82,8 @@ Exemplo de body:
 }
 ```
 
-Exemplo de resposta:
+Resposta:
+
 ```json
 {
   "autenticado": true,
@@ -33,29 +92,12 @@ Exemplo de resposta:
 }
 ```
 
-### POST /auth/alterar-senha/
-Altera a senha do usuário autenticado e define primeiro_acesso = false.
-
-Exemplo de body:
-```json
-{
-  "senha_atual": "bomgosto123",
-  "nova_senha": "BomGosto@2026"
-}
-```
-
-Exemplo de resposta:
-```json
-{
-  "detail": "senha alterada com sucesso.",
-  "primeiro_acesso": false
-}
-```
-
 ### GET /auth/me/
-Retorna dados do usuário autenticado.
 
-Exemplo de resposta:
+Retorna o usuario autenticado. A requisicao precisa manter o cookie de sessao.
+
+Resposta:
+
 ```json
 {
   "login": "admin",
@@ -63,24 +105,44 @@ Exemplo de resposta:
 }
 ```
 
-### POST /auth/logout/
-Encerra a sessão do usuário autenticado.
+### POST /auth/alterar-senha/
 
-Exemplo de resposta:
+Altera a senha do usuario autenticado e define `primeiro_acesso = false`.
+
+Body:
+
+```json
+{
+  "senha_atual": "bomgosto123",
+  "nova_senha": "BomGosto@2026"
+}
+```
+
+Resposta:
+
+```json
+{
+  "detail": "senha alterada com sucesso.",
+  "primeiro_acesso": false
+}
+```
+
+### POST /auth/logout/
+
+Encerra a sessao do usuario autenticado.
+
+Resposta:
+
 ```json
 {
   "detail": "logout realizado com sucesso."
 }
 ```
 
-## Fluxo validado na POC
-- Login com admin e senha inicial.
-- GET /auth/me/ retornando primeiro_acesso = true.
-- POST /auth/alterar-senha/ com sucesso.
-- GET /auth/me/ retornando primeiro_acesso = false.
-- POST /auth/logout/ com sucesso.
+## Validar a API pelo PowerShell
 
-## Comandos usados para validação (PowerShell)
+O `WebRequestSession` preserva o cookie de sessao entre as requisicoes:
+
 ```powershell
 $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 
@@ -95,5 +157,9 @@ Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/api/auth/me/" -WebSess
 Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/api/auth/logout/" -WebSession $session
 ```
 
+## Respostas de erro comuns
 
-
+- `400`: campos obrigatorios ausentes.
+- `401`: credenciais invalidas ou sessao inexistente.
+- `404` em `http://localhost:4200/api/...`: reinicie o Angular para carregar o proxy e confirme que o Django esta rodando na porta 8000.
+- `404` em `http://127.0.0.1:8000/api/...`: confirme a URL, incluindo a barra final, e verifique se o back-end esta em execucao.
