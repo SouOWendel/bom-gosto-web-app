@@ -48,12 +48,12 @@ bom-gosto-web-app/
 
 Implementação inicial do fluxo de autenticação no back-end para prova de conceito, sem integração com API externa e sem alterações no front-end.
 
-### Regras de negócio atendidas
+### Regras atendidas
 - Login com usuário e senha.
 - Identificação de primeiro acesso.
-- Troca obrigatória de senha no primeiro acesso.
-- Logout seguro.
-- Sessão persistente no navegador até logout manual ou expiração configurada.
+- Cadastro local de usuário de teste com senha temporária.
+- Troca de senha e atualização de `primeiro_acesso`.
+- Logout e sessão persistente no navegador.
 
 ### Endpoints
 Base local: `http://127.0.0.1:8000/api`
@@ -72,5 +72,3 @@ python manage.py migrate
 python manage.py runserver
 
 Para detalhes técnicos (payloads, respostas e fluxo de validação), consulte [`docs/auth-poc.md`](docs/auth-poc.md).
-
-

@@ -1,7 +1,8 @@
 # POC de Autenticação (Back-end)
 
-## Escopo desta entrega
-Implementação da prova de conceito de autenticação no back-end com Django/DRF, sem integração com API externa e sem alterações no front-end.
+## Escopo
+
+POC de autenticação com Django e Django REST Framework, conectada ao PostgreSQL e usando diretamente a tabela `usuario`. Não há integração com API externa.
 
 ## Regras de negócio atendidas
 - Login com usuário e senha.
@@ -10,41 +11,107 @@ Implementação da prova de conceito de autenticação no back-end com Django/DR
 - Logout seguro.
 - Sessão persistente no navegador até logout manual ou expiração configurada.
 
+## Pré-requisitos
+
+O banco `db_confeitaria` e a tabela `usuario` devem ser criados pelos scripts em `database/`. No arquivo `apps/backend/.env`, informe os dados da conexão:
+
+```env
+POSTGRES_DB=db_confeitaria
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=sua_senha
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+```
+
+Depois, execute:
+
+```powershell
+cd apps/backend
+python manage.py migrate
+python manage.py runserver
+```
+
+O arquivo `.env` contém credenciais e não deve ser enviado ao Git.
+
 ## Endpoints
+
 Base local: `http://127.0.0.1:8000/api`
 
-### POST /auth/login/
-Autentica usuário e retorna status de primeiro acesso.
+### POST /auth/cadastro-teste/
 
-Exemplo de body:
+Cria um usuário temporário para testes locais. Funciona apenas com `DEBUG=True`, recebe somente o login e gera uma senha temporária de seis dígitos.
+
+Body:
+
 ```json
 {
-  "login": "admin",
-  "senha": "bomgosto123"
+  "login": "usuario"
 }
 ```
 
-Exemplo de resposta:
+Resposta:
+
+```json
+{
+  "login": "usuario",
+  "senha_temporaria": "123456",
+  "primeiro_acesso": true
+}
+```
+
+A senha temporária é retornada apenas para o teste e é salva no banco como hash do Django.
+
+### POST /auth/login/
+
+Autentica o usuário e cria uma sessão.
+
+Body:
+
+```json
+{
+  "login": "usuario",
+  "senha": "senha_temporaria"
+}
+```
+
+Resposta:
+
 ```json
 {
   "autenticado": true,
-  "login": "admin",
+  "login": "usuario",
+  "primeiro_acesso": true
+}
+```
+
+Se o usuário já estiver autenticado, a API retorna a mensagem `usuário já está logado.`.
+
+### GET /auth/me/
+
+Retorna os dados do usuário autenticado:
+
+```json
+{
+  "login": "usuario",
   "primeiro_acesso": true
 }
 ```
 
 ### POST /auth/alterar-senha/
-Altera a senha do usuário autenticado e define primeiro_acesso = false.
 
-Exemplo de body:
+Altera a senha do usuário autenticado e define `primeiro_acesso` como `false`.
+
+Body:
+
 ```json
 {
-  "senha_atual": "bomgosto123",
-  "nova_senha": "BomGosto@2026"
+  "senha_atual": "senha_temporaria",
+  "nova_senha": "nova_senha"
 }
 ```
 
-Exemplo de resposta:
+Resposta:
+
 ```json
 {
   "detail": "senha alterada com sucesso.",
@@ -52,48 +119,110 @@ Exemplo de resposta:
 }
 ```
 
-### GET /auth/me/
-Retorna dados do usuário autenticado.
-
-Exemplo de resposta:
-```json
-{
-  "login": "admin",
-  "primeiro_acesso": false
-}
-```
+A senha atual deve estar correta, e a nova senha precisa ser diferente e ter pelo menos oito caracteres.
 
 ### POST /auth/logout/
-Encerra a sessão do usuário autenticado.
 
-Exemplo de resposta:
+Encerra a sessão do usuário autenticado:
+
 ```json
 {
   "detail": "logout realizado com sucesso."
 }
 ```
 
-## Fluxo validado na POC
-- Login com admin e senha inicial.
-- GET /auth/me/ retornando primeiro_acesso = true.
-- POST /auth/alterar-senha/ com sucesso.
-- GET /auth/me/ retornando primeiro_acesso = false.
-- POST /auth/logout/ com sucesso.
+## Fluxo completo de teste (PowerShell)
 
-## Comandos usados para validação (PowerShell)
+### 1. Criar usuário temporário
+
+```powershell
+$body = @{ login = "usuario" } | ConvertTo-Json
+
+$cadastro = Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://127.0.0.1:8000/api/auth/cadastro-teste/" `
+  -ContentType "application/json" `
+  -Body $body
+
+$cadastro
+```
+
+Guarde o valor retornado em `$cadastro.senha_temporaria`. Para verificar o registro e o valor de `primeiro_acesso`, consulte o banco:
+
+```sql
+SELECT id_usuario, login, primeiro_acesso
+FROM usuario;
+```
+
+### 2. Criar uma sessão e fazer login
+
 ```powershell
 $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 
-Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/api/auth/login/" -WebSession $session -ContentType "application/json" -Body '{"login":"admin","senha":"bomgosto123"}'
+$body = @{
+  login = "usuario"
+  senha = $cadastro.senha_temporaria
+} | ConvertTo-Json
 
-Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/api/auth/me/" -WebSession $session
-
-Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/api/auth/alterar-senha/" -WebSession $session -ContentType "application/json" -Body '{"senha_atual":"bomgosto123","nova_senha":"BomGosto@2026"}'
-
-Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/api/auth/me/" -WebSession $session
-
-Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/api/auth/logout/" -WebSession $session
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://127.0.0.1:8000/api/auth/login/" `
+  -WebSession $session `
+  -ContentType "application/json" `
+  -Body $body
 ```
 
+### 3. Consultar o usuário autenticado
 
+```powershell
+Invoke-RestMethod `
+  -Method Get `
+  -Uri "http://127.0.0.1:8000/api/auth/me/" `
+  -WebSession $session
+```
 
+O retorno deve mostrar `primeiro_acesso: true` antes da troca de senha.
+
+### 4. Alterar a senha
+
+```powershell
+$body = @{
+  senha_atual = $cadastro.senha_temporaria
+  nova_senha = "nova_senha"
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://127.0.0.1:8000/api/auth/alterar-senha/" `
+  -WebSession $session `
+  -ContentType "application/json" `
+  -Body $body
+```
+
+Consulte novamente `/auth/me/`; agora `primeiro_acesso` deve ser `false`.
+
+### 5. Fazer logout
+
+```powershell
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://127.0.0.1:8000/api/auth/logout/" `
+  -WebSession $session
+```
+
+Depois do logout, uma nova chamada para `/auth/me/` usando `$session` deve retornar `401`.
+
+### 6. Fazer novo login
+
+```powershell
+$body = @{ login = "usuario"; senha = "nova_senha" } | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://127.0.0.1:8000/api/auth/login/" `
+  -WebSession $session `
+  -ContentType "application/json" `
+  -Body $body
+```
+
+O retorno deve indicar `primeiro_acesso: false`.
