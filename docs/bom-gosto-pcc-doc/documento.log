@@ -1,10 +1,10 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.9.20)  20 SEP 2026 23:27
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.9.20)  21 SEP 2026 20:40
 entering extended mode
- restricted \write18 enabled.
+ \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**c:/Users/muril/Downloads/TEMPLATE_TCC_IFPI/TEMPLATE_TCC_IFPI/documento.tex
-(c:/Users/muril/Downloads/TEMPLATE_TCC_IFPI/TEMPLATE_TCC_IFPI/documento.tex
+**c:/teste_latex/bom-gosto-web-app/docs/bom-gosto-pcc-doc/documento.tex
+(c:/teste_latex/bom-gosto-web-app/docs/bom-gosto-pcc-doc/documento.tex
 LaTeX2e <2026-06-01>
 L3 programming layer <2026-08-10>
 (./estrutura/preambulo.tex (./abntex2.cls
@@ -1641,63 +1641,32 @@ Package microtype Info: Loading generic protrusion settings for font family
  [11
 
 
-]) (./documento.toc) [12
+]) (./documento.toc [12
 
-]) (./estrutura/textual.tex (./capitulos/introducao.tex
+]) [13]) (./estrutura/textual.tex (./capitulos/01-introducao.tex
 Cap\'{\i }tulo 1.
-) (./capitulos/fundamentacao-teorica.tex [13
+) (./capitulos/02-contexto.tex [14
 
 
 ]
 Cap\'{\i }tulo 2.
-[14
+) (./capitulos/03-analise-sistema.tex [15
 
 ]
-<imagens/grafs_1.png, id=187, 345.08925pt x 196.3335pt>
-File: imagens/grafs_1.png Graphic file (type png)
-<use imagens/grafs_1.png>
-Package pdftex.def Info: imagens/grafs_1.png  used on input line 61.
-(pdftex.def)             Requested size: 345.08841pt x 196.33301pt.
-File: imagens/grafs_1.png Graphic file (type png)
-<use imagens/grafs_1.png>
-Package pdftex.def Info: imagens/grafs_1.png  used on input line 82.
-(pdftex.def)             Requested size: 345.08841pt x 196.33301pt.
- [15 <./imagens/grafs_1.png>]
-<imagens/fig_exemplo.png, id=193, 443.85825pt x 271.0125pt>
-File: imagens/fig_exemplo.png Graphic file (type png)
-<use imagens/fig_exemplo.png>
-Package pdftex.def Info: imagens/fig_exemplo.png  used on input line 125.
-(pdftex.def)             Requested size: 443.85715pt x 271.01183pt.
- [16]) (./capitulos/metodologia.tex [17 <./imagens/fig_exemplo.png>]
 Cap\'{\i }tulo 3.
-
-Underfull \hbox (badness 2050) in paragraph at lines 32--32
-[]|\T1/phv/b/n/10 (+20) Sistemas de
- []
-
-) (./capitulos/resultados.tex [18
+) (./capitulos/04-projeto-sistema.tex [16
 
 ]
 Cap\'{\i }tulo 4.
-<imagens/abntex2-modelo-img-grafico.pdf, id=234, 847.165pt x 314.17375pt>
-File: imagens/abntex2-modelo-img-grafico.pdf Graphic file (type pdf)
-<use imagens/abntex2-modelo-img-grafico.pdf>
-Package pdftex.def Info: imagens/abntex2-modelo-img-grafico.pdf  used on input line 10.
-(pdftex.def)             Requested size: 423.58145pt x 157.08649pt.
-<imagens/ifpi.pdf, id=241, 732.7375pt x 294.09875pt>
-File: imagens/ifpi.pdf Graphic file (type pdf)
-<use imagens/ifpi.pdf>
-Package pdftex.def Info: imagens/ifpi.pdf  used on input line 27.
-(pdftex.def)             Requested size: 146.5449pt x 58.8187pt.
-File: imagens/abntex2-modelo-img-grafico.pdf Graphic file (type pdf)
-<use imagens/abntex2-modelo-img-grafico.pdf>
-Package pdftex.def Info: imagens/abntex2-modelo-img-grafico.pdf  used on input line 34.
-(pdftex.def)             Requested size: 169.43pt x 62.83363pt.
-) (./capitulos/conclusao.tex [19
+) (./capitulos/05-implementacao.tex [17
 
- <./imagens/abntex2-modelo-img-grafico.pdf> <./imagens/ifpi.pdf>]
+]
 Cap\'{\i }tulo 5.
-) (./capitulos/trabalhos-futuros.tex)) [20
+) (./capitulos/06-conclusao.tex [18
+
+]
+Cap\'{\i }tulo 6.
+)) [19
 
 ]
 \openout2 = `estrutura/pos-textual.aux'.
@@ -1708,17 +1677,17 @@ Cap\'{\i }tulo 5.
 
 
 bibitemlist
-)) (./pos-textual/glossario.tex) (./pos-textual/apendices.tex) (./pos-textual/anexos.tex (./pos-textual/anexos-exemplo.tex [21
+)) (./pos-textual/glossario.tex) (./pos-textual/apendices.tex) (./pos-textual/anexos.tex (./pos-textual/anexos-exemplo.tex [20
 
 
 ]
 ANEXO A.
-<imagens/carta_pero_vaz.png, id=307, 298.11375pt x 423.38174pt>
+<imagens/carta_pero_vaz.png, id=267, 298.11375pt x 423.38174pt>
 File: imagens/carta_pero_vaz.png Graphic file (type png)
 <use imagens/carta_pero_vaz.png>
 Package pdftex.def Info: imagens/carta_pero_vaz.png  used on input line 6.
 (pdftex.def)             Requested size: 298.11302pt x 423.3807pt.
-)) (./pos-textual/indices.tex)) [22
+)) (./pos-textual/indices.tex)) [21
 
  <./imagens/carta_pero_vaz.png>]
 \tf@lof=\write6
@@ -1735,21 +1704,21 @@ LaTeX2e <2026-06-01>
 L3 programming layer <2020/03/25>
  ***********
 Package rerunfilecheck Info: File `documento.brf' has not changed.
-(rerunfilecheck)             Checksum: 03014F0ADFBE5D253A56C5FDF31350C6;555.
+(rerunfilecheck)             Checksum: 417083B49988F996D479C855864A73E4;50.
  ) 
 Here is how much of TeX's memory you used:
- 43513 strings out of 467099
- 887103 string characters out of 5412502
- 1504755 words of memory out of 5000000
- 71770 multiletter control sequences out of 15000+600000
- 662450 words of font info for 194 fonts, out of 8000000 for 9000
+ 43322 strings out of 467099
+ 883753 string characters out of 5412502
+ 1500868 words of memory out of 5000000
+ 71663 multiletter control sequences out of 15000+600000
+ 652762 words of font info for 128 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 129i,17n,134p,1194b,716s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 129i,17n,134p,1189b,716s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/helvetic/uhvro8a.pfb>
-Output written on documento.pdf (23 pages, 983565 bytes).
+Output written on documento.pdf (22 pages, 686947 bytes).
 PDF statistics:
- 435 PDF objects out of 1000 (max. 8388607)
- 354 compressed objects within 4 object streams
- 87 named destinations out of 1000 (max. 500000)
- 47450 words of extra memory for PDF output out of 51595 (max. 10000000)
+ 488 PDF objects out of 1000 (max. 8388607)
+ 425 compressed objects within 5 object streams
+ 99 named destinations out of 1000 (max. 500000)
+ 33334 words of extra memory for PDF output out of 35830 (max. 10000000)
 

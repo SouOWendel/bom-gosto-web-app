@@ -10,39 +10,4 @@
 {ABNT, A. B. D. N.~T. Associa{\c{c}}{\~a}o brasileira de normas t{\'e}cnicas, 2011.
 2011.}
 
-\bibitem[Araujo 2012]{araujo2012}
-\abntrefinfo{Araujo}{ARAUJO}{2012}
-{ARAUJO, L.~C.
-\textbf{Configura{\c c}{\~a}o}: uma perspectiva de {A}rquitetura da {I}nforma{\c c}{\~a}o da {E}scola de {B}ras{\'\i}lia.
-Disserta\c{c}\~{a}o (Mestrado) --- Universidade de Bras{\'\i}lia, Bras{\'\i}lia, mar. 2012.}
-
-\bibitem[Associa{\c c}\~ao Brasileira de Normas T\'ecnicas 2002]{NBR10520:2002}
-\abntrefinfo{ABNT}{ABNT}{2002}
-{ASSOCIA{\c C}\~AO BRASILEIRA DE NORMAS T\'ECNICAS. \textbf{{NBR} 10520}: Informa{\c c}\~ao e documenta{\c c}\~ao --- apresenta{\c c}\~ao de cita{\c c}\~oes em documentos.
-Rio de Janeiro, 2002. 7~p.}
-
-\bibitem[Associa{\c c}\~ao Brasileira de Normas T\'ecnicas 2005]{NBR14724:2005}
-\abntrefinfo{ABNT}{ABNT}{2005}
-{ASSOCIA{\c C}\~AO BRASILEIRA DE NORMAS T\'ECNICAS. \textbf{{NBR} 14724}: Informa{\c c}\~ao e documenta{\c c}\~ao --- trabalhos acad\^emicos --- apresenta{\c c}\~ao.
-Rio de Janeiro, 2005. 9~p.}
-
-\bibitem[Associa{\c c}\~ao Brasileira de Normas T\'ecnicas 2011]{NBR14724:2011}
-\abntrefinfo{ABNT}{ABNT}{2011}
-{ASSOCIA{\c C}\~AO BRASILEIRA DE NORMAS T\'ECNICAS. \textbf{{NBR} 14724}: Informa{\c c}\~ao e documenta{\c c}\~ao --- trabalhos acad\^emicos --- apresenta{\c c}\~ao.
-Rio de Janeiro, 2011. 15~p. Substitui a Ref.~\citeonline{NBR14724:2005}.}
-
-\bibitem[IBGE 1993]{ibge1993}
-\abntrefinfo{IBGE}{IBGE}{1993}
-{IBGE. \textbf{Normas de apresenta{\c c}{\~a}o tabular}. 3. ed. Rio de Janeiro: Centro de Documenta{\c c}{\~a}o e Dissemina{\c c}{\~a}o de Informa{\c c}{\~o}es. Funda{\c c}{\~a}o Intituto Brasileiro de Geografia e Estat{\'\i}stica, 1993. Acesso em: 21 ago 2013.}
-
-\bibitem[LIMA 2006]{limaarranjo}
-\abntrefinfo{LIMA}{LIMA}{2006}
-{LIMA, L. Arranjo produtivo local da banana org{\^a}nica.
-\textbf{Relat{\'o}rio de Pesquisa}, 2006.}
-
-\bibitem[{van} Gigch \& Pipino 1986]{van86}
-\abntrefinfo{{van} Gigch \& Pipino}{{van} GIGCH; PIPINO}{1986}
-{{van} GIGCH, J.~P.; PIPINO, L.~L. In search for a paradigm for the discipline of information systems.
-\textbf{Future Computing Systems}, v.~1, n.~1, p. 71--97, 1986.}
-
 \end{thebibliography}
