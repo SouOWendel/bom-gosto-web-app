@@ -1,0 +1,85 @@
+{
+  // ===== BUILD =====
+
+  // Força uso do latexmk sempre
+  "latex-workshop.latex.recipe.default": "latexmk",
+
+  // Reduzir recompilações automática
+  "latex-workshop.latex.autoBuild.run": "never",
+
+  // ===== TOOLS =====
+
+  "latex-workshop.latex.tools": [
+    {
+      "name": "latexmk",
+      "command": "latexmk",
+      "args": [
+        "-pdf",
+        "-interaction=nonstopmode",
+        "-synctex=1",
+        "-file-line-error",
+        "-shell-escape",
+        "%DOC%"
+      ]
+    }
+  ],
+
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "latexmk",
+      "tools": ["latexmk"]
+    }
+  ],
+
+  // ===== LIMPEZA =====
+
+  "latex-workshop.latex.clean.enabled": true,
+  "latex-workshop.latex.clean.fileTypes": [
+    "*.aux",
+    "*.bbl",
+    "*.blg",
+    "*.idx",
+    "*.ind",
+    "*.lof",
+    "*.lot",
+    "*.out",
+    "*.toc",
+    "*.acn",
+    "*.acr",
+    "*.alg",
+    "*.glg",
+    "*.glo",
+    "*.gls",
+    "*.fls",
+    "*.log",
+    "*.fdb_latexmk",
+    "*.synctex.gz"
+  ],
+
+  // ===== PDF VIEW =====
+
+  // Abre PDF no próprio VS Code
+  "latex-workshop.view.pdf.viewer": "tab",
+
+  // Sincronização direta/inversa
+  "latex-workshop.view.pdf.synctex.enabled": true,
+
+  // ===== EDITOR =====
+
+  // Auto fechar ambientes LaTeX
+  "latex-workshop.latex.autoClosingEnv.enabled": true,
+
+  // IntelliSense básico
+  "latex-workshop.intellisense.package.enabled": true,
+
+  // ===== PERFORMANCE =====
+
+  // Evita builds duplicados
+  "latex-workshop.latex.autoBuild.interval": 1000,
+
+  // ===== LOG =====
+
+  // Mostra erros mais claros
+  "latex-workshop.message.error.show": true,
+  "latex-workshop.message.warning.show": true
+}

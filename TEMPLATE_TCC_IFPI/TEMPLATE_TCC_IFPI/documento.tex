@@ -1,0 +1,26 @@
+
+%% Preâmbulo (configurações, pacotes e tudo mais)
+\input{estrutura/preambulo}
+
+%% Início do Documento
+\begin{document}
+
+%% Documento será escrito em Português do Brasil
+\selectlanguage{brazil}
+
+%% Elementos pré-textuais: capa, folha de rosto, dedicatória, listas, sumário, etc.
+\input{estrutura/pre-textual.tex}
+
+%% Indica que a partir daqui ficarão os elementos textuais (TCC em si)
+\textual
+
+%% Inclui os capítulos do TCC (parte textual)
+\input{estrutura/textual}
+
+%% Finalizações para o PDF
+\bookmarksetup{startatroot}
+
+%% Elementos pós-textuais: Referências, Anexos, etc.
+\include{estrutura/pos-textual}
+
+\end{document}
