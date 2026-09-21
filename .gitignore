@@ -27,3 +27,26 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Python and Django
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Django local databases and runtime files
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
+db.sqlite3
+media/
+staticfiles/
+
+# PostgreSQL local data and database dumps
+pgdata/
+postgres_data/
+*.dump
+*.backup
+*.tar

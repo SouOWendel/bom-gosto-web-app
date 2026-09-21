@@ -1,19 +1,24 @@
-# POC de Autenticação (Back-end)
+# POC de Autenticacao
 
 ## Escopo
 
-POC de autenticação com Django e Django REST Framework, conectada ao PostgreSQL e usando diretamente a tabela `usuario`. Não há integração com API externa.
+POC de autenticacao com Django REST Framework no back-end e Angular no front-end. O back-end usa PostgreSQL, a tabela `usuario` existente e sessoes Django armazenadas em cookie. Nao ha JWT nem integracao com API externa.
 
-## Regras de negócio atendidas
-- Login com usuário e senha.
-- Identificação de primeiro acesso.
-- Troca obrigatória de senha no primeiro acesso.
-- Logout seguro.
-- Sessão persistente no navegador até logout manual ou expiração configurada.
+## Regras de negocio
 
-## Pré-requisitos
+- Login com usuario e senha.
+- Identificacao de primeiro acesso.
+- Cadastro de usuario temporario para testes locais.
+- Alteracao da senha atual.
+- Definicao de `primeiro_acesso = false` apos a troca de senha.
+- Logout no back-end, invalidando a sessao.
+- Persistencia da sessao ate o logout manual ou a expiracao configurada.
 
-O banco `db_confeitaria` e a tabela `usuario` devem ser criados pelos scripts em `database/`. No arquivo `apps/backend/.env`, informe os dados da conexão:
+## Preparar o ambiente
+
+O banco `db_confeitaria` e a tabela `usuario` devem ser criados pelos scripts em `database/`. O Django usa a tabela `usuario` existente e nao a recria.
+
+Crie `apps/backend/.env` com os dados da conexao:
 
 ```env
 POSTGRES_DB=db_confeitaria
@@ -23,7 +28,9 @@ POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 ```
 
-Depois, execute:
+O arquivo `.env` contem credenciais e nao deve ser enviado ao Git.
+
+Execute os comandos em terminais separados:
 
 ```powershell
 cd apps/backend
@@ -31,15 +38,29 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-O arquivo `.env` contém credenciais e não deve ser enviado ao Git.
+```powershell
+cd apps/frontend
+npm install
+npm start
+```
+
+O Angular fica em `http://localhost:4200` e o Django em `http://127.0.0.1:8000`. O [proxy do Angular](../apps/frontend/proxy.conf.json) encaminha `/api` para o Django.
+
+## Integracao com o front-end
+
+Abra `http://localhost:4200/auth/login`. O Angular envia as requisicoes para `/api`, preserva o cookie da sessao com `withCredentials` e usa `primeiro_acesso` para decidir entre a tela de troca de senha e o dashboard.
+
+O front-end nao acessa o PostgreSQL diretamente.
 
 ## Endpoints
 
-Base local: `http://127.0.0.1:8000/api`
+Base direta do back-end: `http://127.0.0.1:8000/api`
+
+Ao usar o front-end, o proxy utiliza o mesmo caminho com `http://localhost:4200/api`.
 
 ### POST /auth/cadastro-teste/
 
-Cria um usuário temporário para testes locais. Funciona apenas com `DEBUG=True`, recebe somente o login e gera uma senha temporária de seis dígitos.
+Cria um usuario temporario para testes locais. Funciona somente com `DEBUG=True`, recebe apenas o login e gera uma senha temporaria de seis digitos.
 
 Body:
 
@@ -59,11 +80,11 @@ Resposta:
 }
 ```
 
-A senha temporária é retornada apenas para o teste e é salva no banco como hash do Django.
+A senha temporaria e retornada para o teste e salva no banco como hash compativel com o Django. Em producao, esse endpoint deve permanecer desabilitado.
 
 ### POST /auth/login/
 
-Autentica o usuário e cria uma sessão.
+Autentica o usuario e cria uma sessao Django.
 
 Body:
 
@@ -84,11 +105,13 @@ Resposta:
 }
 ```
 
-Se o usuário já estiver autenticado, a API retorna a mensagem `usuário já está logado.`.
+Se o usuario ja estiver autenticado, retorna `409`. Login ou senha ausentes retornam `400`; credenciais invalidas retornam `401`.
 
 ### GET /auth/me/
 
-Retorna os dados do usuário autenticado:
+Retorna os dados do usuario autenticado. A requisicao precisa manter o cookie da sessao.
+
+Resposta:
 
 ```json
 {
@@ -97,9 +120,11 @@ Retorna os dados do usuário autenticado:
 }
 ```
 
+Sem uma sessao valida, retorna `401`.
+
 ### POST /auth/alterar-senha/
 
-Altera a senha do usuário autenticado e define `primeiro_acesso` como `false`.
+Altera a senha do usuario autenticado e define `primeiro_acesso` como `false`.
 
 Body:
 
@@ -119,11 +144,11 @@ Resposta:
 }
 ```
 
-A senha atual deve estar correta, e a nova senha precisa ser diferente e ter pelo menos oito caracteres.
+A senha atual deve estar correta. A nova senha deve ser diferente e ter pelo menos oito caracteres.
 
 ### POST /auth/logout/
 
-Encerra a sessão do usuário autenticado:
+Encerra a sessao do usuario autenticado:
 
 ```json
 {
@@ -131,9 +156,9 @@ Encerra a sessão do usuário autenticado:
 }
 ```
 
-## Fluxo completo de teste (PowerShell)
+## Fluxo completo de teste no PowerShell
 
-### 1. Criar usuário temporário
+### 1. Criar usuario temporario
 
 ```powershell
 $body = @{ login = "usuario" } | ConvertTo-Json
@@ -147,14 +172,14 @@ $cadastro = Invoke-RestMethod `
 $cadastro
 ```
 
-Guarde o valor retornado em `$cadastro.senha_temporaria`. Para verificar o registro e o valor de `primeiro_acesso`, consulte o banco:
+Guarde `$cadastro.senha_temporaria`. Para consultar o usuario sem expor o hash da senha:
 
 ```sql
 SELECT id_usuario, login, primeiro_acesso
 FROM usuario;
 ```
 
-### 2. Criar uma sessão e fazer login
+### 2. Fazer login e consultar a sessao
 
 ```powershell
 $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
@@ -170,20 +195,16 @@ Invoke-RestMethod `
   -WebSession $session `
   -ContentType "application/json" `
   -Body $body
-```
 
-### 3. Consultar o usuário autenticado
-
-```powershell
 Invoke-RestMethod `
   -Method Get `
   -Uri "http://127.0.0.1:8000/api/auth/me/" `
   -WebSession $session
 ```
 
-O retorno deve mostrar `primeiro_acesso: true` antes da troca de senha.
+O retorno de `/auth/me/` deve mostrar `primeiro_acesso: true` antes da troca de senha.
 
-### 4. Alterar a senha
+### 3. Alterar a senha
 
 ```powershell
 $body = @{
@@ -199,9 +220,9 @@ Invoke-RestMethod `
   -Body $body
 ```
 
-Consulte novamente `/auth/me/`; agora `primeiro_acesso` deve ser `false`.
+Consulte `/auth/me/` novamente. Agora `primeiro_acesso` deve ser `false`.
 
-### 5. Fazer logout
+### 4. Fazer logout
 
 ```powershell
 Invoke-RestMethod `
@@ -210,9 +231,9 @@ Invoke-RestMethod `
   -WebSession $session
 ```
 
-Depois do logout, uma nova chamada para `/auth/me/` usando `$session` deve retornar `401`.
+Depois do logout, uma chamada para `/auth/me/` usando a mesma sessao deve retornar `401`.
 
-### 6. Fazer novo login
+### 5. Fazer novo login
 
 ```powershell
 $body = @{ login = "usuario"; senha = "nova_senha" } | ConvertTo-Json
@@ -226,3 +247,12 @@ Invoke-RestMethod `
 ```
 
 O retorno deve indicar `primeiro_acesso: false`.
+
+## Respostas de erro comuns
+
+- `400`: campos obrigatorios ausentes ou nova senha invalida.
+- `401`: credenciais invalidas ou sessao inexistente.
+- `404`: rota incorreta, barra final ausente ou endpoint de cadastro acessado com `DEBUG=False`.
+- `409`: usuario ja esta logado ou login ja cadastrado.
+
+Se o Angular retornar `404` em `/api/...`, reinicie o servidor Angular para carregar o proxy e confirme que o Django esta rodando na porta `8000`.
