@@ -15,6 +15,7 @@ Reallocated wiz_functions (elt_size=4) to 9000 items from 6000.
 Database file #1: abntex2-options.bib
 Database file #2: bibliografia.bib
 Warning--I didn't find a database entry for "abnt-repeated-author-omit=no'____.'"
+Warning--I didn't find a database entry for "sobrenomeAno"
 Reallocated singl_function (elt_size=4) to 100 items from 50.
 Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
 Reallocated global_strs (elt_size=200001) to 20 items from 10.
@@ -24,45 +25,45 @@ Reallocated glb_str_end (elt_size=4) to 20 items from 10.
 | Em caso de dúvidas ou problemas com este estilo procure |
 | http://www.abntex.net.br/                               |
 +---------------------------------------------------------+
-You've used 7 entries,
+You've used 6 entries,
             6714 wiz_defined-function locations,
-            1210 strings with 9630 characters,
-and the built_in function-call counts, 2668 in all, are:
-= -- 279
-> -- 16
+            1208 strings with 9525 characters,
+and the built_in function-call counts, 2165 in all, are:
+= -- 254
+> -- 1
 < -- 1
-+ -- 56
-- -- 6
-* -- 111
-:= -- 355
-add.period$ -- 3
-call.type$ -- 9
-change.case$ -- 25
-chr.to.int$ -- 6
-cite$ -- 1
-duplicate$ -- 51
-empty$ -- 330
-format.name$ -- 23
-if$ -- 708
++ -- 51
+- -- 1
+* -- 81
+:= -- 277
+add.period$ -- 0
+call.type$ -- 8
+change.case$ -- 18
+chr.to.int$ -- 5
+cite$ -- 0
+duplicate$ -- 22
+empty$ -- 285
+format.name$ -- 0
+if$ -- 597
 int.to.chr$ -- 5
 int.to.str$ -- 1
-missing$ -- 78
-newline$ -- 13
-num.names$ -- 5
-pop$ -- 67
+missing$ -- 62
+newline$ -- 8
+num.names$ -- 0
+pop$ -- 45
 preamble$ -- 1
-purify$ -- 21
+purify$ -- 18
 quote$ -- 0
-skip$ -- 368
+skip$ -- 338
 stack$ -- 1
-substring$ -- 91
-swap$ -- 8
+substring$ -- 74
+swap$ -- 1
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
 type$ -- 0
 warning$ -- 0
-while$ -- 8
+while$ -- 2
 width$ -- 0
-write$ -- 21
-(There was 1 warning)
+write$ -- 8
+(There were 2 warnings)

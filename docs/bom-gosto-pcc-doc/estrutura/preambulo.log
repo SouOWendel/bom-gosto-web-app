@@ -1,10 +1,10 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.9.20)  21 SEP 2026 20:30
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.9.20)  26 SEP 2026 16:23
 entering extended mode
- \write18 enabled.
+ restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**c:/teste_latex/bom-gosto-web-app/docs/bom-gosto-pcc-doc/estrutura/preambulo.tex
-(c:/teste_latex/bom-gosto-web-app/docs/bom-gosto-pcc-doc/estrutura/preambulo.tex
+**c:/Users/muril/Documents/bom-gosto-web-app/docs/bom-gosto-pcc-doc/estrutura/preambulo.tex
+(c:/Users/muril/Documents/bom-gosto-web-app/docs/bom-gosto-pcc-doc/estrutura/preambulo.tex
 LaTeX2e <2026-06-01>
 L3 programming layer <2026-08-10>
 (c:/texlive/2026/texmf-dist/tex/latex/abntex2/abntex2.cls
@@ -560,7 +560,7 @@ Type X to quit or <RETURN> to proceed,
 or enter new name. (Default extension: tex)
 
 Enter file name: 
-c:/teste_latex/bom-gosto-web-app/docs/bom-gosto-pcc-doc/estrutura/preambulo.tex:23: Emergency stop.
+c:/Users/muril/Documents/bom-gosto-web-app/docs/bom-gosto-pcc-doc/estrutura/preambulo.tex:23: Emergency stop.
 <read *> 
          
 l.23 \input{configuracoes/tipografia}
@@ -570,10 +570,10 @@ l.23 \input{configuracoes/tipografia}
  
 Here is how much of TeX's memory you used:
  13664 strings out of 467099
- 221665 string characters out of 5412502
+ 221695 string characters out of 5412502
  670286 words of memory out of 5000000
  42904 multiletter control sequences out of 15000+600000
  628319 words of font info for 42 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 99i,1n,107p,581b,88s stack positions out of 10000i,1000n,20000p,200000b,200000s
-c:/teste_latex/bom-gosto-web-app/docs/bom-gosto-pcc-doc/estrutura/preambulo.tex:23:  ==> Fatal error occurred, no output PDF file produced!
+ 99i,1n,107p,591b,88s stack positions out of 10000i,1000n,20000p,200000b,200000s
+c:/Users/muril/Documents/bom-gosto-web-app/docs/bom-gosto-pcc-doc/estrutura/preambulo.tex:23:  ==> Fatal error occurred, no output PDF file produced!

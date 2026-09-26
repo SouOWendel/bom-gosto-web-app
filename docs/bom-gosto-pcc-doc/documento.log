@@ -1,10 +1,10 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.9.20)  21 SEP 2026 20:40
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.9.20)  26 SEP 2026 17:34
 entering extended mode
- \write18 enabled.
+ restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**c:/teste_latex/bom-gosto-web-app/docs/bom-gosto-pcc-doc/documento.tex
-(c:/teste_latex/bom-gosto-web-app/docs/bom-gosto-pcc-doc/documento.tex
+**c:/Users/muril/Documents/bom-gosto-web-app/docs/bom-gosto-pcc-doc/documento.tex
+(c:/Users/muril/Documents/bom-gosto-web-app/docs/bom-gosto-pcc-doc/documento.tex
 LaTeX2e <2026-06-01>
 L3 programming layer <2026-08-10>
 (./estrutura/preambulo.tex (./abntex2.cls
@@ -1556,14 +1556,14 @@ Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: End \AtBeginDocument code.
 Package babel Info: Main language set to 'brazil'.
  (./estrutura/pre-textual.tex
-<abntex-ifpi/logo_ifpi.pdf, id=31, 597.23125pt x 845.1575pt>
-File: abntex-ifpi/logo_ifpi.pdf Graphic file (type pdf)
-<use abntex-ifpi/logo_ifpi.pdf>
-Package pdftex.def Info: abntex-ifpi/logo_ifpi.pdf  used on input line 23.
-(pdftex.def)             Requested size: 77.64278pt x 109.87433pt.
+<abntex-ifpi/logo_ifsp.pdf, id=31, 597.50792pt x 691.5601pt>
+File: abntex-ifpi/logo_ifsp.pdf Graphic file (type pdf)
+<use abntex-ifpi/logo_ifsp.pdf>
+Package pdftex.def Info: abntex-ifpi/logo_ifsp.pdf  used on input line 23.
+(pdftex.def)             Requested size: 77.67874pt x 89.90596pt.
  [1
 
-{c:/texlive/2026/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{c:/texlive/2026/texmf-dist/fonts/enc/dvips/base/8r.enc} <./abntex-ifpi/logo_ifpi.pdf>] (c:/texlive/2026/texmf-dist/tex/latex/microtype/mt-cmr.cfg
+{c:/texlive/2026/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{c:/texlive/2026/texmf-dist/fonts/enc/dvips/base/8r.enc} <./abntex-ifpi/logo_ifsp.pdf>] (c:/texlive/2026/texmf-dist/tex/latex/microtype/mt-cmr.cfg
 File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman (RS)
 )
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has been already used, duplicate ignored
@@ -1575,12 +1575,12 @@ l.30
 
 
 ] (./pre-textual/ficha-catalografica.tex
-<pre-textual/ficha-catalografica.pdf, id=47, 597.79335pt x 845.19763pt>
+<pre-textual/ficha-catalografica.pdf, id=48, 597.79335pt x 845.19763pt>
 File: pre-textual/ficha-catalografica.pdf Graphic file (type pdf)
 <use pre-textual/ficha-catalografica.pdf>
 Package pdftex.def Info: pre-textual/ficha-catalografica.pdf  used on input line 8.
 (pdftex.def)             Requested size: 597.79189pt x 845.19557pt.
-<pre-textual/ficha-catalografica.pdf, id=49, page=1, 597.79335pt x 845.19763pt>
+<pre-textual/ficha-catalografica.pdf, id=50, page=1, 597.79335pt x 845.19763pt>
 File: pre-textual/ficha-catalografica.pdf Graphic file (type pdf)
 <use pre-textual/ficha-catalografica.pdf, page 1>
 Package pdftex.def Info: pre-textual/ficha-catalografica.pdf , page1 used on input line 8.
@@ -1645,28 +1645,34 @@ Package microtype Info: Loading generic protrusion settings for font family
 
 ]) [13]) (./estrutura/textual.tex (./capitulos/01-introducao.tex
 Cap\'{\i }tulo 1.
-) (./capitulos/02-contexto.tex [14
+
+LaTeX Warning: Citation `sobrenomeAno' on page 14 undefined on input line 6.
 
 
-]
+LaTeX Warning: Citation `sobrenomeAno' on page 14 undefined on input line 8.
+
+[14
+
+
+] [15]) (./capitulos/02-contexto.tex [16]
 Cap\'{\i }tulo 2.
-) (./capitulos/03-analise-sistema.tex [15
+) (./capitulos/03-analise-sistema.tex [17
 
 ]
 Cap\'{\i }tulo 3.
-) (./capitulos/04-projeto-sistema.tex [16
+) (./capitulos/04-projeto-sistema.tex [18
 
 ]
 Cap\'{\i }tulo 4.
-) (./capitulos/05-implementacao.tex [17
+) (./capitulos/05-implementacao.tex [19
 
 ]
 Cap\'{\i }tulo 5.
-) (./capitulos/06-conclusao.tex [18
+) (./capitulos/06-conclusao.tex [20
 
 ]
 Cap\'{\i }tulo 6.
-)) [19
+)) [21
 
 ]
 \openout2 = `estrutura/pos-textual.aux'.
@@ -1677,17 +1683,20 @@ Cap\'{\i }tulo 6.
 
 
 bibitemlist
-)) (./pos-textual/glossario.tex) (./pos-textual/apendices.tex) (./pos-textual/anexos.tex (./pos-textual/anexos-exemplo.tex [20
+
+LaTeX Warning: Empty `thebibliography' environment on input line 8.
+
+)) (./pos-textual/glossario.tex) (./pos-textual/apendices.tex) (./pos-textual/anexos.tex (./pos-textual/anexos-exemplo.tex [22
 
 
 ]
 ANEXO A.
-<imagens/carta_pero_vaz.png, id=267, 298.11375pt x 423.38174pt>
+<imagens/carta_pero_vaz.png, id=272, 298.11375pt x 423.38174pt>
 File: imagens/carta_pero_vaz.png Graphic file (type png)
 <use imagens/carta_pero_vaz.png>
 Package pdftex.def Info: imagens/carta_pero_vaz.png  used on input line 6.
 (pdftex.def)             Requested size: 298.11302pt x 423.3807pt.
-)) (./pos-textual/indices.tex)) [21
+)) (./pos-textual/indices.tex)) [23
 
  <./imagens/carta_pero_vaz.png>]
 \tf@lof=\write6
@@ -1703,22 +1712,26 @@ enddocument/afterlastpage (AED): lastpage setting LastPage.
 LaTeX2e <2026-06-01>
 L3 programming layer <2020/03/25>
  ***********
+
+
+LaTeX Warning: There were undefined references.
+
 Package rerunfilecheck Info: File `documento.brf' has not changed.
-(rerunfilecheck)             Checksum: 417083B49988F996D479C855864A73E4;50.
+(rerunfilecheck)             Checksum: 43B970A814661F6FD43386A33FA6F410;90.
  ) 
 Here is how much of TeX's memory you used:
- 43322 strings out of 467099
- 883753 string characters out of 5412502
- 1500868 words of memory out of 5000000
- 71663 multiletter control sequences out of 15000+600000
- 652762 words of font info for 128 fonts, out of 8000000 for 9000
+ 43372 strings out of 467099
+ 884226 string characters out of 5412502
+ 1501156 words of memory out of 5000000
+ 71672 multiletter control sequences out of 15000+600000
+ 654379 words of font info for 155 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 129i,17n,134p,1189b,716s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 129i,17n,134p,1199b,716s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/helvetic/uhvro8a.pfb>
-Output written on documento.pdf (22 pages, 686947 bytes).
+Output written on documento.pdf (24 pages, 697779 bytes).
 PDF statistics:
- 488 PDF objects out of 1000 (max. 8388607)
- 425 compressed objects within 5 object streams
- 99 named destinations out of 1000 (max. 500000)
+ 493 PDF objects out of 1000 (max. 8388607)
+ 427 compressed objects within 5 object streams
+ 100 named destinations out of 1000 (max. 500000)
  33334 words of extra memory for PDF output out of 35830 (max. 10000000)
 

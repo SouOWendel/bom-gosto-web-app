@@ -1,8 +1,8 @@
-PWD c:/teste_latex/bom-gosto-web-app/docs/bom-gosto-pcc-doc/estrutura
+PWD c:/Users/muril/Documents/bom-gosto-web-app/docs/bom-gosto-pcc-doc/estrutura
 INPUT c:/texlive/2026/texmf.cnf
 INPUT c:/texlive/2026/texmf-dist/web2c/texmf.cnf
 INPUT c:/texlive/2026/texmf-var/web2c/pdftex/pdflatex.fmt
-INPUT c:/teste_latex/bom-gosto-web-app/docs/bom-gosto-pcc-doc/estrutura/preambulo.tex
+INPUT c:/Users/muril/Documents/bom-gosto-web-app/docs/bom-gosto-pcc-doc/estrutura/preambulo.tex
 OUTPUT preambulo.log
 INPUT c:/texlive/2026/texmf-dist/tex/latex/abntex2/abntex2.cls
 INPUT c:/texlive/2026/texmf-dist/tex/latex/abntex2/abntex2.cls

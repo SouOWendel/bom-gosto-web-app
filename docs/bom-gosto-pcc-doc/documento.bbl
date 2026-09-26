@@ -5,9 +5,4 @@
 \providecommand{\abntbstabout}[1]{}
 \abntbstabout{v-1.9.7 }
 
-\bibitem[ABNT 2011]{de2011associaccao}
-\abntrefinfo{ABNT}{ABNT}{2011}
-{ABNT, A. B. D. N.~T. Associa{\c{c}}{\~a}o brasileira de normas t{\'e}cnicas, 2011.
-2011.}
-
 \end{thebibliography}
