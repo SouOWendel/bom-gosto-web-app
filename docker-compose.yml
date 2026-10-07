@@ -12,7 +12,8 @@ services:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./database/create_schema.sql:/docker-entrypoint-initdb.d/02-create-schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d bom_gosto_db"]
       interval: 5s
@@ -32,16 +33,15 @@ services:
       - "8000:8000"
     environment:
       - DEBUG=1
-      - DB_ENGINE=django.db.backends.postgresql
-      - DB_NAME=bom_gosto_db
-      - DB_USER=postgres
-      - DB_PASSWORD=postgrespassword
-      - DB_HOST=postgres
-      - DB_PORT=5432
+      - POSTGRES_DB=bom_gosto_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgrespassword
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
     depends_on:
       postgres:
         condition: service_healthy
-    command: python manage.py runserver 0.0.0.0:8000
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
   
   # FRONTEND: Angular PWA
   frontend:
