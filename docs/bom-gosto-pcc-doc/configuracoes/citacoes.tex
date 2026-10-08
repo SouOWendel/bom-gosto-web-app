@@ -1,0 +1,34 @@
+%% Configuração das Citações
+
+%% Estilo
+%\usepackage[num]{abntex2cite}			% Citações numéricas
+\usepackage[alf, 
+ versalete, 
+ abnt-emphasize = bf, 
+abnt-etal-list = 3,
+abnt-etal-text = it, 
+abnt-and-type = &, 
+abnt-last-names = abnt, 
+abnt-repeated-author-omit = no  '____.']{abntex2cite}			% Citações "AUTOR, ano"
+
+% Definição do negrito
+
+%% Colocar entre parênteses ou colchetes?
+%% Padrão: Parênteses
+%% * Fica mais agradável usar colchetes quando se usa citações numéricas
+%\citebrackets[]							% Comente essa linha e o documento usará parênteses
+
+
+%% Configura o "Citado nas Páginas ..." nas referências
+%% Não mexa nesse:
+\renewcommand{\backref}{}
+
+%% Esse é o texto do "Citado nas páginas ..."
+\renewcommand*{\backrefalt}[4]{
+	\ifcase #1
+		Nenhuma citação no texto.
+	\or
+		Citado na página #2.
+	\else
+		Citado #1 vezes nas páginas #2.
+	\fi}
