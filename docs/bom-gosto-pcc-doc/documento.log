@@ -1,10 +1,10 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.9.20)  26 SEP 2026 17:34
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.9.20)  10 OCT 2026 16:22
 entering extended mode
- restricted \write18 enabled.
+ \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**c:/Users/muril/Documents/bom-gosto-web-app/docs/bom-gosto-pcc-doc/documento.tex
-(c:/Users/muril/Documents/bom-gosto-web-app/docs/bom-gosto-pcc-doc/documento.tex
+**c:/teste_latex/bom-gosto-web-app/docs/bom-gosto-pcc-doc/documento.tex
+(c:/teste_latex/bom-gosto-web-app/docs/bom-gosto-pcc-doc/documento.tex
 LaTeX2e <2026-06-01>
 L3 programming layer <2026-08-10>
 (./estrutura/preambulo.tex (./abntex2.cls
@@ -1646,33 +1646,30 @@ Package microtype Info: Loading generic protrusion settings for font family
 ]) [13]) (./estrutura/textual.tex (./capitulos/01-introducao.tex
 Cap\'{\i }tulo 1.
 
-LaTeX Warning: Citation `sobrenomeAno' on page 14 undefined on input line 6.
-
-
-LaTeX Warning: Citation `sobrenomeAno' on page 14 undefined on input line 8.
+Package hyperref Warning: Suppressing empty link on input line 8.
 
 [14
 
 
-] [15]) (./capitulos/02-contexto.tex [16]
+] [15] [16] [17]) (./capitulos/02-contexto.tex [18]
 Cap\'{\i }tulo 2.
-) (./capitulos/03-analise-sistema.tex [17
+) (./capitulos/03-analise-sistema.tex [19
 
 ]
 Cap\'{\i }tulo 3.
-) (./capitulos/04-projeto-sistema.tex [18
+) (./capitulos/04-projeto-sistema.tex [20
 
 ]
 Cap\'{\i }tulo 4.
-) (./capitulos/05-implementacao.tex [19
+) (./capitulos/05-implementacao.tex [21
 
 ]
 Cap\'{\i }tulo 5.
-) (./capitulos/06-conclusao.tex [20
+) (./capitulos/06-conclusao.tex [22
 
 ]
 Cap\'{\i }tulo 6.
-)) [21
+)) [23
 
 ]
 \openout2 = `estrutura/pos-textual.aux'.
@@ -1683,20 +1680,17 @@ Cap\'{\i }tulo 6.
 
 
 bibitemlist
-
-LaTeX Warning: Empty `thebibliography' environment on input line 8.
-
-)) (./pos-textual/glossario.tex) (./pos-textual/apendices.tex) (./pos-textual/anexos.tex (./pos-textual/anexos-exemplo.tex [22
+)) (./pos-textual/glossario.tex) (./pos-textual/apendices.tex) (./pos-textual/anexos.tex (./pos-textual/anexos-exemplo.tex [24
 
 
 ]
 ANEXO A.
-<imagens/carta_pero_vaz.png, id=272, 298.11375pt x 423.38174pt>
+<imagens/carta_pero_vaz.png, id=299, 298.11375pt x 423.38174pt>
 File: imagens/carta_pero_vaz.png Graphic file (type png)
 <use imagens/carta_pero_vaz.png>
 Package pdftex.def Info: imagens/carta_pero_vaz.png  used on input line 6.
 (pdftex.def)             Requested size: 298.11302pt x 423.3807pt.
-)) (./pos-textual/indices.tex)) [23
+)) (./pos-textual/indices.tex)) [25
 
  <./imagens/carta_pero_vaz.png>]
 \tf@lof=\write6
@@ -1712,26 +1706,22 @@ enddocument/afterlastpage (AED): lastpage setting LastPage.
 LaTeX2e <2026-06-01>
 L3 programming layer <2020/03/25>
  ***********
-
-
-LaTeX Warning: There were undefined references.
-
 Package rerunfilecheck Info: File `documento.brf' has not changed.
-(rerunfilecheck)             Checksum: 43B970A814661F6FD43386A33FA6F410;90.
+(rerunfilecheck)             Checksum: DB1B08C14410AF16FF2D60E7446DC913;178.
  ) 
 Here is how much of TeX's memory you used:
- 43372 strings out of 467099
- 884226 string characters out of 5412502
- 1501156 words of memory out of 5000000
- 71672 multiletter control sequences out of 15000+600000
- 654379 words of font info for 155 fonts, out of 8000000 for 9000
+ 43462 strings out of 467099
+ 885229 string characters out of 5412502
+ 1501885 words of memory out of 5000000
+ 71701 multiletter control sequences out of 15000+600000
+ 656734 words of font info for 193 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 129i,17n,134p,1199b,716s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 129i,17n,134p,1189b,716s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/helvetic/uhvro8a.pfb>
-Output written on documento.pdf (24 pages, 697779 bytes).
+Output written on documento.pdf (26 pages, 705798 bytes).
 PDF statistics:
- 493 PDF objects out of 1000 (max. 8388607)
- 427 compressed objects within 5 object streams
- 100 named destinations out of 1000 (max. 500000)
+ 521 PDF objects out of 1000 (max. 8388607)
+ 453 compressed objects within 5 object streams
+ 106 named destinations out of 1000 (max. 500000)
  33334 words of extra memory for PDF output out of 35830 (max. 10000000)
 
