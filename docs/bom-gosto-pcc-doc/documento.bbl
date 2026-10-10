@@ -1,0 +1,25 @@
+\providecommand{\abntreprintinfo}[1]{%
+ \citeonline{#1}}
+\setlength{\labelsep}{0pt}\begin{thebibliography}{}
+\providecommand{\abntrefinfo}[3]{}
+\providecommand{\abntbstabout}[1]{}
+\abntbstabout{v-1.9.7 }
+
+\bibitem[Laudon \& Laudon 2014]{laudon2014}
+\abntrefinfo{Laudon \& Laudon}{LAUDON; LAUDON}{2014}
+{LAUDON, K.~C.; LAUDON, J.~P. \textbf{Sistemas de informação gerenciais}. 11. ed. São Paulo: Pearson Education do Brasil, 2014.}
+
+\bibitem[Pressman \& Maxim 2021]{pressman2021}
+\abntrefinfo{Pressman \& Maxim}{PRESSMAN; MAXIM}{2021}
+{PRESSMAN, R.~S.; MAXIM, B.~R. \textbf{Engenharia de software: uma abordagem profissional}. 9. ed. Porto Alegre: AMGH, 2021.}
+
+\bibitem[{Sebrae Santa Catarina}]{sebrae_sc}
+\abntrefinfo{{Sebrae Santa Catarina}}{{Sebrae Santa Catarina}}{}
+{{Sebrae Santa Catarina}. \textbf{Importância da gestão de estoque na sua empresa}.
+Dispon{\'\i}vel em: \url{https://www.sebrae-sc.com.br/blog/importancia-da-gestao-de-estoque-na-sua-empresa}. Acesso em: 10 out. 2026.}
+
+\bibitem[Sommerville 2019]{sommerville2019}
+\abntrefinfo{Sommerville}{SOMMERVILLE}{2019}
+{SOMMERVILLE, I. \textbf{Engenharia de software}. 10. ed. São Paulo: Pearson Education do Brasil, 2019.}
+
+\end{thebibliography}

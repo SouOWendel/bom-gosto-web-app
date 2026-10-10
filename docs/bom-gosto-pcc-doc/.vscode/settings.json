@@ -1,14 +1,6 @@
 {
-  // ===== BUILD =====
-
-  // Força uso do latexmk sempre
   "latex-workshop.latex.recipe.default": "latexmk",
-
-  // Reduzir recompilações automática
   "latex-workshop.latex.autoBuild.run": "never",
-
-  // ===== TOOLS =====
-
   "latex-workshop.latex.tools": [
     {
       "name": "latexmk",
@@ -23,16 +15,14 @@
       ]
     }
   ],
-
   "latex-workshop.latex.recipes": [
     {
       "name": "latexmk",
-      "tools": ["latexmk"]
+      "tools": [
+        "latexmk"
+      ]
     }
   ],
-
-  // ===== LIMPEZA =====
-
   "latex-workshop.latex.clean.enabled": true,
   "latex-workshop.latex.clean.fileTypes": [
     "*.aux",
@@ -55,31 +45,68 @@
     "*.fdb_latexmk",
     "*.synctex.gz"
   ],
-
-  // ===== PDF VIEW =====
-
-  // Abre PDF no próprio VS Code
   "latex-workshop.view.pdf.viewer": "tab",
-
-  // Sincronização direta/inversa
   "latex-workshop.view.pdf.synctex.enabled": true,
-
-  // ===== EDITOR =====
-
-  // Auto fechar ambientes LaTeX
   "latex-workshop.latex.autoClosingEnv.enabled": true,
-
-  // IntelliSense básico
   "latex-workshop.intellisense.package.enabled": true,
-
-  // ===== PERFORMANCE =====
-
-  // Evita builds duplicados
   "latex-workshop.latex.autoBuild.interval": 1000,
-
-  // ===== LOG =====
-
-  // Mostra erros mais claros
   "latex-workshop.message.error.show": true,
-  "latex-workshop.message.warning.show": true
+  "latex-workshop.message.warning.show": true,
+  "C_Cpp_Runner.cCompilerPath": "clang",
+  "C_Cpp_Runner.cppCompilerPath": "g++",
+  "C_Cpp_Runner.debuggerPath": "gdb",
+  "C_Cpp_Runner.cStandard": "",
+  "C_Cpp_Runner.cppStandard": "",
+  "C_Cpp_Runner.msvcBatchPath": "C:/Program Files/Microsoft Visual Studio/VR_NR/Community/VC/Auxiliary/Build/vcvarsall.bat",
+  "C_Cpp_Runner.useMsvc": false,
+  "C_Cpp_Runner.warnings": [
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "-Wshadow",
+    "-Wformat=2",
+    "-Wcast-align",
+    "-Wconversion",
+    "-Wsign-conversion",
+    "-Wnull-dereference"
+  ],
+  "C_Cpp_Runner.msvcWarnings": [
+    "/W4",
+    "/permissive-",
+    "/w14242",
+    "/w14287",
+    "/w14296",
+    "/w14311",
+    "/w14826",
+    "/w44062",
+    "/w44242",
+    "/w14905",
+    "/w14906",
+    "/w14263",
+    "/w44265",
+    "/w14928"
+  ],
+  "C_Cpp_Runner.enableWarnings": true,
+  "C_Cpp_Runner.warningsAsError": false,
+  "C_Cpp_Runner.compilerArgs": [],
+  "C_Cpp_Runner.linkerArgs": [],
+  "C_Cpp_Runner.includePaths": [],
+  "C_Cpp_Runner.includeSearch": [
+    "*",
+    "**/*"
+  ],
+  "C_Cpp_Runner.excludeSearch": [
+    "**/build",
+    "**/build/**",
+    "**/.*",
+    "**/.*/**",
+    "**/.vscode",
+    "**/.vscode/**"
+  ],
+  "C_Cpp_Runner.useAddressSanitizer": false,
+  "C_Cpp_Runner.useUndefinedSanitizer": false,
+  "C_Cpp_Runner.useLeakSanitizer": false,
+  "C_Cpp_Runner.showCompilationTime": false,
+  "C_Cpp_Runner.useLinkTimeOptimization": false,
+  "C_Cpp_Runner.msvcSecureNoWarnings": false
 }
