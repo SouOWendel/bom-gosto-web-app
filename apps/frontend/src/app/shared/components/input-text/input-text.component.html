@@ -1,0 +1,13 @@
+<div class="form-field">
+  <label [for]="inputId">{{ label }}</label>
+  <input
+    [id]="inputId"
+    [type]="type"
+    [value]="value"
+    [attr.autocomplete]="autocomplete"
+    [placeholder]="placeholder"
+    [disabled]="disabled"
+    (input)="handleInput($any($event.target).value)"
+    (blur)="handleBlur()"
+  />
+</div>

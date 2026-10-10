@@ -1,18 +1,20 @@
 export interface User {
-	id: number;
-	username: string;
-	email: string;
-	firstName: string;
-	lastName: string;
+	login: string;
+	primeiro_acesso: boolean;
 }
 
 export interface Credentials {
-	username: string;
-	password: string;
+	login: string;
+	senha: string;
 }
 
 export interface AuthResponse {
-	access: string;
-	refresh?: string;
-	user: User;
+	autenticado: boolean;
+	login: string;
+	primeiro_acesso: boolean;
+}
+
+export interface ChangePasswordResponse {
+	detail: string;
+	primeiro_acesso: boolean;
 }

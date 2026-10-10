@@ -2,11 +2,12 @@ import { Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
+import { InputTextComponent } from '../../../../shared/components/input-text/input-text.component';
 
 @Component({
 	selector: 'app-login',
 	standalone: true,
-	imports: [ReactiveFormsModule],
+	imports: [ReactiveFormsModule, InputTextComponent],
 	templateUrl: './login.component.html',
 	styleUrls: ['./login.component.scss'],
 })
@@ -19,8 +20,8 @@ export class LoginComponent {
 	readonly errorMessage = signal<string | null>(null);
 
 	readonly form = this.fb.group({
-		username: ['', [Validators.required]],
-		password: ['', [Validators.required, Validators.minLength(6)]],
+		login: ['', [Validators.required]],
+		senha: ['', [Validators.required, Validators.minLength(6)]],
 	});
 
 	onSubmit() {
@@ -30,9 +31,11 @@ export class LoginComponent {
 		this.errorMessage.set(null);
 
 		this.authService.login(this.form.getRawValue()).subscribe({
-			next: () => this.router.navigate(['/dashboard']),
+			next: () => this.router.navigate([
+				this.authService.user()?.primeiro_acesso ? '/auth/alterar-senha' : '/dashboard',
+			]),
 			error: (err) => {
-				this.errorMessage.set(err.error?.message || 'An error occurred during login.');
+				this.errorMessage.set(err.error?.detail || 'Não foi possível entrar.');
 				this.loading.set(false);
 			},
 		});
