@@ -41,34 +41,3 @@ bom-gosto-web-app/
 ├── CONTRIBUTING.md         # Guia de contribuição e convenções do Git
 └── README.md
 ```
-
----
-
-## POC de Autenticação (Back-end)
-
-Implementação inicial do fluxo de autenticação no back-end para prova de conceito, sem integração com API externa e sem alterações no front-end.
-
-### Regras atendidas
-- Login com usuário e senha.
-- Identificação de primeiro acesso.
-- Cadastro local de usuário de teste com senha temporária.
-- Troca de senha e atualização de `primeiro_acesso`.
-- Logout e sessão persistente no navegador.
-
-### Endpoints
-Base local: `http://127.0.0.1:8000/api`
-
-- `POST /auth/login/`
-- `POST /auth/alterar-senha/`
-- `GET /auth/me/`
-- `POST /auth/logout/`
-
-### Execução rápida (back-end)
-```bash
-cd apps/backend
-python -m venv .venv
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
-
-Para detalhes técnicos (payloads, respostas e fluxo de validação), consulte [`docs/auth-poc.md`](docs/auth-poc.md).
