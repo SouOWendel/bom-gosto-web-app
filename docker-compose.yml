@@ -5,7 +5,7 @@ services:
     container_name: bom-gosto-db
     restart: always
     environment:
-      POSTGRES_DB: bom_gosto_db
+      POSTGRES_DB: db_confeitaria
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgrespassword
     ports:
@@ -14,7 +14,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d bom_gosto_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d db_confeitaria"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -33,15 +33,16 @@ services:
     environment:
       - DEBUG=1
       - DB_ENGINE=django.db.backends.postgresql
-      - DB_NAME=bom_gosto_db
+      - DB_NAME=db_confeitaria
       - DB_USER=postgres
       - DB_PASSWORD=postgrespassword
       - DB_HOST=postgres
       - DB_PORT=5432
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,backend # permite que o Django aceite conexoes de hosts especificos (localhost, 127.0.0.1, backend)
     depends_on:
       postgres:
         condition: service_healthy
-    command: python manage.py runserver 0.0.0.0:8000
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
   
   # FRONTEND: Angular PWA
   frontend:

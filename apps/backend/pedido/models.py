@@ -1,6 +1,12 @@
 from django.db import models
 
-
+# models do fluxo de pedidos
+# migrations do Django criam e atualizam suas tabelas
+# `on_delete` define o comportamento ao excluir objetos pelo ORM
+# comandos SQL diretos seguem as regras de chave estrangeira definidas no banco
+# `CASCADE` propaga a exclusao pelo ORM
+# `PROTECT` impede excluir um objeto relacionado
+# `SET_NULL` limpa uma FK anulavel
 class Cliente(models.Model):
     id_cliente = models.AutoField(primary_key=True)
     nome = models.CharField(max_length=100)
@@ -9,7 +15,6 @@ class Cliente(models.Model):
 
     class Meta:
         db_table = "cliente"
-        managed = False
 
 
 class Receita(models.Model):
@@ -24,7 +29,6 @@ class Receita(models.Model):
 
     class Meta:
         db_table = "receita"
-        managed = False
 
 
 class Produto(models.Model):
@@ -42,10 +46,10 @@ class Produto(models.Model):
 
     class Meta:
         db_table = "produto"
-        managed = False
 
 
 class Pedido(models.Model):
+    # choices centraliza valores aceitos pela aplicacao (nao cria constraints `CHECK` no banco)
     class Tipo(models.TextChoices):
         INTERNO = "interno", "Interno"
         EXTERNO = "externo", "Externo"
@@ -89,7 +93,6 @@ class Pedido(models.Model):
 
     class Meta:
         db_table = "pedido"
-        managed = False
 
 
 class ItemPedido(models.Model):
@@ -129,6 +132,3 @@ class ItemPedido(models.Model):
 
     class Meta:
         db_table = "item_pedido"
-        managed = False
-
-

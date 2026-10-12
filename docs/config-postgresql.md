@@ -86,13 +86,23 @@ A extensão permite conectar ao banco, navegar pelas tabelas e rodar consultas d
 
 A conexão aparecerá no painel, e você poderá expandir os bancos e tabelas, além de abrir um editor de consultas para executar seus scripts `.sql`.
 
-## 6. Executando os scripts pela extensão "PostgreSQL" no VS Code
+## 6. Scripts SQL de referência
+
+`create_schema.sql` documenta o modelo físico. Para as tabelas usadas pelo backend, a criação e a evolução do schema são feitas pelas migrations do Django.
+Não execute esse arquivo no banco usado pela aplicação. O arquivo
+`insert_data.sql` também é mantido como referência histórica. Para dados de desenvolvimento do CRUD de pedidos, use o comando `seed_desenvolvimento` descrito no `docs/guia-pedidos-backend.md`.
+
+Os passos abaixo servem apenas para estudar ou consultar os scripts SQL em um banco separado, sem conectá-los ao ambiente gerenciado pelas migrations.
+
+### Executando scripts de referência pela extensão PostgreSQL no VS Code
 
 Depois de criar a conexão (etapa 5), qualquer arquivo `.sql` aberto no VS Code pode ser executado usando o perfil conectado. A execução é feita em duas etapas, nesta ordem.
 
 Para executar uma query, é necessário selecionar a opção no canto superior direito *Execute Query (PostgreSQL)*, ou apenas pressionar `Shift + Enter` 
 
-### 6.1 Criar o banco de dados
+### 6.1 Criar um banco separado para consultar os scripts
+
+Esta etapa é apenas para estudo manual. Não use esse banco para rodar o backend, que deve ser inicializado pelas migrations.
 
 1. Abra o arquivo `create_database.sql`:
 ```sql
@@ -102,9 +112,6 @@ Para executar uma query, é necessário selecionar a opção no canto superior d
 3. Execute o script.
 4. No painel do elefante, clique em **Refresh** para o banco `db_confeitaria` aparecer na lista *(Se o banco já existir, o PostgreSQL retorna o erro `already exists`. É inofensivo, basta seguir para a próxima etapa)*.
 
-### 6.2 Criar as tabelas (schema)
+### 6.2 Consultar o modelo físico SQL
 
-1. Abra o arquivo `create_schema.sql`.
-2. **Antes de executar**, confira no editor qual banco está selecionado para o arquivo. Ele deve ser `db_confeitaria`. *(Se estiver em `postgres`, as tabelas serão criadas no banco errado. Troque a seleção para `db_confeitaria`,ou crie uma nova conexão apontando para ele)*
-3. Execute o script.
-4. Clique em **Refresh** no painel do elefante e expanda `db_confeitaria` → `Schemas` → `public` → `Tables`. Todas as tabelas devem aparecer.
+Abra `create_schema.sql` para consultar o modelo. Ele não deve ser executado no banco do backend: as migrations do Django são responsáveis pelas tabelas usadas pela aplicação.
