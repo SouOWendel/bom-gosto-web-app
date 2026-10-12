@@ -11,20 +11,14 @@
 	english,			% Adiciona Idioma para Hifenização: Inglês
     %spanish,			% Adiciona Idioma para Hifenização: Espanhol
     %french,			% Adiciona Idioma para Hifenização: Francês
-	brazil				% Adiciona Idioma para Hifenização: Português do Brasil (o último idioma se torna o principal do documento)
+	brazilian				% Adiciona Idioma para Hifenização: Português do Brasil (o último idioma se torna o principal do documento)
 ]{abntex2}				% Utilizar ABNTeX2
-
-
-
-
 
 %% Tipografia
 %% Abra este arquivo e selecione uma das opções de fonte nele. A padrão é Times.
 \input{configuracoes/tipografia}
 
-
-
-%% Pacotes usados pelo documento (se não entender não mexa, hehehe)
+% Pacotes usados pelo documento (se não entender não mexa, hehehe)
 \usepackage{courier}                    % Permite a utilização da fonte Courier (para códigos-fonte)
 \usepackage[T1]{fontenc}				% Seleção de códigos de fonte.
 \usepackage[utf8]{inputenc}				% Codificação do documento (conversão automática dos acentos)
@@ -42,8 +36,9 @@
 \usepackage[brazilian,hyperpageref]{backref}	 % Inclui nas Referências as páginas onde há as citações
 \usepackage{simplecd}                   % Pacote para gerar capa do CD
 \usepackage[final]{pdfpages}            % Pacote para incluir um PDF dentro de outro (ficha catalográfica)
-
-
+\usepackage{newfloat}
+\usepackage{chngcntr}
+\usepackage{caption}
 
 %% Adiciona as alterações do ABNTeX-IFPI
 \usepackage{abntex-ifpi/abntex-ifpi}
@@ -51,29 +46,27 @@
 % Modificações do ABNTeX para o IFPI
 \usepackage{abntex-ifpi/tikz-uml}	    % Pacote Tikz UML para criar UML no LaTeX
 
-
-
-
-
 %% Metadados
 \input{configuracoes/pdf}
-
-
 
 %% Metadados
 \input{configuracoes/metadados}
 
-
-
 %% Configuração do "Citado nas páginas"
 \input{configuracoes/citacoes}
-
-
 
 %% Cores
 \input{configuracoes/cores}
 
-
-
 %% Espaçamentos
 \input{configuracoes/espacamentos}
+
+% Configuração dos quadros
+\newfloat{quadro}{H}{loq}
+\floatname{quadro}{Quadro}
+\newcommand{\tituloquadro}[1]{%
+    \refstepcounter{quadro}%
+    \addcontentsline{loq}{quadro}{\protect\numberline{\thequadro}#1}%
+    \noindent\textbf{Quadro \thequadro\ -- #1}\par
+    \vspace{0.2cm}%
+}

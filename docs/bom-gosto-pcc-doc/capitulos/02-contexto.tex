@@ -4,7 +4,7 @@ Este capítulo apresenta o contexto real no qual o projeto em desenvolvimento es
 \section{Cenário}
 
 \subsection{O Setor de Confeitaria Artesanal e Food Service no Brasil}
-O setor de \textit{food service} e de confeitaria artesanal desempenha um papel de grande relevância na economia nacional, destacando-se como um dos segmentos de maior dinamismo no âmbito das Micro e Pequenas Empresas (MPEs) e do empreendedorismo familiar (SEBRAE, 2023). A produção alimentícia de pequeno porte caracteriza-se por um modelo de produção fortemente baseado em mão de obra artesanal, no qual a personalização dos produtos e a proximidade no atendimento ao cliente constituem os principais diferenciais competitivos frente à produção industrial em larga escala (CHIAVENATO, 2021).
+O setor de \textit{food service} e de confeitaria artesanal desempenha um papel de grande relevância na economia nacional, destacando-se como um dos segmentos de maior dinamismo no âmbito das Micro e Pequenas Empresas (MPEs) e do empreendedorismo familiar \cite{sebrae2023}. A produção alimentícia de pequeno porte caracteriza-se por um modelo de produção fortemente baseado em mão de obra artesanal, no qual a personalização dos produtos e a proximidade no atendimento ao cliente constituem os principais diferenciais competitivos frente à produção industrial em larga escala \cite{chiavenato2021}.
 
 Entretanto, o mercado da confeitaria enfrenta desafios operacionais e econômicos importantes:
 
@@ -14,10 +14,141 @@ Entretanto, o mercado da confeitaria enfrenta desafios operacionais e econômico
     \item A falta de regularidade das encomendas demandam planejamento e sintonia entre o recebimento de pedidos, a aquisição de insumos e a escala de produção na cozinha.
 \end{itemize}
 
-Em microempreendimentos artesanais, é frequente que a gestão administrativa seja conduzida de maneira informal, com anotações dispersas em cadernos ou trocas de mensagens instantâneas (LAUDON; LAUDON, 2014). Essa ausência de padronização impede o microempreendedor de apurar com exatidão o Custo das Mercadorias Vendidas (CMV), dificultando a precificação dos produtos, o que acaba comprometendo a saúde financeira e a expansão do negócio (PRESSMAN; MAXIM, 2021).
+Em microempreendimentos artesanais, é frequente que a gestão administrativa seja conduzida de maneira informal, com anotações dispersas em cadernos ou trocas de mensagens instantâneas \cite{laudon2014}. Essa ausência de padronização impede o microempreendedor de apurar com exatidão o Custo das Mercadorias Vendidas (CMV), dificultando a precificação dos produtos, o que acaba comprometendo a saúde financeira e a expansão do negócio \cite{pressman2021}.
+
+\subsection{Histórico e Estrutura da Confeitaria Bom Gosto}
+
+A \textbf{Confeitaria Bom Gosto} teve sua origem no ano de 1995, quando a fundadora Rosângela Santos confeccionou o bolo de aniversário de seu filho. A receptividade positiva dos convidados gerou as primeiras encomendas informais, impulsionando o início de uma trajetória comercial artesanal que se consolida há três décadas. Atualmente, o estabelecimento é gerido por Rosângela em colaboração direta com sua filha.
+Recentemente, a confeitaria passou por um momento decisivo ao migrar suas operações para um novo espaço físico comercial. Essa mudança trouxe desafios estratégicos significativos:
+
+\begin{itemize}
+    \item \textbf{Captura e Retenção de Clientes:} Necessidade de atratividade para o novo endereço por conta da diminuição de clientes devido ao desconhecimento do local por parte da base antiga ou da suposição incorreta de aumento nos preços praticados.
+    \item \textbf{Reestruturação Operacional:} Necessidade de modernizar a gestão interna para suportar o crescimento das vendas e otimizar os custos operacionais no novo ambiente.
+\end{itemize}
+
+\subsection{Diagnóstico da Gestão Informal Atual}
+
+Atualmente, o fluxo comercial e administrativo da Confeitaria Bom Gosto é conduzido por meio de canais informais, centralizando a entrada de encomendas no aplicativo de mensagens WhatsApp e o registro de lançamentos em modelos simplificados de planilhas manuais ou anotações em papel.
+
+A análise diagnóstica desse modelo de operação revelou pontos de atenção:
+
+\begin{itemize}
+    \item \textbf{Falta de centralização:} As especificações dos pedidos (massas, recheios, decorações, horários e datas de entrega) ficam espalhadas no histórico de conversas, aumentando o risco de esquecimento ou erros na produção.
+    \item \textbf{Falta de automação:} Não há verificação automática da disponibilidade de matérias-primas na cozinha antes da confirmação de um pedido, podendo resultar em paralisação da produção ou compras de emergência a custos mais elevados.
+    \item \textbf{Inconsistência no Acompanhamento Financeiro:} A política da empresa exige a cobrança de um sinal de 50\% para a confirmação de encomendas personalizadas. O controle manual desses pagamentos parciais e das quitações finais gera divergências no resultado final.
+    \item \textbf{Desconhecimento do Custo Real por Receita:} A precificação dos produtos ocorre de forma intuitiva, não existe um cálculo automatizado da relação entre venda dos produtos finais e compras de insumos.
+\end{itemize}
 
 \section{Público-Alvo}
+A caracterização do público-alvo compreende os usuários diretos da aplicação, que a princípio é a proprietária e os atores indiretos afetados pela otimização dos processos do comércio.
+
+\subsection{Usuária Primária (Administradora do Sistema)}
+
+O sistema nasce exclusivamente para uso administrativo e operacional interno da Confeitaria Bom Gosto, sendo operado de forma individual pela proprietária Rosângela Santos e sua parceira na gestão.
+\begin{itemize}
+    \item \textbf{Perfil de Utilização:} A usuária desempenha de forma geral as funções de atendimento ao cliente, gestão financeira, compras de insumos e produção artesanal na cozinha.
+    \item \textbf{Requisitos de Usabilidade:} A interface deve ser otimizada para uso individual e em telas sensíveis ao toque (smartphones/tablets), com navegação fluida e poucos cliques para agilizar o trabalho na cozinha.
+\end{itemize}
+
+\subsection{Clientes da Confeitaria (Beneficiários Indiretos)}
+
+Embora a aplicação não ofereça uma interface pública de e-commerce aos consumidores finais, os clientes do estabelecimento são diretamente beneficiados pela organização promovida pelo software.
+
+\begin{itemize}
+    \item \textbf{Perfil das Demandas:} Consumidores que buscam produtos prontos para consumo imediato (vitrine da loja) ou encomendas de bolos e doces personalizados sob medida para datas comemorativas e eventos.
+    \item \textbf{Impacto da Solução:} A eliminação de erros na anotação de especificações, a garantia do cumprimento de horários agendados e a clareza no registro de sinais e pagamentos aumentam a confiança e a satisfação do cliente com a marca promovendo a reputação do estabelecimento.
+\end{itemize}
 
 \section{Necessidades Identificadas}
+A partir do estudo do cenário e do mapeamento da rotina operacional do estabelecimento, foram identificadas cinco necessidades fundamentais para a estruturação da solução computacional:
+
+\begin{enumerate}
+    \item \textbf{Centralização e Organização dos Pedidos:}  Necessidade de registrar em um único ambiente digital todas as especificações das encomendas (tipo de massa, recheio, decoração, data/horário de entrega, dados do cliente e condições de pagamento), substituindo os recados informais do WhatsApp.
+    \item \textbf{Gestão do Estoque de Vitrine e Inventário de Insumos:} Necessidade de controlar a quantidade, o custo e a data de validade dos produtos prontos na vitrine, bem como de monitorar o estoque de matérias-primas na cozinha, emitindo alertas de insumos abaixo do limite mínimo de segurança.
+    \item \textbf{Padronização de Fichas Técnicas e Cálculo do Custo de Fabricação:} Necessidade de cadastrar receitas com as proporções exatas de ingredientes por quilograma ou unidade, permitindo calcular o custo exato do lote fabricado com base na cotação atualizada dos insumos no inventário e efetuar a baixa automática de estoque após o preparo.
+    \item \textbf{Agendamento e Planejamento da Produção:} Necessidade de compilar os compromissos de entrega e retirada em um calendário (Agenda), permitindo à confeiteira visualizar a carga de trabalho diária/semanal e organizar a linha de produção.
+    \item \textbf{Controle do Fluxo de Caixa Manual e Gestão de Sinais:} Necessidade de registrar as entradas financeiras relativas ao sinal de 50\% exigido na confirmação de encomendas e à quitação final no momento da entrega, marcando a relação de  faturamento e custos para exibir a margem de lucro real da confeitaria.
+\end{enumerate}
 
 \section{Regras de Negócio}
+As Regras de Negócio (RN) definem as diretrizes, políticas, restrições e comportamentos do domínio da Confeitaria Bom Gosto que devem ser rigorosamente atendidos e aplicados pelo sistema. O Quadro~\ref{quadro:regras_negocio_resumo} apresenta o resumo das regras de negócio estabelecidas.
+
+\begin{quadro}
+    \centering
+
+    \tituloquadro{Tecnologias utilizadas no desenvolvimento do sistema}
+    \label{quadro:regras_negocio_resumo}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Tecnologia} & \textbf{Finalidade} \\ \hline
+        HTML & Estrutura das páginas \\ \hline
+        CSS & Estilização das interfaces \\ \hline
+        JavaScript & Interatividade do sistema \\ \hline
+    \end{tabular}
+
+    \vspace{0.2cm}
+
+    \fonte{Elaborado pelos autores (2026).}
+\end{quadro}
+
+\subsection{teste}
+
+oiiiiiiiii
+klf~l;aghd~shfadjhkfah~dskhf~voildshvñakvdfkandkvknkjldfnvahidvnknvkdnkcbvsjkafh kdhfioashduavbuk ndkcn jdbs uhivadh sdighasidhio asdhaidshgdshuvasdvhksbcdv jbdkvujdsujkvnksdbvbksbvkjdvbibdvgugvbjksdvbu
+\begin{quadro}
+    \centering
+
+    \tituloquadro{teste utilizadas no desenvolvimento do sistema}
+    \label{quadro:regras_nego}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Tecnologia} & \textbf{Finalidade} \\ \hline
+        HTML & Estrutura das páginas \\ \hline
+        CSS & Estilização das interfaces \\ \hline
+        JavaScript & Interatividade do sistema \\ \hline
+    \end{tabular}
+
+    \vspace{0.2cm}
+
+    \fonte{Elaborado pelos autores (2026).}
+\end{quadro}
+
+
+oeioahdfsfçia7
+
+\section{teste 2}   
+
+flçasdhgaçcnvkcnvdk
+flçasdhgaçcnvkcnvdk
+flçasdhgaçcnvkcnvdk
+flçasdhgaçcnvkcnvdk
+flçasdhgaçcnvkcnvdk
+Quadro~\ref{quadro:regras_nego}
+flçasdhgaçcnvkcnvdk
+flçasdhgaçcnvkcnvdk
+flçasdhgaçcnvkcnvdk
+flçasdhgaçcnvkcnvd
+flçasdhgaçcnvkcnvdk
+
+
+
+\begin{quadro}
+    \centering
+
+    \tituloquadro{teste teste no desenvolvimento do sistema}
+    \label{quadro:reg}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Tecnologia} & \textbf{Finalidade} \\ \hline
+        HTML & Estrutura das páginas \\ \hline
+        CSS & Estilização das interfaces \\ \hline
+        JavaScript & Interatividade do sistema \\ \hline
+    \end{tabular}
+
+    \vspace{0.2cm}
+
+    \fonte{Elaborado pelos autores (2026).}
+\end{quadro}
+
+oiiiiiiiii
+klf~l;aghd~shfadjhkfah~dskhf~voildshvñakvdfkandkvknkjldfnvahidvnknvkdnkcbvsjkafh Quadro~\ref{quadro:regras_negocio_resumo} ndkcn jdbs uhivadh sdighasidhio asdhaidshgdshuvasdvhksbcdv jbdkvujdsujkvnksdbvbksbvkjdvbibdvgugvbjksdvbu

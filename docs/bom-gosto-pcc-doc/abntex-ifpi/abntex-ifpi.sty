@@ -70,7 +70,14 @@
 % ----------------------------------------------------------
 % Ajuda a criar "caixas"
 % ----------------------------------------------------------
-\newtcbtheorem[]{caixa}{Quadro}{outer arc=0pt,arc=0pt,colframe = cor-quadro,colback = cor-quadro!5}{tha}
+\newtcbtheorem[]{caixa}{Quadro}{outer arc=0pt,
+    arc=0pt,
+    colframe=black!60,
+    colback=white,
+    colbacktitle=white,
+    coltitle=black,
+    fonttitle=\normalfont,
+    boxrule=0.4pt}{tha}
 
 % ----------------------------------------------------------
 % Comando para "corrigir" listas
