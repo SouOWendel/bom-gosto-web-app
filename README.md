@@ -21,6 +21,56 @@ O projeto é estruturado como um **Monorepo** dividido em dois domínios princip
 - **Infraestrutura & DevOps:** Docker, Docker Compose, GitHub Actions (CI/CD)[cite: 1]
 - **Qualidade de Código & Automação:** Husky, Commitlint (Conventional Commits), Prettier, `openapi-typescript`[cite: 1]
 
+## 🚀 Inicialização do desenvolvimento
+
+Pré-requisitos:
+
+- Docker Desktop em execução;
+- Docker Compose disponível no terminal;
+- Node.js e npm apenas para executar ferramentas do monorepo fora dos containers.
+
+Na raiz do projeto, inicie o ambiente completo:
+
+```powershell
+docker compose up -d --build
+```
+
+O Compose inicia o PostgreSQL, cria o schema inicial em um banco novo, aplica as migrations do Django e sobe os servidores:
+
+- Frontend: http://localhost:4200
+- Backend: http://localhost:8000
+- PostgreSQL: `localhost:5432`
+
+Comandos úteis:
+
+```powershell
+docker compose ps
+docker compose logs -f backend frontend
+docker compose exec backend python manage.py makemigrations
+docker compose exec backend python manage.py migrate
+docker compose exec -T postgres psql -U postgres -d bom_gosto_db
+```
+
+Para parar os containers sem apagar o banco:
+
+```powershell
+docker compose down
+```
+
+Para apagar também o volume do PostgreSQL e recriar o banco do zero:
+
+```powershell
+docker compose down -v
+docker compose up -d --build
+```
+
+O segundo comando apaga os dados locais do PostgreSQL. Consulte os guias abaixo para os fluxos específicos:
+
+- [Guia do Docker](docs/docker.md): inicialização, migrations, banco e diagnóstico.
+- [POC de autenticação](docs/auth-poc.md): cadastro de teste, login, sessão e troca de senha.
+- [Guia do back-end de pedidos](docs/guia-pedidos-backend.md): testar a API de pedidos autenticada.
+- [Configuração do PostgreSQL](docs/config-postgresql.md): acesso ao banco pelo terminal ou pelo VS Code.
+
 ---
 
 ## 📂 Estrutura do Repositório

@@ -2,67 +2,37 @@
 
 ## Operações disponíveis
 
-| Método | Rota | Ação |
-|---|---|---|
-| `POST` | `/api/pedido/` | Criar pedido |
-| `GET` | `/api/pedido/` | Listar pedidos |
-| `GET` | `/api/pedido/<id>/` | Consultar um pedido |
+| Método  | Rota                | Ação                             |
+| ------- | ------------------- | -------------------------------- |
+| `POST`  | `/api/pedido/`      | Criar pedido                     |
+| `GET`   | `/api/pedido/`      | Listar pedidos                   |
+| `GET`   | `/api/pedido/<id>/` | Consultar um pedido              |
 | `PATCH` | `/api/pedido/<id>/` | Atualizar parcialmente um pedido |
-| `PUT` | `/api/pedido/<id>/` | Atualizar um pedido |
+| `PUT`   | `/api/pedido/<id>/` | Atualizar um pedido              |
 
 A exclusão por `DELETE` não está habilitada: pedidos devem preservar histórico.
 
 ## Preparar o ambiente
 
-1. Inicie o Docker Desktop e abra o terminal do VS Code na raiz do repositório.
-2. Se o comando `docker` não for reconhecido no PowerShell, adicione o diretório do Docker ao PATH da janela atual:
+1. Inicie o Docker Desktop e abra o terminal do VS Code na raiz do repositorio.
+2. Inicie o ambiente completo:
 
    ```powershell
-   env:Path+=";env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin"
+   docker compose up -d --build
+   docker compose ps
    ```
 
-3. Inicie o serviço PostgreSQL:
+   O PostgreSQL precisa aparecer como `healthy`. O backend aplica as migrations automaticamente e fica disponível em `http://127.0.0.1:8000`.
+
+3. Se precisar verificar o banco:
 
    ```powershell
-   docker compose up -d postgres
-   docker ps
+   docker compose exec -T postgres psql -U postgres -d bom_gosto_db -c "SELECT current_database(), current_user;"
    ```
 
-   Confirme que o contêiner do banco está em execução e saudável.
+   O frontend fica disponível em `http://localhost:4200`. Para parar o ambiente sem apagar dados, use `docker compose down`.
 
-4. No terminal do back-end, ative o ambiente virtual e entre na pasta:
-
-   ```powershell
-   .\.venv\Scripts\Activate.ps1
-   Set-Location .\apps\backend
-   ```
-
-   Se o PowerShell bloquear a ativação, permita scripts somente nesta janela e tente novamente:
-
-   ```powershell
-   Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-   .\.venv\Scripts\Activate.ps1
-   ```
-
-5. Configure as variáveis do PostgreSQL nesse mesmo terminal, usando os valores locais configurados no projeto:
-
-   ```powershell
-   $env:POSTGRES_DB = "bom_gosto_db"
-   $env:POSTGRES_USER = "postgres"
-   $env:POSTGRES_PASSWORD = "SENHA_LOCAL_DO_POSTGRES"
-   $env:POSTGRES_HOST = "127.0.0.1"
-   $env:POSTGRES_PORT = "5432"
-   ```
-
-   Não publique senhas reais no README, neste guia ou no Git.
-
-6. Inicie o servidor Django:
-
-   ```powershell
-   python manage.py runserver
-   ```
-
-   Deixe esse terminal aberto. A API local ficará disponível em `http://127.0.0.1:8000`.
+O fluxo local sem Docker continua possível, mas exige PostgreSQL instalado no host, um ambiente virtual Python, as variáveis `POSTGRES_*` apontando para `127.0.0.1` e a execução manual de `migrate` e `runserver`. Consulte [config-postgresql.md](config-postgresql.md) se precisar desse cenário.
 
 ## Autenticar para testar
 
@@ -121,6 +91,3 @@ Invoke-RestMethod -Method Patch -Uri "http://127.0.0.1:8000/api/pedido/1/" -WebS
 ```
 
 Faça um `GET` do pedido para confirmar a alteração.
-
-
-
