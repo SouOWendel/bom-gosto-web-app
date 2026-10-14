@@ -2,13 +2,13 @@
 
 ## Operacoes disponiveis
 
-| Metodo | Rota | Operacao |
-|---|---|---|
-| `POST` | `/api/pedido/` | Criar pedido |
-| `GET` | `/api/pedido/` | Listar pedidos |
-| `GET` | `/api/pedido/<id>/` | Consultar um pedido |
+| Método  | Rota                | Ação                             |
+| ------- | ------------------- | -------------------------------- |
+| `POST`  | `/api/pedido/`      | Criar pedido                     |
+| `GET`   | `/api/pedido/`      | Listar pedidos                   |
+| `GET`   | `/api/pedido/<id>/` | Consultar um pedido              |
 | `PATCH` | `/api/pedido/<id>/` | Atualizar parcialmente um pedido |
-| `PUT` | `/api/pedido/<id>/` | Atualizar um pedido |
+| `PUT`   | `/api/pedido/<id>/` | Atualizar um pedido              |
 
 A exclusão por `DELETE` não está habilitada: pedidos devem preservar histórico.
 
