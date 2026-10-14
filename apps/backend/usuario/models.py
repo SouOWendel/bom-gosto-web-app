@@ -1,8 +1,8 @@
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.db import models
 
-# representa o gerenciador de usuarios personalizado, que define criacao de usuarios e senha (ja criptografada)
-# recebe parametro extra_fields para permitir a extensao do modelo de usuario no futuro, caso seja necessario adicionar novos campos
+# manager que cria usuarios e armazena senhas usando o hash do Django
+# `extra_fields` permite informar outros campos do model na criacao
 class UsuarioManager(BaseUserManager):
     def create_user(self, login, password=None, **extra_fields):
         if not login:
@@ -12,11 +12,11 @@ class UsuarioManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    # cria um superusuario com permissoes administrativas, utilizando o mesmo metodo de criacao de usuario
+    # mantem a interface esperada pelo Django. cria um usuario comum sem permissoes administrativas
     def create_superuser(self, login, password=None, **extra_fields):
         return self.create_user(login, password, **extra_fields)
 
-# representa diretamente a tabela "usuario" do banco de dados
+# model de autenticacao mapeado para a tabela `usuario`
 class Usuario(AbstractBaseUser):
     id_usuario = models.AutoField(primary_key=True)
     login = models.CharField(max_length=50, unique=True)
@@ -31,7 +31,6 @@ class Usuario(AbstractBaseUser):
 
     class Meta:
         db_table = 'usuario'
-        managed = False
 
     # define que o usuario esta sempre ativo
     @property
