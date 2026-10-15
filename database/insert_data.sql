@@ -1,3 +1,7 @@
+-- referencia historica dos dados de exemplo
+-- `seed_desenvolvimento` carrega clientes, receitas, produtos, pedidos e itens, e cria um usuario com senha temporaria
+-- nao execute este arquivo no banco da aplicacao
+
 BEGIN;
 
 

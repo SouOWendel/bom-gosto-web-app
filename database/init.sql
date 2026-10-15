@@ -1,4 +1,6 @@
--- Script de inicialização do PostgreSQL para a Confeitaria Bom Gosto
--- Executado automaticamente na criação inicial do container do banco de dados
+-- executado automaticamente somente ao inicializar um volume PostgreSQL vazio
+-- este script cria a extensao, e o backend aplica migrations ao iniciar
+-- depois das migrations, rode manualmente `python manage.py seed_desenvolvimento`
+-- para carregar os dados de exemplo
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

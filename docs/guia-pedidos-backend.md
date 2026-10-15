@@ -1,6 +1,6 @@
 # Guia do back-end de pedidos
 
-## Operações disponíveis
+## Operacoes disponiveis
 
 | Método  | Rota                | Ação                             |
 | ------- | ------------------- | -------------------------------- |
@@ -12,82 +12,196 @@
 
 A exclusão por `DELETE` não está habilitada: pedidos devem preservar histórico.
 
-## Preparar o ambiente
+## 1. Preparar o ambiente
 
-1. Inicie o Docker Desktop e abra o terminal do VS Code na raiz do repositorio.
-2. Inicie o ambiente completo:
+Inicie o Docker Desktop e, no PowerShell, abra a pasta raiz do projeto. Se `docker` não for reconhecido, adicione o executável ao PATH desta janela:
 
-   ```powershell
-   docker compose up -d --build
-   docker compose ps
-   ```
+```powershell
+$env:Path = "$env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin;$env:Path"
+```
 
-   O PostgreSQL precisa aparecer como `healthy`. O backend aplica as migrations automaticamente e fica disponível em `http://127.0.0.1:8000`.
+Suba os três serviços e confira o estado deles:
 
-3. Se precisar verificar o banco:
+```powershell
+docker compose up --build -d
+docker compose ps
+```
 
-   ```powershell
-   docker compose exec -T postgres psql -U postgres -d bom_gosto_db -c "SELECT current_database(), current_user;"
-   ```
+O backend aplica as migrations antes de iniciar. Se não subir, consulte os logs:
 
-   O frontend fica disponível em `http://localhost:4200`. Para parar o ambiente sem apagar dados, use `docker compose down`.
+```powershell
+docker compose logs --tail 80 backend
+```
 
-O fluxo local sem Docker continua possível, mas exige PostgreSQL instalado no host, um ambiente virtual Python, as variáveis `POSTGRES_*` apontando para `127.0.0.1` e a execução manual de `migrate` e `runserver`. Consulte [config-postgresql.md](config-postgresql.md) se precisar desse cenário.
+O frontend fica em `http://localhost:4200` e encaminha `/api` ao backend. O banco usado pelo Compose é `db_confeitaria`.
 
-## Autenticar para testar
+No terminal do back-end, ative o ambiente virtual e entre na pasta:
 
-Em outro terminal PowerShell, faça login com uma conta válida, cuja senha inicial já tenha sido alterada:
+```powershell
+.\.venv\Scripts\Activate.ps1
+Set-Location .\apps\backend
+```
+
+Se o PowerShell bloquear a ativação, permita scripts somente nesta janela e tente novamente:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+.\.venv\Scripts\Activate.ps1
+```
+
+## 2. Carregar os dados de exemplo
+
+Rode o seed depois das migrations:
+
+```powershell
+docker compose exec backend python manage.py seed_desenvolvimento
+```
+
+O seed carrega clientes, receitas, produtos, pedidos e itens adaptados de `database/insert_data.sql`. Pode ser executado novamente para atualizar esses exemplos.
+
+`database/insert_data.sql` fica como referência histórica. Não execute esse arquivo no banco da aplicação junto com o seed.
+
+O usuário `confeiteira` é criado somente na primeira execução em que ainda não existe. Nessa criação, o terminal exibe uma senha temporária numérica de 6 dígitos. Isso simula a entrega inicial da senha a uma pessoa. O seed não troca nem exibe a senha novamente quando o usuário já existe. Guarde-a quando aparecer.
+
+Se a senha foi perdida ou você quiser testar com outro usuário, crie um login diferente pelo endpoint de desenvolvimento abaixo. Ele também gera uma senha temporária e só fica disponível com `DEBUG` ativo.
+
+## 3. Criar outro usuário de teste
+
+Use outro terminal PowerShell. O comando gera um login único e cria o usuário no backend:
+
+```powershell
+$login = "teste_pedidos_$([guid]::NewGuid().ToString('N').Substring(0,8))"
+$cadastro = Invoke-RestMethod -Method Post `
+   -Uri "http://localhost:4200/api/auth/cadastro-teste/" `
+   -ContentType "application/json" `
+   -Body (@{ login = $login } | ConvertTo-Json)
+
+$cadastro | Select-Object login, senha_temporaria
+```
+
+Anote a senha temporária retornada. Se o login já existir, o endpoint responde `409`; gere outro login.
+
+## 4. Entrar e trocar a senha inicial
+
+Mantenha os próximos comandos no mesmo terminal para preservar a sessão:
 
 ```powershell
 $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-$loginBody = '{"login":"SEU_LOGIN","senha":"SUA_SENHA"}'
+$loginBody = @{
+   login = $cadastro.login
+   senha = $cadastro.senha_temporaria
+} | ConvertTo-Json
 
-Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/api/auth/login/" -WebSession $session -ContentType "application/json" -Body $loginBody
+Invoke-RestMethod -Method Post `
+   -Uri "http://localhost:4200/api/auth/login/" `
+   -WebSession $session `
+   -ContentType "application/json" `
+   -Body $loginBody
 ```
 
-Os `POST` e `PATCH` também precisam do token CSRF. Obtenha-o do cookie recebido durante o login:
+Troque a senha antes de acessar pedidos. A senha nova precisa ter pelo menos 8 caracteres e ser diferente da temporária:
 
 ```powershell
-$csrfCookie = $session.Cookies.GetCookies([uri]"http://127.0.0.1:8000") | Where-Object Name -eq "csrftoken" | Select-Object -First 1
+$trocaSenha = @{
+   senha_atual = $cadastro.senha_temporaria
+   nova_senha = "PedidoTeste!2026"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method Post `
+   -Uri "http://localhost:4200/api/auth/alterar-senha/" `
+   -WebSession $session `
+   -ContentType "application/json" `
+   -Body $trocaSenha
+```
+
+O backend responde `403` ao acessar pedidos enquanto `primeiro_acesso` estiver ativo.
+
+## 5. Preparar a sessão para o CRUD
+
+As operações de escrita em pedidos usam autenticação por sessão e token CSRF. Obtenha o token do cookie recebido no login:
+
+```powershell
+$csrfCookie = $session.Cookies.GetCookies([uri]"http://localhost:4200") |
+   Where-Object Name -eq "csrftoken" |
+   Select-Object -First 1
 $headers = @{ "X-CSRFToken" = $csrfCookie.Value }
 ```
 
-Mantenha o mesmo terminal para preservar `session`,`csrfCookie` e `$headers`.
+Se `$csrfCookie` estiver vazio, faça login novamente com `$session` e repita este passo.
 
-## Criar um pedido de teste
+## 6. Criar pedido
 
-O exemplo cria um pedido interno com o produto de ID `1`. Use o ID de um produto existente no banco:
-
-```powershell
-$pedidoBody = '{"tipo":"interno","valor_total":"10.00","valor_sinal":"0.00","itens":[{"produto":1,"quantidade":1,"preco_unitario":"10.00"}]}'
-
-Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/api/pedido/" -WebSession $session -Headers $headers -ContentType "application/json" -Body $pedidoBody
-```
-
-A resposta deve incluir o ID do pedido criado, seu status e os itens associados.
-
-## Consultar pedidos
-
-Listar:
+O seed cria produtos de exemplo. Para conferir os IDs disponíveis:
 
 ```powershell
-Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/api/pedido/" -WebSession $session
+docker compose exec backend python manage.py shell -c "from pedido.models import Produto; print(list(Produto.objects.values('id_produto', 'nome')))"
 ```
 
-Consultar um pedido específico, substituindo `1` pelo ID retornado na criação:
+Crie um pedido interno com o produto de ID `1`, ou substitua pelo ID listado acima:
 
 ```powershell
-Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8000/api/pedido/1/" -WebSession $session
+$body = @{
+   tipo = "interno"
+   valor_total = "10.00"
+   valor_sinal = "0.00"
+   itens = @(@{
+      produto = 1
+      quantidade = 1
+      preco_unitario = "10.00"
+   })
+} | ConvertTo-Json -Depth 5
+
+$pedido = Invoke-RestMethod -Method Post `
+   -Uri "http://localhost:4200/api/pedido/" `
+   -WebSession $session -Headers $headers `
+   -ContentType "application/json" -Body $body
+
+$pedido
 ```
 
-## Atualizar um pedido
+A resposta inclui `id_pedido`, usado nas consultas e atualizações seguintes.
 
-O exemplo atualiza a forma de pagamento do pedido de teste:
+## 7. Consultar pedidos
+
+Liste todos os pedidos:
 
 ```powershell
-$atualizacao = '{"forma_pagamento":"pix"}'
-
-Invoke-RestMethod -Method Patch -Uri "http://127.0.0.1:8000/api/pedido/1/" -WebSession $session -Headers $headers -ContentType "application/json" -Body $atualizacao
+Invoke-RestMethod -Method Get `
+   -Uri "http://localhost:4200/api/pedido/" `
+   -WebSession $session
 ```
 
-Faça um `GET` do pedido para confirmar a alteração.
+Consulte o pedido criado:
+
+```powershell
+Invoke-RestMethod -Method Get `
+   -Uri "http://localhost:4200/api/pedido/$($pedido.id_pedido)/" `
+   -WebSession $session
+```
+
+## 8. Atualizar pedido
+
+`PATCH` altera somente os campos enviados:
+
+```powershell
+$alteracao = @{ forma_pagamento = "pix" } | ConvertTo-Json
+
+Invoke-RestMethod -Method Patch `
+   -Uri "http://localhost:4200/api/pedido/$($pedido.id_pedido)/" `
+   -WebSession $session -Headers $headers `
+   -ContentType "application/json" -Body $alteracao
+```
+
+`PUT` também está disponível para enviar a representação completa do pedido. Depois da atualização, consulte-o com `GET` para confirmar a alteração.
+
+## Regras e testes
+
+Cada item deve informar exatamente um produto ou uma receita. Pedidos internos não devem ter subtipo. Pedidos externos exigem cliente e subtipo, e o sinal deve ser zero ou metade do valor total. Valores negativos são rejeitados.
+
+O `DELETE` deve responder `405 Method Not Allowed`; o pedido continua consultável porque a exclusão não faz parte do módulo.
+
+Para rodar os testes automatizados existentes:
+
+```powershell
+docker compose exec backend python manage.py test pedido
+```
