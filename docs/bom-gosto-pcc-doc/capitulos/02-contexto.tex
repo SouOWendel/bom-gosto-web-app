@@ -76,14 +76,19 @@ As Regras de Negócio (RN) definem as diretrizes, políticas, restrições e com
 \begin{quadro}
     \centering
 
-    \tituloquadro{Tecnologias utilizadas no desenvolvimento do sistema}
+    \tituloquadro{Resumo das Regras de Negócio do Sistema (RN01 - RN08)}
     \label{quadro:regras_negocio_resumo}
-    \begin{tabular}{|l|l|}
+    \begin{tabular}{|l|l|l|}
         \hline
-        \textbf{Tecnologia} & \textbf{Finalidade} \\ \hline
-        HTML & Estrutura das páginas \\ \hline
-        CSS & Estilização das interfaces \\ \hline
-        JavaScript & Interatividade do sistema \\ \hline
+        \textbf{ID} & \textbf{Nome da Regra} & textbf{Domínio/Aplicação}\\ \hline
+        RN01 & Classificação do Pedido & Módulo Pedidos\\ \hline
+        RN02 & Fluxo de Verificação de Estoque & Módulo Pedidos / Estoque / Produção\\ \hline
+        RN03 & Política de Sinal e Pagamento & Módulo Pedidos / Finanças\\ \hline
+        RN04 & Tratamento de Pedidos Cancelados & Módulo Pedidos / Estoque / Relatórios\\ \hline
+        RN05 & Validação de Insumos na Produção & Módulo Produção / Inventário\\ \hline
+        RN06 & Baixa e Custo de Insumos & Módulo Produção / Inventário\\ \hline
+        RN07 & Exclusão e Alteração de Pedidos & Módulo Pedidos\\ \hline
+        RN08 & Acesso Restrito e Exclusivo & Módulo Acesso\\ \hline
     \end{tabular}
 
     \vspace{0.2cm}
@@ -91,64 +96,90 @@ As Regras de Negócio (RN) definem as diretrizes, políticas, restrições e com
     \fonte{Elaborado pelos autores (2026).}
 \end{quadro}
 
-\subsection{teste}
+As regras de negócio são descritas detalhadamente a seguir:
 
-oiiiiiiiii
-klf~l;aghd~shfadjhkfah~dskhf~voildshvñakvdfkandkvknkjldfnvahidvnknvkdnkcbvsjkafh kdhfioashduavbuk ndkcn jdbs uhivadh sdighasidhio asdhaidshgdshuvasdvhksbcdv jbdkvujdsujkvnksdbvbksbvkjdvbibdvgugvbjksdvbu
-\begin{quadro}
+\begin{enumerate}
+    \item \textbf{RN01 - Classificação do Pedido:}
+    \begin{itemize}
+        \item Todo pedido cadastrado deve ser obrigatoriamente classificado como Interno (produção própria para abastecer a vitrine) ou Externo (demanda de cliente);
+        \item Pedidos Externos devem ser sub categorizados como Vitrine (compra de produto já pronto) ou Personalizado (encomenda sob medida).
+    \end{itemize}
+\end{enumerate}
+
+\begin{enumerate}
+    \item \textbf{RN02 - Fluxo de Verificação de Estoque:}
+    \begin{itemize}
+        \item Ao registrar um pedido de Vitrine, o sistema deve checar imediatamente a disponibilidade do produto no estoque;
+        \item Ao registrar um pedido Personalizado, o sistema deve consultar o estoque em busca de bases reaproveitáveis (como massas e recheios já prontos). Caso não existam, o item deve ser direcionado para o fluxo de Produção.
+    \end{itemize}
+\end{enumerate}
+
+\begin{enumerate}
+    \item \textbf{RN03 - Política de Sinal e Pagamento:}
+    \begin{itemize}
+        \item Pedidos Personalizados exigem o registro de um valor de sinal (pagamento parcial) para confirmação antes de irem para produção;
+        \item O sistema não realiza o processamento financeiro nem cobranças automáticas (\textit{gateway}); ele atua exclusivamente como registro e controle manual do fluxo de caixa.
+    \end{itemize}
+\end{enumerate}
+
+\begin{enumerate}
+    \item \textbf{RN04 - Tratamento de Pedidos Cancelados:}
+    \begin{itemize}
+        \item Se um pedido for cancelado após o início da confecção, o sistema deve obrigatoriamente solicitar à confeiteira o destino dos insumos/produtos intermediários já preparados e decidir entre:
+        \begin{itemize}
+            \item Envio para o Estoque (para reaproveitamento em futuros pedidos);
+            \item Registro como Perda/Descarte (para abatimento nos relatórios de rendimento).
+        \end{itemize}
+    \end{itemize}
+\end{enumerate}
+
+\begin{enumerate}
+    \item \textbf{RN05 - Validação de Insumos na Produção:}
+    \begin{itemize}
+        \item O sistema não deve permitir a confirmação de início de produção sem emitir um alerta prévio caso a quantidade disponível de ingredientes no Inventário seja menor do que a quantidade exigida pela receita.
+    \end{itemize}
+\end{enumerate}
+
+\begin{enumerate}
+    \item \textbf{RN06 -  Baixa e Custo de Insumos:}
+    \begin{itemize}
+        \item A baixa dos ingredientes no Inventário ocorre de forma automática somente após a confirmação da execução da receita no módulo de Produção;
+        \item O custo unitário do lote fabricado deve ser calculado com base no valor atual de compra dos ingredientes utilizados no momento da produção.
+    \end{itemize}
+\end{enumerate}
+
+\begin{enumerate}
+    \item \textbf{RN07 -  Exclusão e Alteração de Pedidos:}
+    \begin{itemize}
+        \item A alteração de especificações de um pedido pode ser feita em qualquer etapa antes do status "Concluído";
+        \item A exclusão de um pedido deve exigir confirmação explícita para evitar remoção acidental de dados da agenda e das finanças.
+    \end{itemize}
+\end{enumerate}
+
+\begin{enumerate}
+    \item \textbf{RN08 -  Acesso Restrito e Exclusivo:}
+    \begin{itemize}
+        \item O sistema deve permitir o acesso apenas a usuários previamente cadastrados e autenticados (acesso restrito à dona da confeitaria);
+        \item No primeiro acesso ao sistema utilizando a senha provisória, o sistema deve obrigatoriamente exigir que o usuário cadastre uma nova senha pessoal antes de liberar o acesso às demais funcionalidades;
+        \item A sessão mantida no dispositivo deve permanecer ativa por padrão até que a usuária clique explicitamente no botão de logout (sair do sistema) ou expire o token de longa duração configurado no sistema. 
+    \end{itemize}
+\end{enumerate}
+
+\subsection{UML -- Diagrama de Atividades}
+A Figura \ref{diagrama_atividades} ilustra o fluxo de processos que integra a classificação do pedido, a consulta de estoque, a exigência do sinal de 50\%, o direcionamento para a produção, a baixa de insumos e a finalização com quitação financeira, conforme especificado nas Regras de Negócio RN01 a RN08.
+
+\renewcommand{\figurename}{Figura}	
+
+\setcounter{secnumdepth}{4}
+
+\titleformat{\paragraph}
+{\normalfont\normalsize}{\theparagraph}{1em}\emph{}
+\titlespacing*{\paragraph}
+{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+\begin{figure}[H]
     \centering
-
-    \tituloquadro{teste utilizadas no desenvolvimento do sistema}
-    \label{quadro:regras_nego}
-    \begin{tabular}{|l|l|}
-        \hline
-        \textbf{Tecnologia} & \textbf{Finalidade} \\ \hline
-        HTML & Estrutura das páginas \\ \hline
-        CSS & Estilização das interfaces \\ \hline
-        JavaScript & Interatividade do sistema \\ \hline
-    \end{tabular}
-
-    \vspace{0.2cm}
-
-    \fonte{Elaborado pelos autores (2026).}
-\end{quadro}
-
-
-oeioahdfsfçia7
-
-\section{teste 2}   
-
-flçasdhgaçcnvkcnvdk
-flçasdhgaçcnvkcnvdk
-flçasdhgaçcnvkcnvdk
-flçasdhgaçcnvkcnvdk
-flçasdhgaçcnvkcnvdk
-Quadro~\ref{quadro:regras_nego}
-flçasdhgaçcnvkcnvdk
-flçasdhgaçcnvkcnvdk
-flçasdhgaçcnvkcnvdk
-flçasdhgaçcnvkcnvd
-flçasdhgaçcnvkcnvdk
-
-
-
-\begin{quadro}
-    \centering
-
-    \tituloquadro{teste teste no desenvolvimento do sistema}
-    \label{quadro:reg}
-    \begin{tabular}{|l|l|}
-        \hline
-        \textbf{Tecnologia} & \textbf{Finalidade} \\ \hline
-        HTML & Estrutura das páginas \\ \hline
-        CSS & Estilização das interfaces \\ \hline
-        JavaScript & Interatividade do sistema \\ \hline
-    \end{tabular}
-
-    \vspace{0.2cm}
-
-    \fonte{Elaborado pelos autores (2026).}
-\end{quadro}
-
-oiiiiiiiii
-klf~l;aghd~shfadjhkfah~dskhf~voildshvñakvdfkandkvknkjldfnvahidvnknvkdnkcbvsjkafh Quadro~\ref{quadro:regras_negocio_resumo} ndkcn jdbs uhivadh sdighasidhio asdhaidshgdshuvasdvhksbcdv jbdkvujdsujkvnksdbvbksbvkjdvbibdvgugvbjksdvbu
+    \caption{\label{diagrama_atividades}UML -- Diagrama de Atividades.}
+    \includegraphics[width=0.95\textwidth]{imagens/uml_atividades_cap2.png}
+    \legend{Fonte: Elaborado pelos autores (2026).}
+\end{figure}
