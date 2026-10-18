@@ -47,13 +47,11 @@ O `migrate` é automático ao iniciar o backend. O `makemigrations` não é auto
 
 ## Banco de dados
 
-Em um volume novo, o PostgreSQL executa, nesta ordem, `database/init.sql` e `database/create_schema.sql`. O segundo cria as tabelas de domínio, incluindo `usuario`. O modelo Django `Usuario` usa `managed = False`, portanto o Django não cria nem altera essa tabela.
-
 Verificar a conexão e os usuários:
 
 ```powershell
-docker compose exec -T postgres psql -U postgres -d bom_gosto_db -c "SELECT current_database(), current_user;"
-docker compose exec -T postgres psql -U postgres -d bom_gosto_db -c "SELECT id_usuario, login, primeiro_acesso FROM usuario;"
+docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT current_database(), current_user;"
+docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT id_usuario, login, primeiro_acesso FROM usuario;"
 ```
 
 Verificar a conexão usando as configurações do Django:

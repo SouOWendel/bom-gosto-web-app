@@ -48,7 +48,7 @@ docker compose ps
 docker compose logs -f backend frontend
 docker compose exec backend python manage.py makemigrations
 docker compose exec backend python manage.py migrate
-docker compose exec -T postgres psql -U postgres -d bom_gosto_db
+docker compose exec -T postgres psql -U postgres -d db_confeitaria
 ```
 
 Para parar os containers sem apagar o banco:

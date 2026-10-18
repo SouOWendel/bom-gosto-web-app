@@ -9,13 +9,13 @@ docker compose up -d postgres
 docker compose ps
 ```
 
-O banco usado pelo projeto é `bom_gosto_db`, com usuário `postgres`, e fica acessível no host pela porta `5432`. O Django usa `postgres` como host quando executado dentro do container backend.
+O banco usado pelo projeto é `db_confeitaria`, com usuário `postgres`, e fica acessível no host pela porta `5432`. O Django usa `postgres` como host quando executado dentro do container backend.
 
 Para consultar o banco sem instalar `psql` no Windows:
 
 ```powershell
-docker compose exec -T postgres psql -U postgres -d bom_gosto_db -c "\dt"
-docker compose exec -T postgres psql -U postgres -d bom_gosto_db -c "SELECT id_usuario, login, primeiro_acesso FROM usuario;"
+docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "\dt"
+docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT id_usuario, login, primeiro_acesso FROM usuario;"
 ```
 
 Os scripts `database/init.sql` e `database/create_schema.sql` são executados automaticamente apenas quando o volume `postgres_data` é criado. Para recriar o banco local:
@@ -119,11 +119,9 @@ A conexão aparecerá no painel, e você poderá expandir os bancos e tabelas, a
 
 ## 6. Scripts SQL de referência
 
-`create_schema.sql` documenta o modelo físico. Para as tabelas usadas pelo backend, a criação e a evolução do schema são feitas pelas migrations do Django.
-Não execute esse arquivo no banco usado pela aplicação. O arquivo
-`insert_data.sql` também é mantido como referência histórica. Para dados de desenvolvimento do CRUD de pedidos, use o comando `seed_desenvolvimento` descrito no `docs/guia-pedidos-backend.md`.
+Os scripts de inicialização do PostgreSQL não são repetidos em volumes existentes. Não execute `create_schema.sql` completo em um banco que já contém dados ou tabelas. Tanto `create_schema.sql` quanto `insert_data.sql` são mantidos como referência histórica. Para dados de desenvolvimento do CRUD de pedidos, use o comando `seed_desenvolvimento` descrito no `docs/guia-pedidos-backend.md`.
 
-Os passos abaixo servem apenas para estudar ou consultar os scripts SQL em um banco separado, sem conectá-los ao ambiente gerenciado pelas migrations.
+**Os passos abaixo servem para estudar os scripts SQL em uma instância PostgreSQL separada, fora do Docker Compose da aplicação. Não execute os comandos de criação no banco de aplicação existente.**
 
 ### Executando scripts de referência pela extensão PostgreSQL no VS Code
 
@@ -133,7 +131,7 @@ Para executar uma query, é necessário selecionar a opção no canto superior d
 
 ### 6.1 Criar um banco separado para consultar os scripts
 
-Esta etapa é apenas para estudo manual. Não use esse banco para rodar o backend, que deve ser inicializado pelas migrations.
+Esta etapa cria um banco separado para estudo manual na instância PostgreSQL de estudo. O banco `db_confeitaria` do Compose não deve ser usado para executar o schema completo manualmente.
 
 1. Abra o arquivo `create_database.sql`:
 
@@ -147,8 +145,8 @@ Esta etapa é apenas para estudo manual. Não use esse banco para rodar o backen
 
 ### 6.2 Consultar o modelo físico SQL
 
-Abra `create_schema.sql` para consultar o modelo. Ele não deve ser executado no banco do backend: as migrations do Django são responsáveis pelas tabelas usadas pela aplicação.
+Abra `create_schema.sql` para consultar o modelo físico completo. Em um banco novo e vazio da instância de estudo, o script pode ser executado uma vez para criar as tabelas.
 1. Abra o arquivo `create_schema.sql`.
-2. **Antes de executar**, confira no editor qual banco está selecionado para o arquivo. Ele deve ser `db_confeitaria`. _(Se estiver em `postgres`, as tabelas serão criadas no banco errado. Troque a seleção para `db_confeitaria`,ou crie uma nova conexão apontando para ele)_
+2. **Antes de executar**, confira no editor que a conexão aponta para a instância PostgreSQL separada e que o banco `db_confeitaria` nela está vazio. Não use a conexão do Docker Compose da aplicação.
 3. Execute o script.
 4. Clique em **Refresh** no painel do elefante e expanda `db_confeitaria` → `Schemas` → `public` → `Tables`. Todas as tabelas devem aparecer.

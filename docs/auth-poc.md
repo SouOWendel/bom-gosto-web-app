@@ -23,15 +23,15 @@ docker compose up -d --build
 docker compose ps
 ```
 
-O Compose usa o banco `bom_gosto_db`, cria o schema inicial em um volume novo e executa as migrations do Django antes de iniciar o backend. A tabela `usuario` e criada por `database/create_schema.sql`; o Django usa essa tabela existente e nao a recria.
+O Compose usa o banco `db_confeitaria`, cria o schema inicial em um volume novo e executa as migrations do Django antes de iniciar o backend. A tabela `usuario` é criada por `database/create_schema.sql`.
 
 O Angular fica em `http://localhost:4200` e o Django em `http://127.0.0.1:8000`. O [proxy do Angular](../apps/frontend/proxy.conf.json) encaminha `/api` para `http://backend:8000` dentro da rede Docker.
 
 Para conferir a conexao e os usuarios:
 
 ```powershell
-docker compose exec -T postgres psql -U postgres -d bom_gosto_db -c "SELECT current_database(), current_user;"
-docker compose exec -T postgres psql -U postgres -d bom_gosto_db -c "SELECT id_usuario, login, primeiro_acesso FROM usuario;"
+docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT current_database(), current_user"
+docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT id_usuario, login, primeiro_acesso FROM usuario"
 ```
 
 A alternativa de executar Django e Angular diretamente no host exige um PostgreSQL local e variaveis `POSTGRES_*` apontando para `localhost`. Para o fluxo oficial, use o Docker Compose.
