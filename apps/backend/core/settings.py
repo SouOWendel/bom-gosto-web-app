@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'usuario',
     'pedido',
+    'inventario'
 ]
 
 MIDDLEWARE = [
@@ -55,7 +56,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -69,10 +70,10 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
+                'django.contrib.messages.context_processors.messages'
+            ]
+        }
+    }
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
@@ -89,7 +90,7 @@ DATABASES = {
         'USER': os.getenv('DB_USER', os.getenv('POSTGRES_USER', 'postgres')),
         'PASSWORD': os.getenv('DB_PASSWORD', os.getenv('POSTGRES_PASSWORD', '')),
         'HOST': os.getenv('DB_HOST', os.getenv('POSTGRES_HOST', 'localhost')),
-        'PORT': os.getenv('DB_PORT', os.getenv('POSTGRES_PORT', '5432')),
+        'PORT': os.getenv('DB_PORT', os.getenv('POSTGRES_PORT', '5432'))
     }
 }
 
@@ -110,8 +111,8 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'
+    }
 ]
 
 
