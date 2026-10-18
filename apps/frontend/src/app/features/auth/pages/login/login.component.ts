@@ -3,41 +3,44 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { InputTextComponent } from '../../../../shared/components/input-text/input-text.component';
+import { LoginHeaderComponent } from '../../components/login-header/login-header.component';
+import { LoginFooterComponent } from '../../components/login-footer/login-footer.component';
 
 @Component({
-	selector: 'app-login',
-	standalone: true,
-	imports: [ReactiveFormsModule, InputTextComponent],
-	templateUrl: './login.component.html',
-	styleUrls: ['./login.component.scss'],
+  selector: 'app-login',
+  standalone: true,
+  imports: [ReactiveFormsModule, InputTextComponent, LoginHeaderComponent, LoginFooterComponent],
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.scss'],
 })
 export class LoginComponent {
-	private fb = inject(NonNullableFormBuilder);
-	private authService = inject(AuthService);
-	private router = inject(Router);
+  private fb = inject(NonNullableFormBuilder);
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
-	readonly loading = signal(false);
-	readonly errorMessage = signal<string | null>(null);
+  readonly loading = signal(false);
+  readonly errorMessage = signal<string | null>(null);
 
-	readonly form = this.fb.group({
-		login: ['', [Validators.required]],
-		senha: ['', [Validators.required, Validators.minLength(6)]],
-	});
+  readonly form = this.fb.group({
+    login: ['', [Validators.required]],
+    senha: ['', [Validators.required, Validators.minLength(6)]],
+  });
 
-	onSubmit() {
-		if (this.form.invalid) return;
+  onSubmit() {
+    if (this.form.invalid) return;
 
-		this.loading.set(true);
-		this.errorMessage.set(null);
+    this.loading.set(true);
+    this.errorMessage.set(null);
 
-		this.authService.login(this.form.getRawValue()).subscribe({
-			next: () => this.router.navigate([
-				this.authService.user()?.primeiro_acesso ? '/auth/alterar-senha' : '/dashboard',
-			]),
-			error: (err) => {
-				this.errorMessage.set(err.error?.detail || 'Não foi possível entrar.');
-				this.loading.set(false);
-			},
-		});
-	}
+    this.authService.login(this.form.getRawValue()).subscribe({
+      next: () =>
+        this.router.navigate([
+          this.authService.user()?.primeiro_acesso ? '/auth/alterar-senha' : '/dashboard',
+        ]),
+      error: (err) => {
+        this.errorMessage.set(err.error?.detail || 'Não foi possível entrar.');
+        this.loading.set(false);
+      },
+    });
+  }
 }
