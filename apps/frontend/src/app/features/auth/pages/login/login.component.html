@@ -1,33 +1,64 @@
-<div class="login-container">
-  <h2>Acessar Conta</h2>
+<div class="h-screen overflow-hidden flex flex-col justify-between bg-gray-100">
+  <app-login-header />
 
-  @if (errorMessage()) {
-    <div class="alert alert-danger" role="alert">
-      {{ errorMessage() }}
+  <main class="flex-1 flex items-center justify-center p-4">
+    <!-- Caixa central de 600px centralizada contendo as duas colunas -->
+    <div
+      class="w-full max-w-4xl h-[400px] flex flex-col md:flex-row rounded-2xl shadow-xl overflow-hidden bg-white"
+    >
+      <!-- Coluna 1: Formulário -->
+      <div class="w-full md:w-1/2 h-full p-8 md:p-12 flex flex-col justify-center bg-white">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Acessar Conta</h2>
+
+        @if (errorMessage()) {
+          <div
+            class="alert alert-danger mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm"
+            role="alert"
+          >
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+          <app-input-text inputId="login" label="Usuário" formControlName="login" />
+
+          <app-input-text
+            inputId="senha"
+            label="Senha"
+            type="password"
+            autocomplete="current-password"
+            formControlName="senha"
+          />
+
+          <button
+            type="submit"
+            [disabled]="form.invalid || loading()"
+            class="w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-medium rounded-lg transition-colors cursor-pointer"
+          >
+            @if (loading()) {
+              <span>Entrando...</span>
+            } @else {
+              <span>Entrar</span>
+            }
+          </button>
+        </form>
+      </div>
+
+      <!-- Coluna 2: Informações -->
+      <div class="w-full md:w-1/2 h-full bg-gray-200 p-8 md:p-12 flex flex-col justify-between">
+        <span class="text-xs font-semibold tracking-wider text-gray-500 uppercase"
+          >14 de Outubro de 2026</span
+        >
+        <div class="border border-gray-400 rounded-lg p-2">
+          <p>
+            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Amet sit, animi dignissimos
+            corrupti tempora qui corporis at doloremque laboriosam architecto similique, maiores
+            sapiente dolores veniam ipsam vitae eius ratione. Consequatur.
+          </p>
+        </div>
+      </div>
     </div>
-  }
+  </main>
 
-  <form [formGroup]="form" (ngSubmit)="onSubmit()">
-    <app-input-text
-      inputId="login"
-      label="Usuário"
-      formControlName="login"
-    />
-
-    <app-input-text
-      inputId="senha"
-      label="Senha"
-      type="password"
-      autocomplete="current-password"
-      formControlName="senha"
-    />
-
-    <button type="submit" [disabled]="form.invalid || loading()">
-      @if (loading()) {
-        <span>Entrando...</span>
-      } @else {
-        <span>Entrar</span>
-      }
-    </button>
-  </form>
+  <app-login-footer />
 </div>
