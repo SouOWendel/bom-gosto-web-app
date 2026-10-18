@@ -69,6 +69,7 @@ O segundo comando apaga os dados locais do PostgreSQL. Consulte os guias abaixo 
 - [Guia do Docker](docs/docker.md): inicialização, migrations, banco e diagnóstico.
 - [POC de autenticação](docs/auth-poc.md): cadastro de teste, login, sessão e troca de senha.
 - [Guia do back-end de pedidos](docs/guia-pedidos-backend.md): testar a API de pedidos autenticada.
+- [Guia do back-end de inventário](docs/guia-inventario-backend.md): testar a API de ingredientes.
 - [Configuração do PostgreSQL](docs/config-postgresql.md): acesso ao banco pelo terminal ou pelo VS Code.
 
 ---
