@@ -1,20 +1,17 @@
-<footer
-  class="w-full bg-white/70 backdrop-blur-sm border-t border-gray-200 py-4 px-6 text-xs text-gray-500"
->
-  <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+<footer class="login-footer">
+  <div class="login-footer__inner">
     <!-- Copyright -->
-    <div class="flex items-center gap-2">
-      <span class="inline-block w-2 h-2 rounded-full bg-emerald-500" title="Ambiente Seguro"></span>
-      <p>© {{ currentYear }} Bom Gosto. Todos os direitos reservados.</p>
-    </div>
+    <p class="login-footer__copy">
+      © {{ currentYear }} Bom Gosto Bolos &amp; Doces Ateliê. Todos os direitos reservados.
+    </p>
 
-    <!-- Links / Policy -->
-    <nav class="flex items-center gap-6">
-      <a href="javascript:void(0)" class="hover:text-amber-600 transition-colors">Termos de Uso</a>
-      <a href="javascript:void(0)" class="hover:text-amber-600 transition-colors"
-        >Política de Privacidade</a
-      >
-      <a href="javascript:void(0)" class="hover:text-amber-600 transition-colors">Suporte</a>
+    <!-- Links -->
+    <nav class="login-footer__nav" aria-label="Links institucionais">
+      <a href="javascript:void(0)" class="login-footer__link">Termos de Uso</a>
+      <span class="login-footer__dot" aria-hidden="true">•</span>
+      <a href="javascript:void(0)" class="login-footer__link">Privacidade</a>
+      <span class="login-footer__dot" aria-hidden="true">•</span>
+      <a href="javascript:void(0)" class="login-footer__link">Suporte ao Ateliê</a>
     </nav>
   </div>
 </footer>
