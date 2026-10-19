@@ -1,61 +1,105 @@
-<div class="h-screen overflow-hidden flex flex-col justify-between bg-gray-100">
+<div class="login-page">
   <app-login-header />
 
-  <main class="flex-1 flex items-center justify-center p-4">
-    <!-- Caixa central de 600px centralizada contendo as duas colunas -->
-    <div
-      class="w-full max-w-4xl h-[400px] flex flex-col md:flex-row rounded-2xl shadow-xl overflow-hidden bg-white"
-    >
-      <!-- Coluna 1: Formulário -->
-      <div class="w-full md:w-1/2 h-full p-8 md:p-12 flex flex-col justify-center bg-white">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">Acessar Conta</h2>
+  <main class="login-page__main">
+    <div class="login-card">
 
+      <!-- ====== COLUNA 1: Formulário ====== -->
+      <div class="login-card__form-col">
+
+        <!-- Cabeçalho do formulário -->
+        <div class="login-card__form-header">
+          <h2 class="login-card__cursive-title">Bom Gosto Bolos &amp; Doces</h2>
+          <p class="login-card__system-label">Sistema de Gestão do Ateliê</p>
+          <p class="login-card__description">
+            Bem-vinda de volta! Acesse para gerenciar encomendas, controle
+            de insumos e o cronograma de produção diária.
+          </p>
+        </div>
+
+        <!-- Mensagem de erro -->
         @if (errorMessage()) {
-          <div
-            class="alert alert-danger mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm"
-            role="alert"
-          >
+          <div class="login-card__error" role="alert">
             {{ errorMessage() }}
           </div>
         }
 
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
-          <app-input-text inputId="login" label="Usuário" formControlName="login" />
+        <!-- Formulário -->
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="login-card__form" novalidate>
 
           <app-input-text
-            inputId="senha"
-            label="Senha"
-            type="password"
-            autocomplete="current-password"
-            formControlName="senha"
+            inputId="login"
+            label="E-mail profissional"
+            placeholder="ex: rosangela@bomgostoconfeitaria.com.br"
+            formControlName="login"
           />
 
+          <div class="login-card__password-group">
+            <div class="login-card__password-labels">
+              <span class="login-card__password-label">Senha de acesso</span>
+              <a href="javascript:void(0)" class="login-card__forgot">Esqueceu sua senha?</a>
+            </div>
+            <app-input-text
+              inputId="senha"
+              label=""
+              type="password"
+              autocomplete="current-password"
+              placeholder="••••••••••"
+              formControlName="senha"
+            />
+          </div>
+
+          <!-- Checkbox lembrar -->
+          <label class="login-card__remember">
+            <input type="checkbox" class="login-card__checkbox" />
+            <span>Lembrar de mim neste dispositivo</span>
+          </label>
+
+          <!-- Botão submit -->
           <button
+            id="btn-login-submit"
             type="submit"
+            class="login-card__submit"
             [disabled]="form.invalid || loading()"
-            class="w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-medium rounded-lg transition-colors cursor-pointer"
           >
             @if (loading()) {
               <span>Entrando...</span>
             } @else {
-              <span>Entrar</span>
+              <span>Entrar no Sistema</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
             }
           </button>
+
         </form>
       </div>
 
-      <!-- Coluna 2: Informações -->
-      <div class="w-full md:w-1/2 h-full bg-gray-200 p-8 md:p-12 flex flex-col justify-between">
-        <span class="text-xs font-semibold tracking-wider text-gray-500 uppercase"
-          >14 de Outubro de 2026</span
-        >
-        <div class="border border-gray-400 rounded-lg p-2">
-          <p>
-            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Amet sit, animi dignissimos
-            corrupti tempora qui corporis at doloremque laboriosam architecto similique, maiores
-            sapiente dolores veniam ipsam vitae eius ratione. Consequatur.
+      <!-- ====== COLUNA 2: Painel decorativo ====== -->
+      <div class="login-card__deco-col">
+
+        <!-- Data/hora no topo -->
+        <div class="login-card__deco-badge">
+          <span>HOJE • {{ currentTime }}</span>
+        </div>
+
+        <!-- Card de quote na base -->
+        <div class="login-card__quote-card">
+          <div class="login-card__quote-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M6.5 10c-.223 0-.437.034-.65.065.069-.232.14-.468.254-.68.114-.308.292-.575.469-.844.148-.291.409-.488.601-.737.201-.242.475-.403.692-.604.213-.21.492-.315.714-.463.232-.133.434-.28.65-.35.208-.086.39-.16.539-.224.302-.125.474-.197.474-.197L9.758 4.03c0 0-.218.052-.597.144C8.97 4.222 8.737 4.278 8.472 4.345c-.271.05-.56.187-.882.312C7.309 4.785 6.999 4.91 6.694 5.119c-.316.194-.637.395-.913.657-.264.24-.552.477-.795.782-.233.29-.475.582-.655.906-.183.318-.339.661-.448 1.011-.11.35-.188.716-.211 1.084C3.672 9.56 3.5 9.954 3.5 10.5c0 1.381 1.119 2.5 2.5 2.5s2.5-1.119 2.5-2.5S7.881 10 6.5 10zM17.5 10c-.223 0-.437.034-.65.065.069-.232.14-.468.254-.68.114-.308.292-.575.469-.844.148-.291.409-.488.601-.737.201-.242.475-.403.692-.604.213-.21.492-.315.714-.463.232-.133.434-.28.65-.35.208-.086.39-.16.539-.224.302-.125.474-.197.474-.197L20.758 4.03c0 0-.218.052-.597.144-.191.048-.424.104-.689.171-.271.05-.56.187-.882.312-.282.128-.592.253-.897.462-.316.194-.637.395-.913.657-.264.24-.552.477-.795.782-.233.29-.475.582-.655.906-.183.318-.339.661-.448 1.011-.11.35-.188.716-.211 1.084C14.672 9.56 14.5 9.954 14.5 10.5c0 1.381 1.119 2.5 2.5 2.5s2.5-1.119 2.5-2.5S18.881 10 17.5 10z"/>
+            </svg>
+          </div>
+          <p class="login-card__quote-label">EXCELÊNCIA CULINÁRIA</p>
+          <p class="login-card__quote-text">"A arte do açúcar com a precisão da gestão profissional."</p>
+          <p class="login-card__quote-sub">
+            Caderno de receitas, encomendas personalizadas e fichas técnicas em um único ambiente refinado.
           </p>
         </div>
+
       </div>
     </div>
   </main>
