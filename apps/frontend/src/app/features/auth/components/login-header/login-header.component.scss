@@ -1,1 +1,60 @@
-/* Estilos específicos do LoginHeader se necessário */
+:host {
+  display: block;
+}
+
+.login-header {
+  width: 100%;
+  padding: 1.5rem 2rem;
+
+  &__inner {
+    max-width: 72rem;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+  }
+
+  &__logo-wrap {
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(123, 26, 46, 0.35);
+  }
+
+  &__logo-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.125rem;
+  }
+
+  &__title {
+    font-family: var(--font-cursive);
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    line-height: 1;
+    margin: 0;
+  }
+
+  &__subtitle {
+    font-family: var(--font-sans);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    margin: 0;
+  }
+}
