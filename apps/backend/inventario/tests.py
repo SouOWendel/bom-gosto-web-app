@@ -11,7 +11,7 @@ from .models import Ingrediente
 from .serializers import IngredienteSerializer
 from .views import IngredienteViewSet
 
-# classe que testa a API do modulo Inventario, garantindo que as operacoes de CRUD funcionem corretamente e que as validacoes sejam aplicadas conforme esperado
+# classe que testaa a API do modulo Inventario, garantindo que as operacoes de CRUD funcionem corretamente e que as validacoes sejam aplicadas conforme esperado
 class IngredienteApiTests(SimpleTestCase):
     def setUp(self):
         self.client = APIClient()
@@ -81,7 +81,7 @@ class IngredienteApiTests(SimpleTestCase):
         self.assertEqual(atualizacao.status_code, status.HTTP_200_OK)
         self.assertFalse(atualizacao.data["abaixo_do_minimo"])
 
-    # testa que ao atualizar um ingrediente via PUT, os campos opcionais que não foram fornecidos na requisicao permanecem inalterados, garantindo que a API não sobrescreva dados existentes com valores nulos ou padrao
+    # testa que ao atualizar um ingrediente via PUT, os campos opcionais que nao foram fornecidos na requisicao permanecem inalterados, garantindo que a API não sobrescreva dados existentes com valores nulos ou padrao
     def test_put_preserva_campos_opcionais_omitidos(self):
         ingrediente = Ingrediente(
             id_ingrediente=1,
@@ -105,7 +105,7 @@ class IngredienteApiTests(SimpleTestCase):
         self.assertEqual(resposta.data["quantidade_disponivel"], "2.00")
         self.assertEqual(resposta.data["custo_unitario"], "10.00")
 
-    # testa que a API rejeita dados invalidos, como uma quantidade disponivel negativa, e retorna os erros de validacao apropriados, garantindo que as regras de negocio definidas nos serializers sejam aplicadas corretamente
+    # testa que a API rejeita dados invalidos, como uma quantidade disponivel negativa e retorna os erros de validacao apropriados, garantindo que as regras de negocio definidas nos serializers sejam aplicadas corretamente
     def test_rejeita_dados_invalidos(self):
         serializer = IngredienteSerializer(
             data={
@@ -117,14 +117,14 @@ class IngredienteApiTests(SimpleTestCase):
         self.assertFalse(serializer.is_valid())
         self.assertIn("quantidade_disponivel", serializer.errors)
 
-    # testa que ao tentar acessar um ingrediente inexistente, a API retorna um status 404 Not Found, garantindo que o tratamento de erros para recursos não encontrados esteja funcionando corretamente
+    # testa que ao tentar acessar um ingrediente inexistente, a API retorna um status 404 Not Found, garantindo que o tratamento de erros para recursos nao encontrados esteja funcionando corretamente
     def test_retorna_nao_encontrado_para_ingrediente_inexistente(self):
         with patch.object(IngredienteViewSet, "get_object", side_effect=Http404):
             resposta = self.client.get("/api/inventario/ingrediente/999/")
 
         self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND)
 
-    # testa que a API nao permite a exclusão de ingredientes, retornando um status 405 Method Not Allowed, garantindo que a operação de DELETE não esteja habilitada para o endpoint de ingredientes
+    # testa que a API nao permite a exclusao de ingredientes, retornando um status 405 Method Not Allowed, garantindo que a operação de DELETE nao esteja habilitada para o endpoint de ingredientes
     def test_nao_disponibiliza_exclusao(self):
         resposta = self.client.delete("/api/inventario/ingrediente/1/")
 

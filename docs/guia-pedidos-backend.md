@@ -12,6 +12,10 @@
 
 A exclusão por `DELETE` não está habilitada: pedidos devem preservar histórico.
 
+## Verificação integrada com Estoque
+
+Ao criar ou consultar um pedido externo de vitrine ou personalizado, cada item da resposta inclui `verificacao_estoque`. Para itens associados a um produto, o campo consulta os lotes válidos do Estoque e retorna o saldo, a disponibilidade e `encaminhar_para_producao` quando a quantidade não for suficiente. O saldo é atual e pode mudar entre consultas. Não é persistido como histórico no pedido.
+
 ## 1. Preparar o ambiente
 
 Inicie o Docker Desktop e, no PowerShell, abra a pasta raiz do projeto. Se `docker` não for reconhecido, adicione o executável ao PATH desta janela:

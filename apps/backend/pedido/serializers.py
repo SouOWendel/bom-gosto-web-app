@@ -3,10 +3,14 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.db import transaction
 from rest_framework import serializers
 
+from estoque.models import Estoque
+
 from .models import ItemPedido, Pedido
 
 
 class ItemPedidoSerializer(serializers.ModelSerializer):
+    verificacao_estoque = serializers.SerializerMethodField()
+
     class Meta:
         model = ItemPedido
         fields = (
@@ -19,8 +23,48 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
             "recheio",
             "quantidade_peso",
             "decoracao",
+            "verificacao_estoque",
         )
-        read_only_fields = ("id_item_pedido",)
+        read_only_fields = ("id_item_pedido", "verificacao_estoque")
+
+    # RN02: ao registrar ou consultar um pedido externo, verifica imediatamente
+    # se há produto pronto suficiente; a falta de saldo direciona o item à Produção.
+    def get_verificacao_estoque(self, item):
+        pedido_serializer = self.parent.parent
+        pedido = pedido_serializer.instance
+        if (
+            pedido is None
+            or pedido.tipo != Pedido.Tipo.EXTERNO
+            or pedido.subtipo not in (
+                Pedido.Subtipo.VITRINE,
+                Pedido.Subtipo.PERSONALIZADO,
+            )
+        ):
+            return None
+
+        if item.produto_id is None:
+            # O schema não modela bases preparadas como massas ou recheios no
+            # Estoque; itens personalizados sem produto de estoque seguem à Produção.
+            return {
+                "verificado": False,
+                "disponivel": False,
+                "encaminhar_para_producao": True,
+                "motivo": "O item não possui produto pronto associado ao estoque.",
+            }
+
+        quantidade = item.quantidade or item.quantidade_peso
+        if quantidade is None:
+            return {
+                "verificado": False,
+                "disponivel": None,
+                "encaminhar_para_producao": None,
+                "motivo": "Informe a quantidade para verificar o estoque.",
+            }
+
+        return {
+            "verificado": True,
+            **Estoque.objects.verificar_disponibilidade(item.produto_id, quantidade),
+        }
 
     def validate(self, attrs):
         produto = attrs.get("produto")
@@ -114,6 +158,18 @@ class PedidoSerializer(serializers.ModelSerializer):
                 {"itens": "Informe ao menos um item no pedido."}
             )
 
+        # pedidos de vitrine devem referenciar produtos prontos e itens sem produto pronto nao podem ser incluidos
+        itens = attrs.get("itens")
+        if (
+            tipo == Pedido.Tipo.EXTERNO
+            and subtipo == Pedido.Subtipo.VITRINE
+            and itens is not None
+            and any(item.get("produto") is None for item in itens)
+        ):
+            raise serializers.ValidationError(
+                {"itens": "Pedidos de vitrine devem referenciar produtos prontos."}
+            )
+
         if "itens" in attrs and not attrs["itens"]:
             raise serializers.ValidationError(
                 {"itens": "O pedido precisa ter ao menos um item."}
@@ -177,5 +233,3 @@ class PedidoSerializer(serializers.ModelSerializer):
                 ItemPedido.objects.create(pedido=instance, **item_data)
 
         return instance
-
-
