@@ -152,6 +152,16 @@ Encerra a sessao do usuario autenticado:
 
 O endpoint abaixo esta habilitado somente com `DEBUG=True`, como no ambiente de desenvolvimento atual.
 
+**cURL (Linux / macOS / Git Bash):**
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/auth/cadastro-teste/ \
+  -H "Content-Type: application/json" \
+  -d '{"login": "usuario"}'
+```
+
+**PowerShell (Windows):**
+
 ```powershell
 $body = @{ login = "usuario" } | ConvertTo-Json
 
@@ -164,7 +174,7 @@ $cadastro = Invoke-RestMethod `
 $cadastro
 ```
 
-Guarde `$cadastro.senha_temporaria`. Para consultar o usuario sem expor o hash da senha:
+Guarde a senha temporaria retornada. Para consultar o usuario sem expor o hash da senha:
 
 ```sql
 SELECT id_usuario, login, primeiro_acesso
