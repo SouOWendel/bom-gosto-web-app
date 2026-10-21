@@ -21,6 +21,56 @@ O projeto é estruturado como um **Monorepo** dividido em dois domínios princip
 - **Infraestrutura & DevOps:** Docker, Docker Compose, GitHub Actions (CI/CD)[cite: 1]
 - **Qualidade de Código & Automação:** Husky, Commitlint (Conventional Commits), Prettier, `openapi-typescript`[cite: 1]
 
+## 🚀 Inicialização do desenvolvimento
+
+Pré-requisitos:
+
+- Docker Desktop em execução;
+- Docker Compose disponível no terminal;
+- Node.js e npm apenas para executar ferramentas do monorepo fora dos containers.
+
+Na raiz do projeto, inicie o ambiente completo:
+
+```powershell
+docker compose up -d --build
+```
+
+O Compose inicia o PostgreSQL, cria o schema inicial em um banco novo, aplica as migrations do Django e sobe os servidores:
+
+- Frontend: http://localhost:4200
+- Backend: http://localhost:8000
+- PostgreSQL: `localhost:5432`
+
+Comandos úteis:
+
+```powershell
+docker compose ps
+docker compose logs -f backend frontend
+docker compose exec backend python manage.py makemigrations
+docker compose exec backend python manage.py migrate
+docker compose exec -T postgres psql -U postgres -d bom_gosto_db
+```
+
+Para parar os containers sem apagar o banco:
+
+```powershell
+docker compose down
+```
+
+Para apagar também o volume do PostgreSQL e recriar o banco do zero:
+
+```powershell
+docker compose down -v
+docker compose up -d --build
+```
+
+O segundo comando apaga os dados locais do PostgreSQL. Consulte os guias abaixo para os fluxos específicos:
+
+- [Guia do Docker](docs/docker.md): inicialização, migrations, banco e diagnóstico.
+- [POC de autenticação](docs/auth-poc.md): cadastro de teste, login, sessão e troca de senha.
+- [Guia do back-end de pedidos](docs/guia-pedidos-backend.md): testar a API de pedidos autenticada.
+- [Configuração do PostgreSQL](docs/config-postgresql.md): acesso ao banco pelo terminal ou pelo VS Code.
+
 ---
 
 ## 📂 Estrutura do Repositório
@@ -41,34 +91,3 @@ bom-gosto-web-app/
 ├── CONTRIBUTING.md         # Guia de contribuição e convenções do Git
 └── README.md
 ```
-
----
-
-## POC de Autenticação (Back-end)
-
-Implementação inicial do fluxo de autenticação no back-end para prova de conceito, sem integração com API externa e sem alterações no front-end.
-
-### Regras atendidas
-- Login com usuário e senha.
-- Identificação de primeiro acesso.
-- Cadastro local de usuário de teste com senha temporária.
-- Troca de senha e atualização de `primeiro_acesso`.
-- Logout e sessão persistente no navegador.
-
-### Endpoints
-Base local: `http://127.0.0.1:8000/api`
-
-- `POST /auth/login/`
-- `POST /auth/alterar-senha/`
-- `GET /auth/me/`
-- `POST /auth/logout/`
-
-### Execução rápida (back-end)
-```bash
-cd apps/backend
-python -m venv .venv
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
-
-Para detalhes técnicos (payloads, respostas e fluxo de validação), consulte [`docs/auth-poc.md`](docs/auth-poc.md).

@@ -14,37 +14,27 @@ POC de autenticacao com Django REST Framework no back-end e Angular no front-end
 - Logout no back-end, invalidando a sessao.
 - Persistencia da sessao ate o logout manual ou a expiracao configurada.
 
-## Preparar o ambiente
+## Preparar o ambiente com Docker
 
-O banco `db_confeitaria` e a tabela `usuario` devem ser criados pelos scripts em `database/`. O Django usa a tabela `usuario` existente e nao a recria.
-
-Crie `apps/backend/.env` com os dados da conexao:
-
-```env
-POSTGRES_DB=db_confeitaria
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=sua_senha
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-```
-
-O arquivo `.env` contem credenciais e nao deve ser enviado ao Git.
-
-Execute os comandos em terminais separados:
+Na raiz do repositorio, inicie o ambiente:
 
 ```powershell
-cd apps/backend
-python manage.py migrate
-python manage.py runserver
+docker compose up -d --build
+docker compose ps
 ```
+
+O Compose usa o banco `bom_gosto_db`, cria o schema inicial em um volume novo e executa as migrations do Django antes de iniciar o backend. A tabela `usuario` e criada por `database/create_schema.sql`; o Django usa essa tabela existente e nao a recria.
+
+O Angular fica em `http://localhost:4200` e o Django em `http://127.0.0.1:8000`. O [proxy do Angular](../apps/frontend/proxy.conf.json) encaminha `/api` para `http://backend:8000` dentro da rede Docker.
+
+Para conferir a conexao e os usuarios:
 
 ```powershell
-cd apps/frontend
-npm install
-npm start
+docker compose exec -T postgres psql -U postgres -d bom_gosto_db -c "SELECT current_database(), current_user;"
+docker compose exec -T postgres psql -U postgres -d bom_gosto_db -c "SELECT id_usuario, login, primeiro_acesso FROM usuario;"
 ```
 
-O Angular fica em `http://localhost:4200` e o Django em `http://127.0.0.1:8000`. O [proxy do Angular](../apps/frontend/proxy.conf.json) encaminha `/api` para o Django.
+A alternativa de executar Django e Angular diretamente no host exige um PostgreSQL local e variaveis `POSTGRES_*` apontando para `localhost`. Para o fluxo oficial, use o Docker Compose.
 
 ## Integracao com o front-end
 
@@ -159,6 +149,8 @@ Encerra a sessao do usuario autenticado:
 ## Fluxo completo de teste no PowerShell
 
 ### 1. Criar usuario temporario
+
+O endpoint abaixo esta habilitado somente com `DEBUG=True`, como no ambiente de desenvolvimento atual.
 
 ```powershell
 $body = @{ login = "usuario" } | ConvertTo-Json
