@@ -2,12 +2,11 @@ import { Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
-import { InputTextComponent } from '../../../../shared/components/input-text/input-text.component';
 
 @Component({
   selector: 'app-change-password',
   standalone: true,
-  imports: [ReactiveFormsModule, InputTextComponent],
+  imports: [ReactiveFormsModule],
   templateUrl: './change-password.component.html',
   styleUrls: ['./change-password.component.scss'],
 })

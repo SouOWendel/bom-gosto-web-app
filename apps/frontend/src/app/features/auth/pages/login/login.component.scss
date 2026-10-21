@@ -1,86 +1,281 @@
-.login-container {
+// ============================================================
+// Login Page — Estilos visuais da tela de acesso
+// ============================================================
+
+.login-page {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  justify-content: space-between;
   min-height: 100vh;
-  padding: 1.5rem;
-  background-color: #f8f9fa;
+  background: radial-gradient(115.51% 79.77% at 50% 10%, #FFFBF9 0%, #FFF3EE 45%, #F7E6DE 100%), #FFF;
 
-  h2 {
-    margin-bottom: 1.5rem;
-    color: #212529;
-    font-weight: 600;
+  &__main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem;
   }
+}
 
-  .alert-danger {
-    width: 100%;
-    max-width: 400px;
-    padding: 0.75rem 1rem;
-    margin-bottom: 1rem;
-    color: #842029;
-    background-color: #f8d7da;
-    border: 1px solid #f5c2c7;
-    border-radius: 0.375rem;
-    font-size: 0.875rem;
-  }
+// ============================================================
+// Card central (duas colunas)
+// ============================================================
+.login-card {
+  width: 100%;
+  max-width: 62rem;
+  min-height: 26rem;
+  display: flex;
+  flex-direction: row;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  background: var(--color-white);
 
-  form {
-    width: 100%;
-    max-width: 400px;
+  // ── Coluna formulário ──────────────────────────────────────
+  &__form-col {
+    flex: 1;
+    padding: 2.75rem 3rem;
     display: flex;
     flex-direction: column;
+    justify-content: center;
     gap: 1.25rem;
-    background: #ffffff;
-    padding: 2rem;
+    background: var(--color-white);
+  }
+
+  &__form-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-bottom: 0.25rem;
+  }
+
+  &__cursive-title {
+    font-family: var(--font-cursive);
+    font-size: 1.7rem;
+    font-weight: 500;
+    color: var(--color-primary);
+    line-height: 1.15;
+  }
+
+  &__system-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-top: 0.2rem;
+  }
+
+  &__description {
+    font-size: 0.82rem;
+    color: var(--color-muted);
+    line-height: 1.55;
+    max-width: 30rem;
+  }
+
+  &__error {
+    padding: 0.7rem 1rem;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
     border-radius: 0.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    font-size: 0.82rem;
+    color: #b91c1c;
+  }
 
-    .form-field {
-      display: flex;
-      flex-direction: column;
-      gap: 0.375rem;
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
 
-      label {
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: #495057;
-      }
+  // Grupo senha com label "Esqueceu sua senha?" inline
+  &__password-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
 
-      input {
-        padding: 0.625rem 0.75rem;
-        border: 1px solid #ced4da;
-        border-radius: 0.375rem;
-        font-size: 1rem;
-        outline: none;
-        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  &__password-labels {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
 
-        &:focus {
-          border-color: #0d6efd;
-          box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-        }
+  &__password-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--color-text);
+  }
+
+  &__forgot {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 0.75;
+      text-decoration: underline;
+    }
+  }
+
+  // Checkbox "Lembrar de mim"
+  &__remember {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--color-muted);
+    user-select: none;
+    margin-top: -0.15rem;
+  }
+
+  &__checkbox {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--color-primary);
+    cursor: pointer;
+    flex-shrink: 0;
+    border-radius: 0.2rem;
+  }
+
+  // Botão submit
+  &__submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.85rem 1.5rem;
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    border: none;
+    border-radius: 0.6rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+    margin-top: 0.25rem;
+
+    svg {
+      width: 1.1rem;
+      height: 1.1rem;
+      transition: transform 0.2s ease;
+    }
+
+    &:hover:not(:disabled) {
+      background-color: var(--color-primary-dark);
+      box-shadow: 0 4px 16px rgba(123, 26, 46, 0.35);
+      transform: translateY(-1px);
+
+      svg {
+        transform: translateX(3px);
       }
     }
 
-    button {
-      padding: 0.75rem;
-      background-color: #0d6efd;
-      color: #fff;
-      border: none;
-      border-radius: 0.375rem;
-      font-size: 1rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background-color 0.15s ease-in-out;
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
 
-      &:hover:not(:disabled) {
-        background-color: #0b5ed7;
-      }
+    &:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+  }
 
-      &:disabled {
-        opacity: 0.65;
-        cursor: not-allowed;
-      }
+  // ── Coluna decorativa (vinho) ──────────────────────────────
+  &__deco-col {
+    flex: 0 0 42%;
+    position: relative;
+    background: linear-gradient(160deg, #8b1c35 0%, #5c1221 60%, #3d0c17 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.5rem 1.5rem 1.75rem;
+    overflow: hidden;
+
+    // Textura / detalhe de fundo sutil
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 70% 30%, rgba(255, 255, 255, 0.07) 0%, transparent 60%),
+        url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+  }
+
+  // Badge de hora no topo direito
+  &__deco-badge {
+    align-self: flex-end;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+  }
+
+  // Card de quote na base
+  &__quote-card {
+    background: rgba(255, 255, 255, 0.93);
+    border-radius: 0.85rem;
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  }
+
+  &__quote-icon {
+    color: var(--color-primary);
+    margin-bottom: 0.1rem;
+  }
+
+  &__quote-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--color-primary);
+    text-transform: uppercase;
+  }
+
+  &__quote-text {
+    font-family: var(--font-cursive);
+    font-size: 1rem;
+    color: var(--color-primary);
+    line-height: 1.4;
+  }
+
+  &__quote-sub {
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    line-height: 1.5;
+    margin-top: 0.1rem;
+  }
+}
+
+// ── Responsivo ────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .login-card {
+    flex-direction: column;
+    max-width: 28rem;
+
+    &__form-col {
+      padding: 2rem 1.75rem;
+    }
+
+    &__deco-col {
+      flex: none;
+      min-height: 14rem;
     }
   }
 }

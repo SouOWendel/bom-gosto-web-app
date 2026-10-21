@@ -1,0 +1,50 @@
+:host {
+    display: block;
+}
+
+.login-footer {
+    width: 100%;
+    background: rgba(255, 240, 237, 0.60);
+    backdrop-filter: blur(2px);
+    padding: 1.25rem 2.5rem;
+
+    &__inner {
+        max-width: 72rem;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    &__copy {
+        font-size: 0.75rem;
+        color: var(--color-muted);
+        font-weight: 400;
+    }
+
+    &__nav {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    &__link {
+        font-size: 0.75rem;
+        color: var(--color-muted);
+        text-decoration: none;
+        font-weight: 400;
+        transition: color 0.2s ease;
+
+        &:hover {
+            color: var(--color-primary);
+        }
+    }
+
+    &__dot {
+        font-size: 0.6rem;
+        color: var(--color-muted);
+        opacity: 0.6;
+    }
+}

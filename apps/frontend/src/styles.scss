@@ -1,1 +1,56 @@
-/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@font-face {
+	font-family: 'Ms Madi';
+	src: url('../public/fonts/MsMadi.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Plus Jakarta Sans';
+	src: url('../public/fonts/PlusJakartaSans.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+
+:root {
+	--bg-page: #fce8e8;
+	--color-primary: #7b1a2e;
+	--color-primary-dark: #5c1221;
+	--color-primary-light: rgba(123, 26, 46, 0.08);
+	--color-text: #574141;
+	--color-muted: #6b7280;
+	--color-border: #e5e7eb;
+	--color-white: #ffffff;
+	--font-cursive: 'Ms Madi', cursive;
+	--font-body: 'Plus Jakarta Sans', 'Inter', sans-serif;
+	--radius-card: 0.75rem;
+	--shadow-card: 0 8px 40px rgba(123, 26, 46, 0.12);
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+html,
+body {
+	font-family: var(--font-body);
+	background-color: var(--bg-page);
+
+	color: var(--color-text);
+	height: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+	font-family: inherit;
+}
