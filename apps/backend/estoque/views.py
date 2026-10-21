@@ -20,7 +20,7 @@ class EstoqueViewSet(ModelViewSet):
     queryset = Estoque.objects.select_related("produto").all().order_by("id_estoque")
     serializer_class = EstoqueSerializer
     permission_classes = [IsAuthenticated, SenhaInicialAlterada]
-    http_method_names = ["get", "post", "put", "patch", "head", "options"] # nao permite excluir lotes de estoque
+    http_method_names = ["get", "put", "patch", "head", "options"] # nao permite excluir lotes de estoque
 
     # endpoint customizado que verifica a disponibilidade de um produto no estoque, recebendo o id do produto e a quantidade solicitada como parametros de consulta e retornando se ha saldo suficiente ou se deve encaminhar para producao
     @action(detail=False, methods=["get"], url_path="disponibilidade")
