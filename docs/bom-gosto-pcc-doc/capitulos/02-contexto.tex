@@ -10,8 +10,8 @@ Entretanto, o mercado da confeitaria enfrenta desafios operacionais e econômico
 
 \begin{itemize}
     \item A elevada instabilidade nos preços de matérias-primas essenciais (como leite, açúcar, cacau, farinha e derivados) exige uma gestão rigorosa da compra e do consumo de estoque.
-    \item A perecibilidade dos insumos e dos produtos acabados impõe prazos de validade curtos, aumentando o risco de perdas financeiras pelos desperdícios.
-    \item A falta de regularidade das encomendas demandam planejamento e sintonia entre o recebimento de pedidos, a aquisição de insumos e a escala de produção na cozinha.
+    \item A velocidade rápida com que os consumos e produtos finais estragam colocam prazos de validade curtos, aumentando o risco de perdas financeiras pelos desperdícios.
+    \item A falta de regularidade das encomendas exigem planejamento e sintonia entre o recebimento de pedidos, a aquisição de insumos e a escala de produção na cozinha.
 \end{itemize}
 
 Em microempreendimentos artesanais, é frequente que a gestão administrativa seja conduzida de maneira informal, com anotações dispersas em cadernos ou trocas de mensagens instantâneas \cite{laudon2014}. Essa ausência de padronização impede o microempreendedor de apurar com exatidão o Custo das Mercadorias Vendidas (CMV), dificultando a precificação dos produtos, o que acaba comprometendo a saúde financeira e a expansão do negócio \cite{pressman2021}.
@@ -35,8 +35,8 @@ A análise diagnóstica desse modelo de operação revelou pontos de atenção:
 \begin{itemize}
     \item \textbf{Falta de centralização:} As especificações dos pedidos (massas, recheios, decorações, horários e datas de entrega) ficam espalhadas no histórico de conversas, aumentando o risco de esquecimento ou erros na produção.
     \item \textbf{Falta de automação:} Não há verificação automática da disponibilidade de matérias-primas na cozinha antes da confirmação de um pedido, podendo resultar em paralisação da produção ou compras de emergência a custos mais elevados.
-    \item \textbf{Inconsistência no Acompanhamento Financeiro:} A política da empresa exige a cobrança de um sinal de 50\% para a confirmação de encomendas personalizadas. O controle manual desses pagamentos parciais e das quitações finais gera divergências no resultado final.
-    \item \textbf{Desconhecimento do Custo Real por Receita:} A precificação dos produtos ocorre de forma intuitiva, não existe um cálculo automatizado da relação entre venda dos produtos finais e compras de insumos.
+    \item \textbf{Inconsistência no acompanhamento financeiro:} A política da empresa exige a cobrança de um sinal de 50\% para a confirmação de encomendas personalizadas. O controle manual desses pagamentos parciais e das quitações finais gera divergências no resultado final.
+    \item \textbf{Desconhecimento do custo real por receita:} A precificação dos produtos ocorre de forma intuitiva, não existe um cálculo automatizado da relação entre venda dos produtos finais e compras de insumos.
 \end{itemize}
 
 \section{Público-Alvo}
@@ -47,12 +47,12 @@ A caracterização do público-alvo compreende os usuários diretos da aplicaç�
 O sistema nasce exclusivamente para uso administrativo e operacional interno da Confeitaria Bom Gosto, sendo operado de forma individual pela proprietária Rosângela Santos e sua parceira na gestão.
 \begin{itemize}
     \item \textbf{Perfil de Utilização:} A usuária desempenha de forma geral as funções de atendimento ao cliente, gestão financeira, compras de insumos e produção artesanal na cozinha.
-    \item \textbf{Requisitos de Usabilidade:} A interface deve ser otimizada para uso individual e em telas sensíveis ao toque (smartphones/tablets), com navegação fluida e poucos cliques para agilizar o trabalho na cozinha.
+    \item \textbf{Requisitos de Usabilidade:} A interface deve ser otimizada para uso individual e em telas sensíveis ao toque (\textit{smartphones}/\textit{tablets}), com navegação fluida e poucos cliques para agilizar o trabalho na cozinha.
 \end{itemize}
 
 \subsection{Clientes da Confeitaria (Beneficiários Indiretos)}
 
-Embora a aplicação não ofereça uma interface pública de e-commerce aos consumidores finais, os clientes do estabelecimento são diretamente beneficiados pela organização promovida pelo software.
+Embora a aplicação não ofereça uma interface pública de \textit{e-commerce} aos consumidores finais, os clientes do estabelecimento são diretamente beneficiados pela organização promovida pelo \textit{software}.
 
 \begin{itemize}
     \item \textbf{Perfil das Demandas:} Consumidores que buscam produtos prontos para consumo imediato (vitrine da loja) ou encomendas de bolos e doces personalizados sob medida para datas comemorativas e eventos.
@@ -80,7 +80,7 @@ As Regras de Negócio (RN) definem as diretrizes, políticas, restrições e com
     \label{quadro:regras_negocio_resumo}
     \begin{tabular}{|l|l|l|}
         \hline
-        \textbf{ID} & \textbf{Nome da Regra} & textbf{Domínio/Aplicação}\\ \hline
+        \textbf{ID} & \textbf{Nome da Regra} & \textbf{Domínio/Aplicação}\\ \hline
         RN01 & Classificação do Pedido & Módulo Pedidos\\ \hline
         RN02 & Fluxo de Verificação de Estoque & Módulo Pedidos / Estoque / Produção\\ \hline
         RN03 & Política de Sinal e Pagamento & Módulo Pedidos / Finanças\\ \hline
@@ -161,7 +161,7 @@ As regras de negócio são descritas detalhadamente a seguir:
     \begin{itemize}
         \item O sistema deve permitir o acesso apenas a usuários previamente cadastrados e autenticados (acesso restrito à dona da confeitaria);
         \item No primeiro acesso ao sistema utilizando a senha provisória, o sistema deve obrigatoriamente exigir que o usuário cadastre uma nova senha pessoal antes de liberar o acesso às demais funcionalidades;
-        \item A sessão mantida no dispositivo deve permanecer ativa por padrão até que a usuária clique explicitamente no botão de logout (sair do sistema) ou expire o token de longa duração configurado no sistema. 
+        \item A sessão mantida no dispositivo deve permanecer ativa por padrão até que a usuária clique explicitamente no botão de \textit{logout} (sair do sistema) ou expire o \textit{token} de longa duração configurado no sistema. 
     \end{itemize}
 \end{enumerate}
 

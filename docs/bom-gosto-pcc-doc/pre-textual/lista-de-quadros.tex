@@ -1,4 +1,9 @@
+
 %% Lista de Quadros
 \pdfbookmark[0]{Lista de Quadros}{loq}
-\listof{quadro}{Lista de Quadros}
+
+\begingroup
+\renewcommand{\numberline}[1]{Quadro~#1\ --\ \hspace{0.5em}}\listof{quadro}{Lista de Quadros}
+\endgroup
+
 \cleardoublepage
