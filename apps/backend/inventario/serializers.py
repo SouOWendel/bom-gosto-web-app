@@ -15,9 +15,9 @@ class IngredienteSerializer(serializers.ModelSerializer):
             "id_ingrediente",
             "nome",
             "quantidade_disponivel",
-            "custo_unitario",
-            "data_validade",
             "quantidade_minima",
+            "unidade_medida",
+            "custo_unitario",
             "abaixo_do_minimo",
         )
         read_only_fields = ("id_ingrediente",)
