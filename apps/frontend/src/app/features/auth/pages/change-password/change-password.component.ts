@@ -5,11 +5,20 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { InputTextComponent } from '../../../../shared/components/input-text/input-text.component';
 import { LoginHeaderComponent } from '../../components/login-header/login-header.component';
 import { LoginFooterComponent } from '../../components/login-footer/login-footer.component';
+import { LucideArrowLeft, LucideArrowRight, LucideClock } from '@lucide/angular';
 
 @Component({
   selector: 'app-change-password',
   standalone: true,
-  imports: [ReactiveFormsModule, InputTextComponent, LoginHeaderComponent, LoginFooterComponent],
+  imports: [
+    ReactiveFormsModule,
+    InputTextComponent,
+    LoginHeaderComponent,
+    LoginFooterComponent,
+    LucideArrowLeft,
+    LucideArrowRight,
+    LucideClock,
+  ],
   templateUrl: './change-password.component.html',
   styleUrls: ['./change-password.component.scss'],
 })
