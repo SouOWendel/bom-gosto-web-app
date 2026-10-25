@@ -16,12 +16,12 @@ A base de código foi organizada sob a abordagem de \textit{Monorepo}, centraliz
     \legend{Fonte: Elaborado pelos autores (2026).}
 \end{figure}
 
-\begin{figure}[H]
-    \centering
-    \caption{\label{fig:diagrama_pacotes}Diagrama de Pacotes}
-    \includegraphics[width=\textwidth]{imagens/diagrama_pacotes.png}
-    \legend{Fonte: Elaborado pelos autores (2026).}
-\end{figure}
+%%\begin{figure}[H]
+%%    \centering
+%%    \caption{\label{fig:diagrama_pacotes}Diagrama de Pacotes}
+%%    \includegraphics[width=\textwidth]{imagens/diagrama_pacotes.png}
+%%    \legend{Fonte: Elaborado pelos autores (2026).}
+%%\end{figure}
 
 \section{Implementação dos Componentes}
 Considerando o estágio atual de desenvolvimento, a equipe priorizou a validação da arquitetura por meio de uma Prova de Conceito (POC) focada no Módulo de Usuário e Segurança. Foi implementada com sucesso a funcionalidade de Autenticação no \textit{Django}, dando vida para a Regra de Negócio de Acesso Restrito (RN08).
@@ -31,12 +31,12 @@ A implementação incluiu a criação e validação dos \textit{endpoints} de se
 \section{Integração dos Módulos}
 A integração entre o \textit{front-end} e o \textit{back-end} ocorre por meio do consumo da \textit{API REST}. Em ambiente de desenvolvimento, essa comunicação é feita pelos \textit{containers Docker}, que estabelecem a rede interna necessária para que as requisições HTTP disparadas pela interface \textit{Angular} sejam processadas de maneira segura e isolada pelas rotas do \textit{Django}.
 
-\begin{figure}[H]
-    \centering
-    \caption{\label{fig:diagrama_implantacao}Diagrama de Implantação}
-    \includegraphics[width=\textwidth]{imagens/diagrama_implantacao.png}
-    \legend{Fonte: Elaborado pelos autores (2026).}
-\end{figure}
+%%\begin{figure}[H]
+%%    \centering
+%%    \caption{\label{fig:diagrama_implantacao}Diagrama de Implantação}
+%%    \includegraphics[width=\textwidth]{imagens/diagrama_implantacao.png}
+%%    \legend{Fonte: Elaborado pelos autores (2026).}
+%%\end{figure}
 
 \section{Testes Realizados}
 Para garantir o funcionamento do código durante o desenvolvimento do sistema, foi estabelecido um protocolo rigoroso de testes automatizados. A cobertura de testes foi configurada utilizando o \textit{framework Pytest} para os testes unitários e de integração no \textit{back-end (API)}, enquanto o \textit{framework Jest} foi usado para avaliar o comportamento dos componentes da interface no \textit{front-end}.
