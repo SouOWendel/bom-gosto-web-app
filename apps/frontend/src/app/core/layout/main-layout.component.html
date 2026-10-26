@@ -1,0 +1,9 @@
+<div class="main-layout">
+  <!-- Menu Lateral -->
+  <app-sidebar [user]="userProfile()" (logout)="onLogout()" />
+
+  <!-- Conteúdo Principal -->
+  <main class="main-layout__content">
+    <router-outlet />
+  </main>
+</div>
