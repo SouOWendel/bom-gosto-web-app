@@ -10,7 +10,8 @@ export const routes: Routes = [
 	{
 		path: '',
 		component: MainLayoutComponent,
-		// canActivate: [authGuard],
+		// TODO: descomentar o guard de autenticação
+		// canActivate: [authGuard], 
 		children: [
 			{
 				path: 'inicio',
