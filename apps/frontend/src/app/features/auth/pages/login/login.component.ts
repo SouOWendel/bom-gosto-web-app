@@ -55,7 +55,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.authService.login(this.form.getRawValue()).subscribe({
       next: () =>
         this.router.navigate([
-          this.authService.user()?.primeiro_acesso ? '/auth/alterar-senha' : '/dashboard',
+          this.authService.user()?.primeiro_acesso ? '/auth/alterar-senha' : '/inicio',
         ]),
       error: (err) => {
         this.errorMessage.set(err.error?.detail || 'Não foi possível entrar.');

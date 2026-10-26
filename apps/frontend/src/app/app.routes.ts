@@ -13,14 +13,20 @@ export const routes: Routes = [
 		// canActivate: [authGuard],
 		children: [
 			{
-				path: 'dashboard',
+				path: 'inicio',
 				title: 'Dashboard - Bom Gosto',
 				loadComponent: () =>
 					import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
 			},
 			{
+				path: 'pedidos',
+				title: 'Orders - Bom Gosto',
+				loadComponent: () =>
+					import('./features/orders/orders.component').then((m) => m.OrdersComponent),
+			},
+			{
 				path: '',
-				redirectTo: 'dashboard',
+				redirectTo: 'inicio',
 				pathMatch: 'full',
 			},
 		],

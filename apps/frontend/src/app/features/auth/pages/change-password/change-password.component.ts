@@ -83,7 +83,7 @@ export class ChangePasswordComponent implements OnInit, OnDestroy {
     this.authService.changePassword(currentPassword, newPassword).subscribe({
       next: () => {
         this.authService.user.update((user) => (user ? { ...user, primeiro_acesso: false } : user));
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/inicio']);
       },
       error: (error) => {
         this.errorMessage.set(error.error?.detail || 'Não foi possível alterar a senha.');

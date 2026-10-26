@@ -60,7 +60,7 @@ export class SidebarComponent {
     {
       id: 'inicio',
       label: 'Início',
-      route: '/dashboard',
+      route: '/inicio',
       icon: 'layout-grid',
       exact: true,
     },
