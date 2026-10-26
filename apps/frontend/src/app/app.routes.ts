@@ -14,15 +14,33 @@ export const routes: Routes = [
 		children: [
 			{
 				path: 'inicio',
-				title: 'Dashboard - Bom Gosto',
+				title: 'Início - Bom Gosto',
 				loadComponent: () =>
 					import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
 			},
 			{
 				path: 'pedidos',
-				title: 'Orders - Bom Gosto',
+				title: 'Pedidos - Bom Gosto',
 				loadComponent: () =>
 					import('./features/orders/orders.component').then((m) => m.OrdersComponent),
+			},
+			{
+				path: 'produtos',
+				title: 'Produtos - Bom Gosto',
+				loadComponent: () =>
+					import('./features/products/products.component').then((m) => m.ProductsComponent),
+			},
+			{
+				path: 'estoque',
+				title: 'Estoque - Bom Gosto',
+				loadComponent: () =>
+					import('./features/stock/stock.component').then((m) => m.StockComponent),
+			},
+			{
+				path: 'inventario',
+				title: 'Inventário - Bom Gosto',
+				loadComponent: () =>
+					import('./features/inventory/inventory.component').then((m) => m.InventoryComponent),
 			},
 			{
 				path: '',

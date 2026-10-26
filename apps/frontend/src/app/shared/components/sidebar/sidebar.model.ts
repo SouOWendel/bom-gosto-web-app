@@ -24,5 +24,29 @@ export const DEFAULT_SIDEBAR_PAGES: NavItem[] = [
     route: '/inicio',
     icon: 'layout-grid',
     exact: true,
-  }
+  },
+  {
+    id: 'pedidos',
+    label: 'Pedidos',
+    route: '/pedidos',
+    icon: 'receipt',
+  },
+  {
+    id: 'produtos',
+    label: 'Produtos',
+    route: '/produtos',
+    icon: 'cake-slice',
+  },
+  {
+    id: 'estoque',
+    label: 'Estoque',
+    route: '/estoque',
+    icon: 'archive',
+  },
+  {
+    id: 'inventario',
+    label: 'Inventário',
+    route: '/inventario',
+    icon: 'chart-column',
+  },
 ];

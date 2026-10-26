@@ -17,7 +17,7 @@ import {
   LucideSettings,
   LucideCircle,
 } from '@lucide/angular';
-import { NavItem, UserProfile } from './sidebar.model';
+import { DEFAULT_SIDEBAR_PAGES, NavItem, UserProfile } from './sidebar.model';
 
 @Component({
   selector: 'app-sidebar',
@@ -54,17 +54,9 @@ import { NavItem, UserProfile } from './sidebar.model';
 export class SidebarComponent {
   /**
    * Lista de itens do menu de navegação.
-   * Por padrão, inicia apenas com a página de Início.
+   * Por padrão, carrega as páginas padrão da aplicação.
    */
-  readonly items = input<NavItem[]>([
-    {
-      id: 'inicio',
-      label: 'Início',
-      route: '/inicio',
-      icon: 'layout-grid',
-      exact: true,
-    },
-  ]);
+  readonly items = input<NavItem[]>(DEFAULT_SIDEBAR_PAGES);
 
   /**
    * Informações do usuário exibidas no rodapé da sidebar.
@@ -91,6 +83,10 @@ export class SidebarComponent {
     const aliasMap: Record<string, string> = {
       dashboard: 'layout-grid',
       inicio: 'layout-grid',
+      pedidos: 'receipt',
+      produtos: 'cake-slice',
+      estoque: 'archive',
+      inventario: 'chart-column',
     };
     return aliasMap[icon] ?? icon;
   }
