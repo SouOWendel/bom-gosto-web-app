@@ -1,0 +1,20 @@
+.dashboard-page {
+	padding: 2rem;
+
+	&__header {
+		margin-bottom: 2rem;
+	}
+
+	&__title {
+		font-size: 1.75rem;
+		font-weight: 700;
+		color: #2e1d21;
+		margin: 0;
+	}
+
+	&__subtitle {
+		font-size: 0.95rem;
+		color: #826c70;
+		margin-top: 0.25rem;
+	}
+}
