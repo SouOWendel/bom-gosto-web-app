@@ -1,5 +1,8 @@
 :host {
   display: block;
+  width: 16.5rem;
+  min-width: 16.5rem;
+  flex-shrink: 0;
   height: 100%;
 }
 
@@ -162,7 +165,8 @@
     flex-shrink: 0;
     background: #f4d8d8;
 
-    img, svg {
+    img,
+    svg {
       width: 100%;
       height: 100%;
     }
