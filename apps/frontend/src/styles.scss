@@ -71,3 +71,71 @@ select {
     padding: 2rem 1.5rem;
   }
 }
+
+// Botões Padronizados Globais
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+
+  &--primary {
+    background-color: var(--color-primary);
+    color: #ffffff;
+    &:hover {
+      background-color: var(--color-primary-dark);
+    }
+  }
+
+  &--secondary {
+    background-color: #ffffff;
+    color: var(--color-text);
+    border-color: #e5d7d9;
+    &:hover {
+      background-color: #fcf6f7;
+    }
+  }
+
+  &--outline-primary {
+    background-color: var(--color-primary-light);
+    color: var(--color-primary);
+    border-color: rgba(123, 26, 46, 0.2);
+    &:hover {
+      background-color: rgba(123, 26, 46, 0.12);
+    }
+  }
+
+  &--sm {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.8125rem;
+  }
+
+  &--block {
+    width: 100%;
+  }
+}
+
+.btn-icon {
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 1px solid #e5d7d9;
+  background-color: #ffffff;
+  color: #5c3e43;
+  cursor: pointer;
+  &:hover {
+    background-color: #f7ebeb;
+    color: var(--color-primary);
+  }
+}
