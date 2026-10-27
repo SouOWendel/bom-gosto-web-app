@@ -1,8 +1,311 @@
-<div class="dashboard-page">
-	<header class="dashboard-page__header">
-		<div>
-			<h1 class="dashboard-page__title">Início</h1>
-			<p class="dashboard-page__subtitle">Visão Geral</p>
-		</div>
-	</header>
+<div class="dashboard">
+  <!-- Top Bar / Saudação & Ações Rápidas -->
+  <header class="dashboard__header">
+    <div class="dashboard__greeting">
+      <div class="dashboard__badge-status">
+        <span class="status-dot"></span>
+        <span>{{ statusAtelie }}</span>
+        <span class="divider-dot">•</span>
+        <span class="dashboard__date">{{ dataFormatada }}</span>
+      </div>
+      <h1 class="dashboard__title">
+        {{ saudacao }}
+        <span class="wave-emoji" aria-hidden="true">🧁</span>
+      </h1>
+    </div>
+
+    <div class="dashboard__header-actions">
+      <a routerLink="/pedidos" class="btn btn--secondary">
+        <svg [lucideIcon]="'clock'" [size]="16" [strokeWidth]="2"></svg>
+        <span>Ver Cronograma</span>
+      </a>
+      <a routerLink="/pedidos" class="btn btn--primary">
+        <svg [lucideIcon]="'plus'" [size]="18" [strokeWidth]="2.5"></svg>
+        <span>Cadastrar Pedido ({{ getDiaDoMes(dataSelecionada()) }}/09)</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Métricas Rápidas / Cards de Resumo -->
+  <section class="dashboard__summary" aria-label="Resumo do dia">
+    @for (card of cardsResumo; track card.titulo) {
+      <div class="summary-card summary-card--{{ card.tipo }}">
+        <div class="summary-card__header">
+          <span class="summary-card__title">{{ card.titulo }}</span>
+          <div class="summary-card__icon" aria-hidden="true">
+            <svg [lucideIcon]="getIcon(card.icone)" [size]="20" [strokeWidth]="2"></svg>
+          </div>
+        </div>
+
+        <div class="summary-card__body">
+          <span class="summary-card__value">{{ card.valor }}</span>
+          <p class="summary-card__subtext">
+            {{ card.subtexto }}
+            @if (card.tagAcao) {
+              <a routerLink="/inventario" class="summary-card__action-link">
+                {{ card.tagAcao }} →
+              </a>
+            }
+          </p>
+        </div>
+      </div>
+    }
+  </section>
+
+  <!-- Conteúdo Principal: Grade com Calendário e Agenda de Produção -->
+  <div class="dashboard__content-grid">
+    <!-- Coluna Esquerda: Calendário Interativo -->
+    <section class="dashboard__panel calendar-panel" aria-label="Calendário de encomendas">
+      <div class="calendar-panel__header">
+        <div class="calendar-panel__title-box">
+          <h2 class="calendar-panel__month">{{ mesAno }}</h2>
+          <span class="calendar-panel__hint">Clique em uma data para ver as encomendas</span>
+        </div>
+        <div class="calendar-panel__nav">
+          <button type="button" class="btn-icon" aria-label="Mês anterior">
+            <svg [lucideIcon]="'chevron-left'" [size]="18" [strokeWidth]="2"></svg>
+          </button>
+          <button type="button" class="btn-icon" aria-label="Próximo mês">
+            <svg [lucideIcon]="'chevron-right'" [size]="18" [strokeWidth]="2"></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Grade do Calendário -->
+      <div class="calendar-grid">
+        <!-- Dias da Semana -->
+        <div class="calendar-grid__weekdays">
+          @for (diaNome of diasSemana; track diaNome) {
+            <span class="calendar-grid__weekday">{{ diaNome }}</span>
+          }
+        </div>
+
+        <!-- Células dos Dias -->
+        <div class="calendar-grid__days">
+          @for (dia of diasCalendario(); track $index) {
+            @if (dia.numero === null) {
+              <div class="calendar-grid__cell calendar-grid__cell--empty"></div>
+            } @else {
+              <button
+                type="button"
+                class="calendar-grid__cell"
+                [class.calendar-grid__cell--today]="dia.isHoje"
+                [class.calendar-grid__cell--selected]="dia.dataStr === dataSelecionada()"
+                (click)="selecionarDia(dia)"
+                [attr.aria-label]="'Dia ' + dia.numero + ' de Setembro'"
+              >
+                <span class="cell-day-number">{{ dia.numero }}</span>
+                @if (dia.isHoje) {
+                  <span class="cell-today-pill">HOJE</span>
+                }
+
+                <!-- Pontinhos indicadores de encomendas -->
+                @if (dia.categorias.length > 0) {
+                  <div class="cell-dots">
+                    @for (cat of dia.categorias; track cat) {
+                      <span class="cell-dot cell-dot--{{ cat }}" [title]="cat"></span>
+                    }
+                  </div>
+                }
+              </button>
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Legenda de Categorias -->
+      <div class="calendar-legend">
+        <div class="legend-item">
+          <span class="cell-dot cell-dot--bolo"></span>
+          <span>Bolos Artesanais</span>
+        </div>
+        <div class="legend-item">
+          <span class="cell-dot cell-dot--doce"></span>
+          <span>Doces & Brigadeiros</span>
+        </div>
+        <div class="legend-item">
+          <span class="cell-dot cell-dot--kit"></span>
+          <span>Kits Festa & Corporativo</span>
+        </div>
+      </div>
+
+      <!-- Botão de Ação Rápida no Calendário -->
+      <div class="calendar-footer">
+        <a routerLink="/pedidos" class="btn btn--outline-primary btn--block">
+          <svg [lucideIcon]="'plus'" [size]="16" [strokeWidth]="2.5"></svg>
+          <span>Novo Pedido para dia {{ getDiaDoMes(dataSelecionada()) }}</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Coluna Direita: Agenda de Produção do Dia -->
+    <section class="dashboard__panel schedule-panel" aria-label="Agenda de produção">
+      <div class="schedule-panel__header">
+        <div class="schedule-panel__info">
+          <div class="schedule-panel__date-badge">
+            <svg [lucideIcon]="'calendar'" [size]="16" [strokeWidth]="2"></svg>
+            <span>{{ getDiaDoMes(dataSelecionada()) }} de Setembro</span>
+          </div>
+          <h2 class="schedule-panel__title">Agenda de Produção</h2>
+          <span class="schedule-panel__subtitle">
+            {{ pedidosDoDia().length }} entrega(s) agendada(s) nesta data
+          </span>
+        </div>
+
+        <div class="schedule-panel__meta-badge">
+          <span class="meta-label">Meta</span>
+          <span class="meta-value">100%</span>
+        </div>
+      </div>
+
+      <!-- Filtro por abas de categorias -->
+      <div class="schedule-tabs" role="tablist">
+        <button
+          type="button"
+          class="schedule-tab"
+          [class.schedule-tab--active]="filtroCategoria() === 'todos'"
+          (click)="setFiltro('todos')"
+        >
+          Todos <span class="tab-badge">{{ contadoresCategoria().todos }}</span>
+        </button>
+        <button
+          type="button"
+          class="schedule-tab"
+          [class.schedule-tab--active]="filtroCategoria() === 'bolo'"
+          (click)="setFiltro('bolo')"
+        >
+          Bolos <span class="tab-badge">{{ contadoresCategoria().bolo }}</span>
+        </button>
+        <button
+          type="button"
+          class="schedule-tab"
+          [class.schedule-tab--active]="filtroCategoria() === 'doce'"
+          (click)="setFiltro('doce')"
+        >
+          Doces <span class="tab-badge">{{ contadoresCategoria().doce }}</span>
+        </button>
+        <button
+          type="button"
+          class="schedule-tab"
+          [class.schedule-tab--active]="filtroCategoria() === 'kit'"
+          (click)="setFiltro('kit')"
+        >
+          Kits <span class="tab-badge">{{ contadoresCategoria().kit }}</span>
+        </button>
+      </div>
+
+      <!-- Lista de Pedidos da Agenda -->
+      <div class="schedule-list">
+        @if (pedidosFiltrados().length === 0) {
+          <div class="schedule-empty">
+            <div class="schedule-empty__icon">
+              <svg [lucideIcon]="'package'" [size]="36" [strokeWidth]="1.5"></svg>
+            </div>
+            <h3>Nenhum pedido agendado</h3>
+            <p>Não há encomendas para o filtro ou data selecionada.</p>
+            <a routerLink="/pedidos" class="btn btn--sm btn--primary"> Cadastrar Encomenda </a>
+          </div>
+        } @else {
+          @for (pedido of pedidosFiltrados(); track pedido.id) {
+            <article class="order-card order-card--{{ pedido.status }}">
+              <!-- Linha Superior do Card: Horário, Tipo e Status -->
+              <div class="order-card__top">
+                <div class="order-card__time-badge">
+                  <svg [lucideIcon]="'clock'" [size]="14" [strokeWidth]="2"></svg>
+                  <strong>{{ pedido.horario }}</strong>
+                  <span class="bullet">•</span>
+                  <span>{{ pedido.modalidade }}</span>
+                </div>
+
+                <span class="status-chip status-chip--{{ pedido.status }}">
+                  {{ pedido.statusLabel }}
+                </span>
+              </div>
+
+              <!-- Conteúdo Principal do Pedido -->
+              <div class="order-card__content">
+                <h3 class="order-card__item-title">{{ pedido.titulo }}</h3>
+                @if (pedido.descricao) {
+                  <p class="order-card__item-desc">{{ pedido.descricao }}</p>
+                }
+
+                <div class="order-card__client-info">
+                  <span class="client-name"
+                    >Cliente: <strong>{{ pedido.cliente }}</strong></span
+                  >
+                  <span class="bullet">•</span>
+                  <span class="client-phone">{{ pedido.telefone }}</span>
+                </div>
+
+                @if (pedido.endereco) {
+                  <div class="order-card__address">
+                    <svg [lucideIcon]="'map-pin'" [size]="13" [strokeWidth]="2"></svg>
+                    <span>{{ pedido.endereco }}</span>
+                  </div>
+                }
+
+                <!-- Barra de Progresso de Produção (quando aplicável) -->
+                @if (pedido.etapaProducao) {
+                  <div class="order-card__progress-box">
+                    <div class="progress-labels">
+                      <span class="progress-step">{{ pedido.etapaProducao }}</span>
+                    </div>
+                    <div class="progress-bar">
+                      <div
+                        class="progress-bar__fill"
+                        [style.width.%]="pedido.progressoPct ?? 0"
+                      ></div>
+                    </div>
+                  </div>
+                }
+
+                <!-- Informações de Pagamento (RN03: Sinal 50% / Quitação) -->
+                <div class="order-card__payment-box">
+                  <svg [lucideIcon]="'receipt'" [size]="14" [strokeWidth]="2"></svg>
+                  <span>{{ pedido.pagamentoInfo }}</span>
+                </div>
+              </div>
+
+              <!-- Ações do Card -->
+              <div class="order-card__actions">
+                <button
+                  type="button"
+                  class="btn-action-secondary"
+                  (click)="abrirWhatsApp(pedido.telefone, pedido.cliente)"
+                  title="Conversar com o cliente no WhatsApp"
+                >
+                  <svg [lucideIcon]="'phone'" [size]="14" [strokeWidth]="2"></svg>
+                  <span>WhatsApp</span>
+                </button>
+
+                <a
+                  routerLink="/pedidos"
+                  class="btn-action-secondary"
+                  title="Ver ficha técnica e detalhes"
+                >
+                  <svg [lucideIcon]="'file-text'" [size]="14" [strokeWidth]="2"></svg>
+                  <span>Ficha</span>
+                </a>
+
+                @if (pedido.botaoAcao) {
+                  <button
+                    type="button"
+                    class="btn btn--sm btn--primary order-card__action-cta"
+                    (click)="avancarStatus(pedido)"
+                  >
+                    <svg [lucideIcon]="'circle-check'" [size]="14" [strokeWidth]="2"></svg>
+                    <span>{{ pedido.botaoAcao }}</span>
+                  </button>
+                }
+              </div>
+            </article>
+          }
+        }
+      </div>
+
+      <div class="schedule-panel__footer">
+        <span>Visualizando encomendas do dia {{ getDiaDoMes(dataSelecionada()) }} de Setembro</span>
+      </div>
+    </section>
+  </div>
 </div>
