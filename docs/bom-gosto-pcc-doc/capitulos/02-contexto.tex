@@ -1,5 +1,5 @@
 \chapter{Contexto do Projeto}
-Este capítulo apresenta o contexto real no qual o projeto em desenvolvimento está inserido, caracterizando a área de atuação do parceiro comercial, o perfil do público-alvo, as necessidades operacionais identificadas e a fundamentação conceitual das regras de negócio que determinam o domínio da aplicação web para a confeitaria Rô Bolos. A sua finalidade é estabelecer a compreensão aprofundada dos desafios cotidianos enfrentados pelo estabelecimento antes da especificação e estruturação técnica da solução computacional.
+Este capítulo apresenta o contexto real no qual o projeto em desenvolvimento está inserido, caracterizando a área de atuação do parceiro comercial, o perfil do público-alvo, as necessidades operacionais identificadas e a fundamentação conceitual das regras de negócio que determinam o domínio da aplicação web para a confeitaria Bom Gosto. A sua finalidade é estabelecer a compreensão aprofundada dos desafios cotidianos enfrentados pelo estabelecimento antes da especificação e estruturação técnica da solução computacional.
 
 \section{Cenário}
 
@@ -87,7 +87,7 @@ As Regras de Negócio (RN) definem as diretrizes, políticas, restrições e com
         RN04 & Tratamento de Pedidos Cancelados & Módulo Pedidos / Estoque / Relatórios\\ \hline
         RN05 & Validação de Insumos na Produção & Módulo Produção / Inventário\\ \hline
         RN06 & Baixa e Custo de Insumos & Módulo Produção / Inventário\\ \hline
-        RN07 & Exclusão e Alteração de Pedidos & Módulo Pedidos\\ \hline
+        RN07 & Alteração de Pedidos & Módulo Pedidos\\ \hline
         RN08 & Acesso Restrito e Exclusivo & Módulo Acesso\\ \hline
     \end{tabular}
 
@@ -104,25 +104,19 @@ As regras de negócio são descritas detalhadamente a seguir:
         \item Todo pedido cadastrado deve ser obrigatoriamente classificado como Interno (produção própria para abastecer a vitrine) ou Externo (demanda de cliente);
         \item Pedidos Externos devem ser sub categorizados como Vitrine (compra de produto já pronto) ou Personalizado (encomenda sob medida).
     \end{itemize}
-\end{enumerate}
 
-\begin{enumerate}
     \item \textbf{RN02 - Fluxo de Verificação de Estoque:}
     \begin{itemize}
         \item Ao registrar um pedido de Vitrine, o sistema deve checar imediatamente a disponibilidade do produto no estoque;
         \item Ao registrar um pedido Personalizado, o sistema deve consultar o estoque em busca de bases reaproveitáveis (como massas e recheios já prontos). Caso não existam, o item deve ser direcionado para o fluxo de Produção.
     \end{itemize}
-\end{enumerate}
 
-\begin{enumerate}
     \item \textbf{RN03 - Política de Sinal e Pagamento:}
     \begin{itemize}
         \item Pedidos Personalizados exigem o registro de um valor de sinal (pagamento parcial) para confirmação antes de irem para produção;
         \item O sistema não realiza o processamento financeiro nem cobranças automáticas (\textit{gateway}); ele atua exclusivamente como registro e controle manual do fluxo de caixa.
     \end{itemize}
-\end{enumerate}
 
-\begin{enumerate}
     \item \textbf{RN04 - Tratamento de Pedidos Cancelados:}
     \begin{itemize}
         \item Se um pedido for cancelado após o início da confecção, o sistema deve obrigatoriamente solicitar à confeiteira o destino dos insumos/produtos intermediários já preparados e decidir entre:
@@ -131,32 +125,26 @@ As regras de negócio são descritas detalhadamente a seguir:
             \item Registro como Perda/Descarte (para abatimento nos relatórios de rendimento).
         \end{itemize}
     \end{itemize}
-\end{enumerate}
 
-\begin{enumerate}
     \item \textbf{RN05 - Validação de Insumos na Produção:}
     \begin{itemize}
         \item O sistema não deve permitir a confirmação de início de produção sem emitir um alerta prévio caso a quantidade disponível de ingredientes no Inventário seja menor do que a quantidade exigida pela receita.
     \end{itemize}
-\end{enumerate}
 
-\begin{enumerate}
     \item \textbf{RN06 -  Baixa e Custo de Insumos:}
     \begin{itemize}
         \item A baixa dos ingredientes no Inventário ocorre de forma automática somente após a confirmação da execução da receita no módulo de Produção;
         \item O custo unitário do lote fabricado deve ser calculado com base no valor atual de compra dos ingredientes utilizados no momento da produção.
     \end{itemize}
-\end{enumerate}
 
-\begin{enumerate}
-    \item \textbf{RN07 -  Exclusão e Alteração de Pedidos:}
+   
+    \item \textbf{RN07 - Alteração de Pedidos:}
     \begin{itemize}
-        \item A alteração de especificações de um pedido pode ser feita em qualquer etapa antes do status "Concluído";
-        \item A exclusão de um pedido deve exigir confirmação explícita para evitar remoção acidental de dados da agenda e das finanças.
+        \item A alteração das especificações de um pedido pode ser realizada em qualquer etapa anterior ao status "Concluído";
+        \item A alteração de um pedido deve exigir confirmação explícita para evitar informações incorretas.
     \end{itemize}
-\end{enumerate}
 
-\begin{enumerate}
+
     \item \textbf{RN08 -  Acesso Restrito e Exclusivo:}
     \begin{itemize}
         \item O sistema deve permitir o acesso apenas a usuários previamente cadastrados e autenticados (acesso restrito à dona da confeitaria);
