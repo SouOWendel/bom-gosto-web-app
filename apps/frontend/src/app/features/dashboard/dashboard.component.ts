@@ -4,24 +4,16 @@ import { RouterLink } from '@angular/router';
 import {
   LucideDynamicIcon,
   provideLucideIcons,
-  LucideTrendingUp,
-  LucideReceipt,
-  LucideBanknote,
-  LucideCakeSlice,
-  LucideTriangleAlert,
-  LucideCalendar,
   LucideChevronLeft,
   LucideChevronRight,
-  LucideClock,
-  LucideMapPin,
   LucidePlus,
-  LucidePhone,
-  LucideFileText,
-  LucideCircleCheck,
-  LucidePackage,
-  LucideShoppingBag,
-  LucideSparkles,
 } from '@lucide/angular';
+import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
+import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
+import { MetricCardsComponent } from '../../shared/components/metric-cards/metric-cards.component';
+import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
+import { DashboardAgendaComponent } from './components/dashboard-agenda/dashboard-agenda.component';
+import { DashboardRemindersComponent } from './components/dashboard-reminders/dashboard-reminders.component';
 
 export interface ResumoCard {
   titulo: string;
@@ -64,37 +56,58 @@ export interface DiaCalendario {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, LucideDynamicIcon],
-  providers: [
-    provideLucideIcons(
-      LucideTrendingUp,
-      LucideReceipt,
-      LucideBanknote,
-      LucideCakeSlice,
-      LucideTriangleAlert,
-      LucideCalendar,
-      LucideChevronLeft,
-      LucideChevronRight,
-      LucideClock,
-      LucideMapPin,
-      LucidePlus,
-      LucidePhone,
-      LucideFileText,
-      LucideCircleCheck,
-      LucidePackage,
-      LucideShoppingBag,
-      LucideSparkles,
-    ),
+  imports: [
+    CommonModule,
+    RouterLink,
+    LucideDynamicIcon,
+    PageGreetingComponent,
+    MetricCardsComponent,
+    DashboardAgendaComponent,
+    DashboardRemindersComponent,
   ],
+  providers: [provideLucideIcons(LucideChevronLeft, LucideChevronRight, LucidePlus)],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent {
   // Informações do Cabeçalho
-  readonly saudacao = 'Bom dia, Chef Rosangela!';
-  readonly statusAtelie = 'Ateliê em Produção';
-  readonly dataFormatada = 'Segunda-feira, 15 de Setembro de 2026';
-  readonly mesAno = 'Setembro 2026';
+  readonly nomeChef = 'Rosangela';
+  readonly mesAno = 'Setembro de 2026';
+
+  readonly greetingActions: PageAction[] = [
+    {
+      label: 'Ver Cronograma do Dia',
+      route: '/pedidos',
+      icon: 'calendar',
+      variant: 'secondary',
+    },
+    {
+      label: 'Cadastrar Pedido',
+      route: '/pedidos',
+      icon: 'plus',
+      variant: 'primary',
+    },
+  ];
+
+  readonly metricas: MetricCardItem[] = [
+    {
+      label: 'VENDAS DE HOJE',
+      value: 'R$ 840,00',
+      icon: 'banknote',
+      variant: 'vendas',
+      trend: {
+        value: '+14% em relação à meta do dia',
+        direction: 'up',
+      },
+    },
+    {
+      label: 'PEDIDOS AGENDADOS',
+      value: '3 pedidos',
+      icon: 'receipt',
+      variant: 'pedidos',
+      subtext: '1 pronto • 1 em finalização • 1 confirmado',
+    },
+  ];
 
   // Dia atualmente selecionado no calendário (YYYY-MM-DD)
   readonly dataSelecionada = signal<string>('2026-09-15');
@@ -102,40 +115,7 @@ export class DashboardComponent {
   // Filtro de categorias da agenda: 'todos' | 'bolo' | 'doce' | 'kit'
   readonly filtroCategoria = signal<string>('todos');
 
-  // Cards de Métricas do Cabeçalho (baseados no protótipo Figura 8)
-  readonly cardsResumo: ResumoCard[] = [
-    {
-      titulo: 'VENDAS DE HOJE',
-      valor: 'R$ 840,00',
-      subtexto: '+14% em relação à meta do dia',
-      tipo: 'vendas',
-      icone: 'banknote',
-    },
-    {
-      titulo: 'PEDIDOS AGENDADOS',
-      valor: '3 pedidos',
-      subtexto: '1 pronto • 1 em finalização • 1 confirmado',
-      tipo: 'pedidos',
-      icone: 'receipt',
-    },
-    {
-      titulo: 'VALOR MÉDIO POR PEDIDO',
-      valor: 'R$ 181,60',
-      subtexto: 'Alta complexidade artesanal garantida',
-      tipo: 'ticket',
-      icone: 'cake-slice',
-    },
-    {
-      titulo: 'ESTOQUE BAIXO',
-      valor: 'Leite Condensado Moça',
-      subtexto: 'Restam apenas 3 latas no inventário',
-      tipo: 'alerta',
-      tagAcao: 'Repor Estoque',
-      icone: 'triangle-alert',
-    },
-  ];
-
-  // Base simulada de pedidos (alinhada aos dados do backend/seed e protótipo)
+  // Base simulada de pedidos
   readonly pedidos = signal<PedidoSimulado[]>([
     {
       id: 1,
@@ -163,7 +143,7 @@ export class DashboardComponent {
       statusLabel: 'Em Produção',
       cliente: 'Beatriz Santos',
       telefone: '(11) 97755-4411',
-      etapaProducao: 'Cozinhando & Cobertura • 75% Concluído',
+      etapaProducao: 'Cozinhando & Cobertura — 75% Concluído',
       progressoPct: 75,
       pagamentoInfo: 'Sinal 50%: R$ 245,00 (R$ 245 restante)',
       botaoAcao: 'Avançar para Pronto',
@@ -174,20 +154,20 @@ export class DashboardComponent {
       horario: '18:00',
       modalidade: 'DELIVERY',
       titulo: 'Bolo Red Velvet Especial',
-      descricao: 'Decoração floral com frutas vermelhas',
+      descricao: 'Bolo 1,8kg massa red velvet com cream cheese',
       categoria: 'bolo',
       status: 'confirmado',
       statusLabel: 'Confirmado',
       cliente: 'Beatriz Santos',
       telefone: '(11) 97755-4411',
-      endereco: 'Entrega em Domicílio (Zona Sul)',
-      pagamentoInfo: 'Sinal 50%: R$ 90,00 (R$ 90 restante)',
+      endereco: 'Rua das Flores, 123 — Vila Mariana',
+      pagamentoInfo: 'Valor Total: R$ 180,00',
       botaoAcao: 'Iniciar Preparo',
     },
     {
       id: 4,
       data: '2026-09-19',
-      horario: '16:00',
+      horario: '11:00',
       modalidade: 'RETIRADA',
       titulo: 'Bolo 1kg massa branca + 50 salgados',
       categoria: 'kit',
@@ -318,7 +298,7 @@ export class DashboardComponent {
         if (p.status === 'confirmado') {
           return {
             ...p,
-            status: 'em_producao',
+            status: 'em_producao' as StatusPedido,
             statusLabel: 'Em Produção',
             etapaProducao: 'Massa & Recheio em preparo',
             progressoPct: 35,
@@ -329,7 +309,7 @@ export class DashboardComponent {
         if (p.status === 'em_producao') {
           return {
             ...p,
-            status: 'pronto',
+            status: 'pronto' as StatusPedido,
             statusLabel: 'Pronto para Retirada',
             progressoPct: 100,
             botaoAcao: undefined,
@@ -353,13 +333,5 @@ export class DashboardComponent {
     if (!dataStr) return '';
     const partes = dataStr.split('-');
     return partes[2] ?? '';
-  }
-
-  getIcon(icone: string): string {
-    const aliases: Record<string, string> = {
-      'alert-triangle': 'triangle-alert',
-      'check-circle-2': 'circle-check',
-    };
-    return aliases[icone] ?? icone;
   }
 }

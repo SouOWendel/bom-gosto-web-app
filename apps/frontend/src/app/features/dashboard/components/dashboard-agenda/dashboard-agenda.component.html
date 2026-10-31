@@ -1,0 +1,181 @@
+<section class="agenda-panel" aria-label="Agenda de produção">
+  <!-- Cabeçalho -->
+  <div class="agenda-panel__header">
+    <div class="agenda-panel__info">
+      <h2 class="agenda-panel__title">Agenda de Produção</h2>
+      <span class="agenda-panel__subtitle">
+        {{ pedidosFiltrados().length }} entrega(s) programada(s) nesta data
+      </span>
+    </div>
+  </div>
+
+  <!-- Filtro por abas -->
+  <div class="agenda-tabs" role="tablist">
+    <button
+      type="button"
+      class="agenda-tab"
+      [class.agenda-tab--active]="filtroCategoria() === 'todos'"
+      (click)="setFiltro('todos')"
+      role="tab"
+    >
+      Todos <span class="agenda-tab__badge">{{ contadoresCategoria().todos }}</span>
+    </button>
+    <button
+      type="button"
+      class="agenda-tab"
+      [class.agenda-tab--active]="filtroCategoria() === 'bolo'"
+      (click)="setFiltro('bolo')"
+      role="tab"
+    >
+      Bolos <span class="agenda-tab__badge">{{ contadoresCategoria().bolo }}</span>
+    </button>
+    <button
+      type="button"
+      class="agenda-tab"
+      [class.agenda-tab--active]="filtroCategoria() === 'doce'"
+      (click)="setFiltro('doce')"
+      role="tab"
+    >
+      Doces <span class="agenda-tab__badge">{{ contadoresCategoria().doce }}</span>
+    </button>
+    <button
+      type="button"
+      class="agenda-tab"
+      [class.agenda-tab--active]="filtroCategoria() === 'kit'"
+      (click)="setFiltro('kit')"
+      role="tab"
+    >
+      Kits <span class="agenda-tab__badge">{{ contadoresCategoria().kit }}</span>
+    </button>
+  </div>
+
+  <!-- Lista de pedidos -->
+  <div class="agenda-list">
+    @if (pedidosFiltrados().length === 0) {
+      <div class="agenda-empty">
+        <div class="agenda-empty__icon">
+          <svg [lucideIcon]="'package'" [size]="36" [strokeWidth]="1.5"></svg>
+        </div>
+        <h3>Nenhum pedido agendado</h3>
+        <p>Não há encomendas para o filtro ou data selecionada.</p>
+        <a routerLink="/pedidos" class="btn btn--sm btn--primary">Cadastrar Encomenda</a>
+      </div>
+    } @else {
+      @for (pedido of pedidosFiltrados(); track pedido.id) {
+        <article class="order-card order-card--{{ pedido.status }}">
+          <!-- Linha superior: horário + status badge -->
+          <div class="order-card__top">
+            <div class="order-card__time-badge">
+              <svg [lucideIcon]="'clock'" [size]="13" [strokeWidth]="2"></svg>
+              <strong>{{ pedido.horario }}</strong>
+              <span class="order-card__bullet">&bull;</span>
+              <span>{{ pedido.modalidade }}</span>
+            </div>
+            <span class="status-chip status-chip--{{ pedido.status }}">
+              {{ pedido.statusLabel }}
+            </span>
+          </div>
+
+          <!-- Conteúdo: imagem + detalhes -->
+          <div class="order-card__body">
+            <!-- Placeholder imagem -->
+            <div
+              class="order-card__image order-card__image--{{ pedido.categoria }}"
+              aria-hidden="true"
+            >
+              @if (pedido.categoria === 'bolo') {
+                🎂
+              }
+              @if (pedido.categoria === 'doce') {
+                🍬
+              }
+              @if (pedido.categoria === 'kit') {
+                🎁
+              }
+            </div>
+
+            <div class="order-card__details">
+              <h3 class="order-card__item-title">{{ pedido.titulo }}</h3>
+              @if (pedido.descricao) {
+                <p class="order-card__item-desc">{{ pedido.descricao }}</p>
+              }
+              <div class="order-card__client-info">
+                <span
+                  >Cliente: <strong>{{ pedido.cliente }}</strong></span
+                >
+              </div>
+
+              @if (pedido.endereco) {
+                <div class="order-card__address">
+                  <svg [lucideIcon]="'map-pin'" [size]="12" [strokeWidth]="2"></svg>
+                  <span>{{ pedido.endereco }}</span>
+                </div>
+              }
+
+              @if (pedido.etapaProducao) {
+                <div class="order-card__progress-box">
+                  <div class="progress-labels">{{ pedido.etapaProducao }}</div>
+                  <div class="progress-bar">
+                    <div
+                      class="progress-bar__fill"
+                      [style.width.%]="pedido.progressoPct ?? 0"
+                    ></div>
+                  </div>
+                </div>
+              }
+
+              <div class="order-card__payment-info">
+                @if (pedido.status === 'pronto') {
+                  <span class="order-card__paid">
+                    <svg [lucideIcon]="'circle-check'" [size]="13" [strokeWidth]="2.5"></svg>
+                    Pago
+                  </span>
+                }
+                <span class="order-card__payment-value">{{ pedido.pagamentoInfo }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ações -->
+          <div class="order-card__actions">
+            @if (pedido.status === 'pronto') {
+              <a routerLink="/pedidos" class="btn-action-secondary">
+                <svg [lucideIcon]="'file-text'" [size]="13" [strokeWidth]="2"></svg>
+                <span>Ficha</span>
+              </a>
+            } @else if (pedido.status === 'em_producao') {
+              <button
+                type="button"
+                class="btn btn--sm btn--primary order-card__cta"
+                (click)="avancarStatus(pedido)"
+              >
+                Avançar para Pronto →
+              </button>
+            } @else if (pedido.status === 'confirmado') {
+              <button
+                type="button"
+                class="btn btn--sm btn--outline-primary"
+                (click)="avancarStatus(pedido)"
+              >
+                Iniciar Preparo
+              </button>
+            }
+            <button
+              type="button"
+              class="btn-action-secondary"
+              (click)="abrirWhatsApp(pedido.telefone, pedido.cliente)"
+              title="Conversar com o cliente no WhatsApp"
+            >
+              <svg [lucideIcon]="'phone'" [size]="13" [strokeWidth]="2"></svg>
+              <span>WhatsApp</span>
+            </button>
+          </div>
+        </article>
+      }
+    }
+  </div>
+
+  <div class="agenda-panel__footer">
+    <span>Visualizando encomendas do dia {{ getDiaDoMes(dataSelecionada()) }} de Setembro</span>
+  </div>
+</section>
