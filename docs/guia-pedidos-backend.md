@@ -14,7 +14,11 @@ A exclusão por `DELETE` não está habilitada: pedidos devem preservar históri
 
 ## Verificação integrada com Estoque
 
+<<<<<<< HEAD
 Ao criar, editar ou consultar um pedido, a resposta inclui `analise` com disponibilidade por item, receitas sugeridas, receitas ou ingredientes ausentes e ingredientes insuficientes. A falta de produto ou ingrediente gera alerta e não bloqueia o cadastro. Consulte [Contratos da API operacional](api-fluxos-operacionais.md) para payloads e as rotas de iniciar, concluir, cancelar e confirmar consumo do Estoque.
+=======
+Ao criar ou consultar um pedido externo de vitrine ou personalizado, cada item da resposta inclui `verificacao_estoque`. Para itens associados a um produto, o campo consulta os lotes válidos do Estoque e retorna o saldo, a disponibilidade e `encaminhar_para_producao` quando a quantidade não for suficiente. O saldo é atual e pode mudar entre consultas. Não é persistido como histórico no pedido.
+>>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 
 ## 1. Preparar o ambiente
 
@@ -200,7 +204,11 @@ Invoke-RestMethod -Method Patch `
 
 ## Regras e testes
 
+<<<<<<< HEAD
 Cada item deve informar exatamente um produto ou uma receita. Pedidos internos não devem ter subtipo. Pedidos externos exigem subtipo e cliente ou `contato_nome` com `contato_telefone`; o sinal deve ser zero ou metade do valor total. Valores negativos são rejeitados. Status operacional é controlado pelos endpoints do fluxo e não representa pagamentos.
+=======
+Cada item deve informar exatamente um produto ou uma receita. Pedidos internos não devem ter subtipo. Pedidos externos exigem cliente e subtipo, e o sinal deve ser zero ou metade do valor total. Valores negativos são rejeitados.
+>>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 
 O `DELETE` deve responder `405 Method Not Allowed`; o pedido continua consultável porque a exclusão não faz parte do módulo.
 

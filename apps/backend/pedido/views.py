@@ -1,4 +1,5 @@
 from rest_framework.permissions import BasePermission, IsAuthenticated
+<<<<<<< HEAD
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -13,6 +14,14 @@ from producao.serializers import CancelamentoSerializer
 
 
 # Bloqueia as rotas de pedidos até a senha provisória ser trocada.
+=======
+from rest_framework.viewsets import ModelViewSet
+
+from .models import Pedido
+from .serializers import PedidoSerializer
+
+
+>>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 class SenhaInicialAlterada(BasePermission):
     message = "Altere a senha inicial antes de acessar os pedidos."
 
@@ -20,13 +29,17 @@ class SenhaInicialAlterada(BasePermission):
         return not getattr(request.user, "primeiro_acesso", True)
 
 
+<<<<<<< HEAD
 # Oferece o CRUD de pedidos e as ações operacionais de consumo, conclusão e cancelamento.
+=======
+>>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 class PedidoViewSet(ModelViewSet):
     queryset = Pedido.objects.all().order_by("-id_pedido")
     serializer_class = PedidoSerializer
     permission_classes = [IsAuthenticated, SenhaInicialAlterada]
     http_method_names = ["get", "post", "put", "patch", "head", "options"]
 
+<<<<<<< HEAD
     # Impede exclusões e preserva o histórico operacional do pedido.
     def perform_destroy(self, instance):
         raise ValidationError("Pedidos não podem ser excluídos; edite ou cancele o pedido.")
@@ -97,4 +110,6 @@ class CancelamentoViewSet(ReadOnlyModelViewSet):
     serializer_class = CancelamentoRegistroSerializer
     permission_classes = [IsAuthenticated, SenhaInicialAlterada]
 
+=======
+>>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 

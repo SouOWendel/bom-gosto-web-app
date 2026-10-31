@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
@@ -55,3 +56,8 @@ class MovimentacaoProducaoTests(SimpleTestCase):
             with self.assertRaises(ValidationError):
                 cancelar_pedido(pedido, [], "descarte")
             criar_cancelamento.assert_called_once()
+=======
+from django.test import TestCase
+
+# Create your tests here.
+>>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8

@@ -80,7 +80,11 @@ class Command(BaseCommand):
             ("Joseane", date(2026, 9, 5), time(11, 0), "51.00", "25.50", Pedido.Status.CONCLUIDO, [("Pote", 2, "brigadeiro", None, None), ("Pote", 1, "bannoffe", None, None)]),
             ("Márcia Regina", date(2026, 9, 4), time(10, 0), "61.20", "0.00", Pedido.Status.CONCLUIDO, [("Fatia", 1, "Matilda", None, "1.00"), ("Mini vulcão", 1, "ninho", None, "1.00")]),
             ("Rafaela Souza", date(2026, 9, 12), time(15, 0), "115.90", "57.95", Pedido.Status.CANCELADO, [("Bolo 1kg massa branca", 1, "brigadeiro", "Parabéns (R$ 35,00)", "1.00")]),
+<<<<<<< HEAD
             ("Carlos Menezes", date(2026, 10, 10), time(15, 0), "90.00", "45.00", Pedido.Status.EM_PRODUCAO, [("Mini vulcão", 3, "ninho", None, None), ("Pote", 2, "bannoffe", None, None)]),
+=======
+            ("Carlos Menezes", date(2026, 10, 10), time(15, 0), "90.00", "45.00", Pedido.Status.PAGAMENTO_PARCIAL, [("Mini vulcão", 3, "ninho", None, None), ("Pote", 2, "bannoffe", None, None)]),
+>>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
         ]
 
         for (nome, data_entrega, horario, total, sinal, status,

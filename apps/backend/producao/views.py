@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404
@@ -74,3 +75,27 @@ class ConcluirProducaoView(APIView):
         serializer.is_valid(raise_exception=True)
         resultado = serializer.save()
         return Response({"pedido": PedidoSerializer(resultado["pedido"], context={"request": request}).data, "custo_producao": resultado["custo"]}, status=status.HTTP_200_OK)
+=======
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from estoque.serializers import EstoqueSerializer
+from .serializers import RegistrarProducaoSerializer
+
+
+class RegistrarProducaoView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        serializer = RegistrarProducaoSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        lote = serializer.save()
+
+        return Response(
+            EstoqueSerializer(lote).data,
+            status=status.HTTP_201_CREATED,
+        )
+>>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8

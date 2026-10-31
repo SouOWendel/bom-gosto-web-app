@@ -1,7 +1,10 @@
 # Guia do back-end de inventário
 
+<<<<<<< HEAD
 As respostas incluem `data_validade`, `abaixo_do_minimo` e `alerta_validade`. O alerta usa `critico` (vencido ou vence hoje), `atencao` (até sete dias) e `preventivo` (até quinze dias). `unidade_medida` não existe na tabela atual e não é exposta pela API. Para produção e baixa de ingredientes, consulte [Contratos da API operacional](api-fluxos-operacionais.md).
 
+=======
+>>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 Este guia descreve como iniciar o projeto com Docker e testar manualmente a API de Inventário usando PowerShell.
 
 ## Escopo e persistência
@@ -221,4 +224,8 @@ try {
 }
 ```
 
+<<<<<<< HEAD
 O registro não é removido pelo teste. Confirme o estado final com `GET` ou com a consulta SQL da etapa 2. A limpeza de registros de teste deve ser feita de acordo com o procedimento de manutenção do banco do projeto.
+=======
+O registro não é removido pelo teste. Confirme o estado final com `GET` ou com a consulta SQL da etapa 2. A limpeza de registros de teste deve ser feita de acordo com o procedimento de manutenção do banco do projeto.
+>>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
