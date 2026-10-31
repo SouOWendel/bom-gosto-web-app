@@ -3,11 +3,12 @@ import { Router, RouterOutlet } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
 import { UserProfile } from '../../shared/components/sidebar/sidebar.model';
+import { TopbarComponent } from './topbar/topbar.component';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent],
+  imports: [RouterOutlet, SidebarComponent, TopbarComponent],
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.scss'],
 })
