@@ -1,0 +1,52 @@
+# Angular specific
+/dist/
+/out-tsc/
+/tmp/
+/coverage/
+/e2e/test-output/
+/.angular/
+.angular/
+
+# Node modules and dependency files
+/node_modules/
+/package-lock.json
+/yarn.lock
+
+# Environment files
+/.env
+/apps/backend/.env
+
+# Angular CLI and build artefacts
+/.angular-cli.json
+/.ng/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python and Django
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Django local databases and runtime files
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
+db.sqlite3
+media/
+staticfiles/
+
+# PostgreSQL local data and database dumps
+pgdata/
+postgres_data/
+*.dump
+*.backup
+*.tar

@@ -1,0 +1,68 @@
+services:
+  # BANCO DE DADOS: PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: bom-gosto-db
+    restart: always
+    environment:
+      POSTGRES_DB: db_confeitaria
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./database/create_schema.sql:/docker-entrypoint-initdb.d/02-create-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d db_confeitaria"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # BACKEND: API Rest Django
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile.dev
+    container_name: bom-gosto-backend
+    restart: always
+    volumes: # Mapeia localmente para o Hot Reload do DJANGO
+      - ./apps/backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=db_confeitaria
+      - DB_USER=postgres
+      - DB_PASSWORD=postgrespassword
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,backend # permite que o Django aceite conexoes de hosts especificos (localhost, 127.0.0.1, backend)
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+  
+  # FRONTEND: Angular PWA
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile.dev
+    container_name: bom-gosto-frontend
+    restart: always
+    volumes: # Mapeia localmente para o Hot Reload do Angular
+      - ./apps/frontend:/app
+      - /app/node_modules
+    ports:
+      - "4200:4200"
+    environment:
+      - CHOKIDAR_USEPOLLING=true # Garante a detecção de alterações no Windows/WSL2
+    depends_on:
+      - backend
+    command: npm run start -- --host 0.0.0.0
+
+volumes:
+  postgres_data:
+

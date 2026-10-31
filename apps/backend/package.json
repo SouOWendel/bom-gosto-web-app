@@ -1,0 +1,9 @@
+{
+  "name": "@bom-gosto/backend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo \"Iniciando backend...\"",
+    "test": "echo \"Sem testes configurados no backend\""
+  }
+}

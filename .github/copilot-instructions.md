@@ -1,0 +1,1 @@
+Sempre escreva as mensagens de commit em português do Brasil, utilizando o padrão Conventional Commits. Não deixe a mensagem passar de 200 caracteres. Sempre que possível, utilize emojis para representar o tipo de commit. Se a mensagem for longa, utilize a primeira linha como título e as demais linhas como corpo da mensagem. Deixe o corpo da mensagem resumido.
