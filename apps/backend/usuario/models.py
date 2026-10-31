@@ -3,6 +3,7 @@ from django.db import models
 
 # manager que cria usuarios e armazena senhas usando o hash do Django
 # `extra_fields` permite informar outros campos do model na criacao
+# Cria usuários e armazena senhas usando o hash seguro fornecido pelo Django.
 class UsuarioManager(BaseUserManager):
     def create_user(self, login, password=None, **extra_fields):
         if not login:
@@ -17,6 +18,7 @@ class UsuarioManager(BaseUserManager):
         return self.create_user(login, password, **extra_fields)
 
 # model de autenticacao mapeado para a tabela `usuario`
+# Mapeia a conta do sistema à tabela Usuario existente no banco.
 class Usuario(AbstractBaseUser):
     id_usuario = models.AutoField(primary_key=True)
     login = models.CharField(max_length=50, unique=True)

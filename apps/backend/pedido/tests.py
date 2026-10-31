@@ -31,6 +31,18 @@ class PedidoApiTests(APITestCase):
 			preco_venda="12.50",
 		)
 		self.client.force_authenticate(user=self.usuario)
+		self.analise_patch = patch(
+			"pedido.serializers.analisar_pedido",
+			return_value={"estoque": [], "receitas_sugeridas": [], "ausencias": [], "ingredientes_insuficientes": [], "ingredientes": [], "encaminhar_para_producao": False},
+		)
+		self.analise_patch.start()
+		self.addCleanup(self.analise_patch.stop)
+		self.estoque_patch = patch(
+			"pedido.serializers.Estoque.objects.verificar_disponibilidade",
+			return_value={"quantidade_solicitada": 1, "quantidade_disponivel": Decimal("0"), "disponivel": False, "encaminhar_para_producao": True},
+		)
+		self.estoque_patch.start()
+		self.addCleanup(self.estoque_patch.stop)
 
 	# verifica criacao, consulta e atualizacao parcial do pedido
 	def test_cria_consulta_e_atualiza_pedido(self):
@@ -79,6 +91,13 @@ class PedidoApiTests(APITestCase):
 
 # testes de integracao da API de pedidos com a consulta de disponibilidade do estoque
 class PedidoEstoqueIntegrationTests(SimpleTestCase):
+
+    def test_pedido_concluido_nao_pode_ser_editado(self):
+        pedido = SimpleNamespace(status=Pedido.Status.CONCLUIDO)
+        serializer = PedidoSerializer(instance=pedido)
+
+        with self.assertRaises(serializers.ValidationError):
+            serializer.validate({})
 
     # cria um serializer de item de pedido com o pedido fornecido para simular a chamada do serializer de pedido
     # o serializer é responsavel por transformar os dados do modelo em um formato que pode ser facilmente convertido em JSON e enviado para o cliente, alem de validar os dados recebidos do cliente antes de salvar no banco de dados

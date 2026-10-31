@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -36,7 +37,7 @@ class IngredienteApiTests(SimpleTestCase):
             nome="Farinha",
             quantidade_disponivel=Decimal("4.50"),
             custo_unitario=Decimal("3.25"),
-            data_validade="2027-01-31",
+            data_validade=date(2027, 1, 31),
             quantidade_minima=Decimal("5.00")
         )
         dados = {
@@ -80,6 +81,7 @@ class IngredienteApiTests(SimpleTestCase):
         self.assertEqual(len(listagem.data), 1)
         self.assertEqual(atualizacao.status_code, status.HTTP_200_OK)
         self.assertFalse(atualizacao.data["abaixo_do_minimo"])
+        self.assertEqual(atualizacao.data["data_validade"], "2027-01-31")
 
     # testa que ao atualizar um ingrediente via PUT, os campos opcionais que nao foram fornecidos na requisicao permanecem inalterados, garantindo que a API não sobrescreva dados existentes com valores nulos ou padrao
     def test_put_preserva_campos_opcionais_omitidos(self):
@@ -116,6 +118,14 @@ class IngredienteApiTests(SimpleTestCase):
 
         self.assertFalse(serializer.is_valid())
         self.assertIn("quantidade_disponivel", serializer.errors)
+
+    def test_classifica_alertas_de_validade(self):
+        serializer = IngredienteSerializer()
+        hoje = date(2026, 1, 1)
+        with patch("inventario.serializers.timezone.localdate", return_value=hoje):
+            self.assertEqual(serializer.get_alerta_validade(Ingrediente(data_validade=hoje))["nivel"], "critico")
+            self.assertEqual(serializer.get_alerta_validade(Ingrediente(data_validade=hoje + timedelta(days=7)))["nivel"], "atencao")
+            self.assertEqual(serializer.get_alerta_validade(Ingrediente(data_validade=hoje + timedelta(days=15)))["nivel"], "preventivo")
 
     # testa que ao tentar acessar um ingrediente inexistente, a API retorna um status 404 Not Found, garantindo que o tratamento de erros para recursos nao encontrados esteja funcionando corretamente
     def test_retorna_nao_encontrado_para_ingrediente_inexistente(self):

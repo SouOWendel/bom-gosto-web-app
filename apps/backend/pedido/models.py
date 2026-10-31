@@ -1,5 +1,17 @@
 from django.db import models
 
+
+# Converte status legados para a etapa operacional equivalente ao ler pedidos antigos.
+def status_operacional(status):
+    """Traduz status antigos em leitura, sem exigir alteração nos dados existentes."""
+    return {
+        "pagamento_parcial": "em_producao",
+        "pagamento_total": "pedido_feito",
+        "pedido_em_producao": "em_producao",
+        "pedido_concluido": "concluido",
+        "pedido_cancelado": "cancelado",
+    }.get(status, status)
+
 # models do fluxo de pedidos
 # migrations do Django criam e atualizam suas tabelas
 # `on_delete` define o comportamento ao excluir objetos pelo ORM
@@ -7,6 +19,7 @@ from django.db import models
 # `CASCADE` propaga a exclusao pelo ORM
 # `PROTECT` impede excluir um objeto relacionado
 # `SET_NULL` limpa uma FK anulavel
+# Guarda nome e contato usados pelos pedidos externos.
 class Cliente(models.Model):
     id_cliente = models.AutoField(primary_key=True)
     nome = models.CharField(max_length=100)
@@ -17,6 +30,7 @@ class Cliente(models.Model):
         db_table = "cliente"
 
 
+# Registra o rendimento e o custo de referência de cada receita.
 class Receita(models.Model):
     id_receita = models.AutoField(primary_key=True)
     nome = models.CharField(max_length=100)
@@ -31,6 +45,7 @@ class Receita(models.Model):
         db_table = "receita"
 
 
+# Representa um produto vendável e sua receita principal, quando houver.
 class Produto(models.Model):
     id_produto = models.AutoField(primary_key=True)
     receita = models.ForeignKey(
@@ -48,6 +63,7 @@ class Produto(models.Model):
         db_table = "produto"
 
 
+# Centraliza dados comerciais, entrega e status operacional do pedido.
 class Pedido(models.Model):
     # choices centraliza valores aceitos pela aplicacao (nao cria constraints `CHECK` no banco)
     class Tipo(models.TextChoices):
@@ -60,11 +76,10 @@ class Pedido(models.Model):
 
     class Status(models.TextChoices):
         PEDIDO_FEITO = "pedido_feito", "Pedido feito"
-        PAGAMENTO_PARCIAL = "pagamento_parcial", "Pagamento parcial"
-        EM_PRODUCAO = "pedido_em_producao", "Em produção"
-        PAGAMENTO_TOTAL = "pagamento_total", "Pagamento total"
-        CONCLUIDO = "pedido_concluido", "Concluído"
-        CANCELADO = "pedido_cancelado", "Cancelado"
+        EM_PRODUCAO = "em_producao", "Em produção"
+        PRODUCAO_CONCLUIDA = "producao_concluida", "Produção concluída"
+        CONCLUIDO = "concluido", "Concluído"
+        CANCELADO = "cancelado", "Cancelado"
 
     id_pedido = models.AutoField(primary_key=True)
     cliente = models.ForeignKey(
@@ -95,6 +110,7 @@ class Pedido(models.Model):
         db_table = "pedido"
 
 
+# Guarda cada produto ou receita, quantidade e especificações incluídas no pedido.
 class ItemPedido(models.Model):
     id_item_pedido = models.AutoField(primary_key=True)
     pedido = models.ForeignKey(
@@ -132,3 +148,29 @@ class ItemPedido(models.Model):
 
     class Meta:
         db_table = "item_pedido"
+
+
+# Mapeia relações complementares entre receitas e produtos existentes no schema.
+class ReceitaProduto(models.Model):
+    id_receita_produto = models.AutoField(primary_key=True)
+    receita = models.ForeignKey(Receita, on_delete=models.CASCADE, db_column="id_receita")
+    produto = models.ForeignKey(Produto, on_delete=models.CASCADE, db_column="id_produto")
+    quantidade = models.DecimalField(max_digits=10, decimal_places=3)
+    unidade_medida = models.CharField(max_length=20, null=True, blank=True)
+    custo_unitario = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    class Meta:
+        db_table = "receita_produto"
+        managed = False
+
+
+# Registra o pedido cancelado, a data e o destino informado para o resultado.
+class Cancelamento(models.Model):
+    id_cancelamento = models.AutoField(primary_key=True)
+    pedido = models.ForeignKey(Pedido, on_delete=models.PROTECT, db_column="pedido_id")
+    destino = models.CharField(max_length=20, null=True, blank=True)
+    data_cancelamento = models.DateField(null=True, blank=True)
+
+    class Meta:
+        db_table = "cancelamento"
+        managed = False

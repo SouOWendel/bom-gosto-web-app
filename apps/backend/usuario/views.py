@@ -15,6 +15,7 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
         return
 
 # endpoint temporario para criar usuarios locais com senha inicial descartavel
+# Cria usuários descartáveis somente em ambiente de desenvolvimento.
 class CadastroTesteView(APIView):
     authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [AllowAny]
@@ -43,6 +44,7 @@ class CadastroTesteView(APIView):
         }, status=201)
 
 # define a view de login, que recebe login e senha, autentica o usuario e cria uma sessao
+# Autentica login e senha e inicia a sessão do usuário.
 class LoginView(APIView):
     authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [AllowAny]
@@ -67,6 +69,7 @@ class LoginView(APIView):
 # - senha atual invalida
 # - nova senha igual a senha atual
 # - nova senha com menos de 8 caracteres
+# Troca a senha provisória e libera o acesso normal às rotas protegidas.
 class AlterarSenhaView(APIView):
     authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [IsAuthenticated]
@@ -92,6 +95,7 @@ class AlterarSenhaView(APIView):
         return Response({"detail": "senha alterada com sucesso.", "primeiro_acesso": False})
 
 # define a view de logout, que encerra a sessao do usuario logado
+# Encerra a sessão autenticada no navegador.
 class LogoutView(APIView):
     authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [IsAuthenticated]
@@ -100,6 +104,7 @@ class LogoutView(APIView):
         return Response({"detail": "logout realizado com sucesso."})
 
 # define a view de informacoes do usuario logado, lendo diretamente do banco de dados
+# Retorna os dados básicos do usuário associado à sessão atual.
 class MeView(APIView):
     authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [IsAuthenticated]

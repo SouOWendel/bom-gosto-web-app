@@ -5,9 +5,19 @@ from rest_framework import serializers
 
 from estoque.models import Estoque
 
-from .models import ItemPedido, Pedido
+from .models import Cancelamento, Cliente, ItemPedido, Pedido, status_operacional
+from producao.services import analisar_pedido
 
 
+# Devolve os dados do registro de cancelamento para consulta pela API.
+class CancelamentoRegistroSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cancelamento
+        fields = ("id_cancelamento", "pedido", "destino", "data_cancelamento")
+        read_only_fields = fields
+
+
+# Valida os dados de cada item e apresenta sua disponibilidade em Estoque.
 class ItemPedidoSerializer(serializers.ModelSerializer):
     verificacao_estoque = serializers.SerializerMethodField()
 
@@ -27,8 +37,7 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id_item_pedido", "verificacao_estoque")
 
-    # RN02: ao registrar ou consultar um pedido externo, verifica imediatamente
-    # se há produto pronto suficiente; a falta de saldo direciona o item à Produção.
+    # Confere o saldo do produto pronto e sinaliza quando o item precisa de Produção.
     def get_verificacao_estoque(self, item):
         pedido_serializer = self.parent.parent
         pedido = pedido_serializer.instance
@@ -66,6 +75,7 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
             **Estoque.objects.verificar_disponibilidade(item.produto_id, quantidade),
         }
 
+    # Garante que o item tenha produto ou receita e quantidades válidas.
     def validate(self, attrs):
         produto = attrs.get("produto")
         receita = attrs.get("receita")
@@ -86,6 +96,10 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"quantidade_peso": "O peso deve ser maior que zero."}
             )
+        if quantidade is None and peso is None:
+            raise serializers.ValidationError(
+                "Informe quantidade ou quantidade_peso para o item."
+            )
 
         preco = attrs.get("preco_unitario")
         if preco is not None and preco < 0:
@@ -102,8 +116,12 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
         return attrs
 
 
+# Valida e grava pedidos com seus itens, contato e análise operacional integrada.
 class PedidoSerializer(serializers.ModelSerializer):
     itens = ItemPedidoSerializer(many=True, required=False)
+    contato_nome = serializers.CharField(write_only=True, required=False, allow_blank=False, max_length=100)
+    contato_telefone = serializers.CharField(write_only=True, required=False, allow_blank=False, max_length=20)
+    analise = serializers.SerializerMethodField()
 
     class Meta:
         model = Pedido
@@ -120,11 +138,24 @@ class PedidoSerializer(serializers.ModelSerializer):
             "endereco_entrega",
             "forma_pagamento",
             "itens",
+            "analise",
+            "contato_nome",
+            "contato_telefone",
         )
-        read_only_fields = ("id_pedido",)
+        read_only_fields = ("id_pedido", "status", "analise")
 
+    # Aplica as regras de tipo, contato, subtipo, itens e valores do pedido.
     def validate(self, attrs):
         pedido_existente = self.instance
+
+        # Pedidos concluídos ou cancelados precisam manter o histórico intacto.
+        if pedido_existente and status_operacional(pedido_existente.status) in (
+            Pedido.Status.CONCLUIDO,
+            Pedido.Status.CANCELADO,
+        ):
+            raise serializers.ValidationError(
+                {"status": "Pedidos concluídos ou cancelados não podem ser editados."}
+            )
 
         tipo = attrs.get(
             "tipo",
@@ -139,10 +170,13 @@ class PedidoSerializer(serializers.ModelSerializer):
             pedido_existente.cliente if pedido_existente else None,
         )
 
+        contato_nome = attrs.get("contato_nome")
+        contato_telefone = attrs.get("contato_telefone")
+
         if tipo == Pedido.Tipo.EXTERNO:
-            if cliente is None:
+            if cliente is None and not (contato_nome and contato_telefone):
                 raise serializers.ValidationError(
-                    {"cliente": "Pedidos externos precisam de um cliente."}
+                    {"cliente": "Informe um cliente ou nome e telefone de contato."}
                 )
             if not subtipo:
                 raise serializers.ValidationError(
@@ -209,8 +243,17 @@ class PedidoSerializer(serializers.ModelSerializer):
 
         return attrs
 
+    # Reúne disponibilidade, receitas aplicáveis e faltas no Inventário.
+    def get_analise(self, pedido):
+        return analisar_pedido(pedido)
+
+    # Cria o pedido e seus itens dentro de uma única transação.
     @transaction.atomic
     def create(self, validated_data):
+        nome = validated_data.pop("contato_nome", None)
+        telefone = validated_data.pop("contato_telefone", None)
+        if not validated_data.get("cliente") and nome and telefone:
+            validated_data["cliente"] = Cliente.objects.create(nome=nome, telefone=telefone)
         itens_data = validated_data.pop("itens", [])
         pedido = Pedido.objects.create(**validated_data)
 
@@ -219,8 +262,13 @@ class PedidoSerializer(serializers.ModelSerializer):
 
         return pedido
 
+    # Atualiza os dados do pedido e substitui itens somente quando enviados.
     @transaction.atomic
     def update(self, instance, validated_data):
+        nome = validated_data.pop("contato_nome", None)
+        telefone = validated_data.pop("contato_telefone", None)
+        if not validated_data.get("cliente") and nome and telefone:
+            validated_data["cliente"] = Cliente.objects.create(nome=nome, telefone=telefone)
         itens_data = validated_data.pop("itens", None)
 
         for campo, valor in validated_data.items():
@@ -233,3 +281,9 @@ class PedidoSerializer(serializers.ModelSerializer):
                 ItemPedido.objects.create(pedido=instance, **item_data)
 
         return instance
+
+    # Exibe status operacionais atuais mesmo para registros com valores antigos.
+    def to_representation(self, instance):
+        dados = super().to_representation(instance)
+        dados["status"] = status_operacional(instance.status)
+        return dados

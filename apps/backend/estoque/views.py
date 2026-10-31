@@ -16,6 +16,7 @@ class SenhaInicialAlterada(BasePermission):
         return not getattr(request.user, "primeiro_acesso", True)
 
 # classe que implementa o viewset para o modelo Estoque, fornecendo endpoints RESTful para listar, criar, atualizar e verificar a disponibilidade de lotes de estoque, com permissoes de acesso baseadas na autenticacao do usuario e na alteracao da senha inicial
+# Lista e edita lotes existentes e calcula a disponibilidade por produto.
 class EstoqueViewSet(ModelViewSet):
     queryset = Estoque.objects.select_related("produto").all().order_by("id_estoque")
     serializer_class = EstoqueSerializer
@@ -24,6 +25,7 @@ class EstoqueViewSet(ModelViewSet):
 
     # endpoint customizado que verifica a disponibilidade de um produto no estoque, recebendo o id do produto e a quantidade solicitada como parametros de consulta e retornando se ha saldo suficiente ou se deve encaminhar para producao
     @action(detail=False, methods=["get"], url_path="disponibilidade")
+    # Informa o saldo válido e se a quantidade solicitada precisa ir à Produção.
     def disponibilidade(self, request):
         consulta = VerificarDisponibilidadeSerializer(data=request.query_params)
         consulta.is_valid(raise_exception=True)

@@ -1,0 +1,33 @@
+\providecommand{\abntreprintinfo}[1]{%
+ \citeonline{#1}}
+\setlength{\labelsep}{0pt}\begin{thebibliography}{}
+\providecommand{\abntrefinfo}[3]{}
+\providecommand{\abntbstabout}[1]{}
+\abntbstabout{v-1.9.7 }
+
+\bibitem[Chiavenato 2021]{chiavenato2021}
+\abntrefinfo{Chiavenato}{CHIAVENATO}{2021}
+{CHIAVENATO, I. \textbf{Iniciação à Administração Geral}. 5. ed. São Paulo: Atlas, 2021.}
+
+\bibitem[Laudon \& Laudon 2014]{laudon2014}
+\abntrefinfo{Laudon \& Laudon}{LAUDON; LAUDON}{2014}
+{LAUDON, K.~C.; LAUDON, J.~P. \textbf{Sistemas de informação gerenciais}. 11. ed. São Paulo: Pearson Education do Brasil, 2014.}
+
+\bibitem[Pressman \& Maxim 2021]{pressman2021}
+\abntrefinfo{Pressman \& Maxim}{PRESSMAN; MAXIM}{2021}
+{PRESSMAN, R.~S.; MAXIM, B.~R. \textbf{Engenharia de software: uma abordagem profissional}. 9. ed. Porto Alegre: AMGH, 2021.}
+
+\bibitem[{Sebrae Santa Catarina} 2025]{sebrae_sc2025}
+\abntrefinfo{{Sebrae Santa Catarina}}{{Sebrae Santa Catarina}}{2025}
+{{Sebrae Santa Catarina}. \textbf{Importância da gestão de estoque na sua empresa}. 2025.
+Dispon{\'\i}vel em: \url{https://www.sebrae-sc.com.br/blog/importancia-da-gestao-de-estoque-na-sua-empresa}. Acesso em: 10 out. 2026.}
+
+\bibitem[{Serviço Brasileiro de Apoio às Micro e Pequenas Empresas - SEBRAE} 2023]{sebrae2023}
+\abntrefinfo{{Serviço Brasileiro de Apoio às Micro e Pequenas Empresas - SEBRAE}}{{Serviço Brasileiro de Apoio às Micro e Pequenas Empresas - SEBRAE}}{2023}
+{{Serviço Brasileiro de Apoio às Micro e Pequenas Empresas - SEBRAE}. \textbf{Pesquisa de Transformação Digital nas MPEs}. Brasília: SEBRAE, 2023.}
+
+\bibitem[Sommerville 2019]{sommerville2019}
+\abntrefinfo{Sommerville}{SOMMERVILLE}{2019}
+{SOMMERVILLE, I. \textbf{Engenharia de software}. 10. ed. São Paulo: Pearson Education do Brasil, 2019.}
+
+\end{thebibliography}

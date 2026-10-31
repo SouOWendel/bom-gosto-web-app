@@ -1,5 +1,7 @@
 # Guia do back-end de inventário
 
+As respostas incluem `data_validade`, `abaixo_do_minimo` e `alerta_validade`. O alerta usa `critico` (vencido ou vence hoje), `atencao` (até sete dias) e `preventivo` (até quinze dias). `unidade_medida` não existe na tabela atual e não é exposta pela API. Para produção e baixa de ingredientes, consulte [Contratos da API operacional](api-fluxos-operacionais.md).
+
 Este guia descreve como iniciar o projeto com Docker e testar manualmente a API de Inventário usando PowerShell.
 
 ## Escopo e persistência

@@ -1,6 +1,7 @@
 from django.db import models
 
 
+# Mantém saldo, custo, validade e nível mínimo de cada matéria-prima.
 class Ingrediente(models.Model):
     id_ingrediente = models.AutoField(primary_key=True)
     nome = models.CharField(max_length=100)
