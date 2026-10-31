@@ -50,3 +50,15 @@ postgres_data/
 *.dump
 *.backup
 *.tar
+
+# LaTex
+*.aux
+*.bbl
+*.blg
+*.brf
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.synctex.gz
+*.toc
