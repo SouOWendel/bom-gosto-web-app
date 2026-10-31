@@ -6,20 +6,14 @@ from rest_framework import serializers
 from pedido.models import Produto
 from .models import Estoque
 
-<<<<<<< HEAD
 # Formata lotes do Estoque e calcula os alertas de validade apresentados na API.
-=======
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 class EstoqueSerializer(serializers.ModelSerializer):
     id_produto = serializers.PrimaryKeyRelatedField(
         queryset=Produto.objects.all(),
         source="produto",
     )
     vencido = serializers.SerializerMethodField()
-<<<<<<< HEAD
     alerta_validade = serializers.SerializerMethodField()
-=======
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 
     class Meta:
         model = Estoque
@@ -30,10 +24,7 @@ class EstoqueSerializer(serializers.ModelSerializer):
             "data_validade",
             "custo",
             "vencido",
-<<<<<<< HEAD
             "alerta_validade",
-=======
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
         )
         read_only_fields = ("id_estoque", "vencido")
 
@@ -57,7 +48,6 @@ class EstoqueSerializer(serializers.ModelSerializer):
             and estoque.data_validade < timezone.localdate()
         )
 
-<<<<<<< HEAD
     def get_alerta_validade(self, estoque):
         validade = estoque.data_validade
         if validade is None:
@@ -74,8 +64,6 @@ class EstoqueSerializer(serializers.ModelSerializer):
         return {"nivel": nivel, "dias_para_vencer": dias}
 
 # Valida produto e quantidade recebidos na consulta de disponibilidade.
-=======
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 class VerificarDisponibilidadeSerializer(serializers.Serializer):
     id_produto = serializers.PrimaryKeyRelatedField(
         queryset=Produto.objects.all(),
@@ -85,8 +73,4 @@ class VerificarDisponibilidadeSerializer(serializers.Serializer):
         max_digits=10,
         decimal_places=2,
         min_value=Decimal("0.01"),
-<<<<<<< HEAD
     )
-=======
-    )
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8

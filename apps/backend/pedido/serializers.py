@@ -5,7 +5,6 @@ from rest_framework import serializers
 
 from estoque.models import Estoque
 
-<<<<<<< HEAD
 from .models import Cancelamento, Cliente, ItemPedido, Pedido, status_operacional
 from producao.services import analisar_pedido
 
@@ -19,11 +18,6 @@ class CancelamentoRegistroSerializer(serializers.ModelSerializer):
 
 
 # Valida os dados de cada item e apresenta sua disponibilidade em Estoque.
-=======
-from .models import ItemPedido, Pedido
-
-
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 class ItemPedidoSerializer(serializers.ModelSerializer):
     verificacao_estoque = serializers.SerializerMethodField()
 
@@ -43,12 +37,7 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id_item_pedido", "verificacao_estoque")
 
-<<<<<<< HEAD
     # Confere o saldo do produto pronto e sinaliza quando o item precisa de Produção.
-=======
-    # RN02: ao registrar ou consultar um pedido externo, verifica imediatamente
-    # se há produto pronto suficiente; a falta de saldo direciona o item à Produção.
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
     def get_verificacao_estoque(self, item):
         pedido_serializer = self.parent.parent
         pedido = pedido_serializer.instance
@@ -86,10 +75,7 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
             **Estoque.objects.verificar_disponibilidade(item.produto_id, quantidade),
         }
 
-<<<<<<< HEAD
     # Garante que o item tenha produto ou receita e quantidades válidas.
-=======
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
     def validate(self, attrs):
         produto = attrs.get("produto")
         receita = attrs.get("receita")
@@ -110,13 +96,10 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"quantidade_peso": "O peso deve ser maior que zero."}
             )
-<<<<<<< HEAD
         if quantidade is None and peso is None:
             raise serializers.ValidationError(
                 "Informe quantidade ou quantidade_peso para o item."
             )
-=======
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 
         preco = attrs.get("preco_unitario")
         if preco is not None and preco < 0:
@@ -133,17 +116,12 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
         return attrs
 
 
-<<<<<<< HEAD
 # Valida e grava pedidos com seus itens, contato e análise operacional integrada.
 class PedidoSerializer(serializers.ModelSerializer):
     itens = ItemPedidoSerializer(many=True, required=False)
     contato_nome = serializers.CharField(write_only=True, required=False, allow_blank=False, max_length=100)
     contato_telefone = serializers.CharField(write_only=True, required=False, allow_blank=False, max_length=20)
     analise = serializers.SerializerMethodField()
-=======
-class PedidoSerializer(serializers.ModelSerializer):
-    itens = ItemPedidoSerializer(many=True, required=False)
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 
     class Meta:
         model = Pedido
@@ -160,7 +138,6 @@ class PedidoSerializer(serializers.ModelSerializer):
             "endereco_entrega",
             "forma_pagamento",
             "itens",
-<<<<<<< HEAD
             "analise",
             "contato_nome",
             "contato_telefone",
@@ -180,14 +157,6 @@ class PedidoSerializer(serializers.ModelSerializer):
                 {"status": "Pedidos concluídos ou cancelados não podem ser editados."}
             )
 
-=======
-        )
-        read_only_fields = ("id_pedido",)
-
-    def validate(self, attrs):
-        pedido_existente = self.instance
-
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
         tipo = attrs.get(
             "tipo",
             pedido_existente.tipo if pedido_existente else None,
@@ -201,7 +170,6 @@ class PedidoSerializer(serializers.ModelSerializer):
             pedido_existente.cliente if pedido_existente else None,
         )
 
-<<<<<<< HEAD
         contato_nome = attrs.get("contato_nome")
         contato_telefone = attrs.get("contato_telefone")
 
@@ -209,12 +177,6 @@ class PedidoSerializer(serializers.ModelSerializer):
             if cliente is None and not (contato_nome and contato_telefone):
                 raise serializers.ValidationError(
                     {"cliente": "Informe um cliente ou nome e telefone de contato."}
-=======
-        if tipo == Pedido.Tipo.EXTERNO:
-            if cliente is None:
-                raise serializers.ValidationError(
-                    {"cliente": "Pedidos externos precisam de um cliente."}
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
                 )
             if not subtipo:
                 raise serializers.ValidationError(
@@ -281,7 +243,6 @@ class PedidoSerializer(serializers.ModelSerializer):
 
         return attrs
 
-<<<<<<< HEAD
     # Reúne disponibilidade, receitas aplicáveis e faltas no Inventário.
     def get_analise(self, pedido):
         return analisar_pedido(pedido)
@@ -293,10 +254,6 @@ class PedidoSerializer(serializers.ModelSerializer):
         telefone = validated_data.pop("contato_telefone", None)
         if not validated_data.get("cliente") and nome and telefone:
             validated_data["cliente"] = Cliente.objects.create(nome=nome, telefone=telefone)
-=======
-    @transaction.atomic
-    def create(self, validated_data):
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
         itens_data = validated_data.pop("itens", [])
         pedido = Pedido.objects.create(**validated_data)
 
@@ -305,7 +262,6 @@ class PedidoSerializer(serializers.ModelSerializer):
 
         return pedido
 
-<<<<<<< HEAD
     # Atualiza os dados do pedido e substitui itens somente quando enviados.
     @transaction.atomic
     def update(self, instance, validated_data):
@@ -313,10 +269,6 @@ class PedidoSerializer(serializers.ModelSerializer):
         telefone = validated_data.pop("contato_telefone", None)
         if not validated_data.get("cliente") and nome and telefone:
             validated_data["cliente"] = Cliente.objects.create(nome=nome, telefone=telefone)
-=======
-    @transaction.atomic
-    def update(self, instance, validated_data):
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
         itens_data = validated_data.pop("itens", None)
 
         for campo, valor in validated_data.items():
@@ -329,12 +281,9 @@ class PedidoSerializer(serializers.ModelSerializer):
                 ItemPedido.objects.create(pedido=instance, **item_data)
 
         return instance
-<<<<<<< HEAD
 
     # Exibe status operacionais atuais mesmo para registros com valores antigos.
     def to_representation(self, instance):
         dados = super().to_representation(instance)
         dados["status"] = status_operacional(instance.status)
         return dados
-=======
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8

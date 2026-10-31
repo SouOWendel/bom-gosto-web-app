@@ -12,10 +12,7 @@ class SenhaInicialAlterada(BasePermission):
         return not getattr(request.user, "primeiro_acesso", True)
 
 
-<<<<<<< HEAD
 # Permite cadastrar, consultar e editar os ingredientes do Inventário.
-=======
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 class IngredienteViewSet(ModelViewSet):
     queryset = Ingrediente.objects.all().order_by("id_ingrediente")
     serializer_class = IngredienteSerializer

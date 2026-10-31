@@ -2,7 +2,6 @@ from decimal import Decimal
 
 from rest_framework import serializers
 
-<<<<<<< HEAD
 from inventario.models import Ingrediente
 from pedido.models import Pedido, Produto, Receita, ReceitaProduto
 from .models import IngredienteReceita
@@ -167,28 +166,3 @@ class AnaliseProducaoSerializer(serializers.Serializer):
 
     def to_representation(self, instance):
         return analisar_pedido(instance["pedido"])
-=======
-from pedido.models import Produto
-from .services import registrar_producao
-
-
-class RegistrarProducaoSerializer(serializers.Serializer):
-    produto_id = serializers.PrimaryKeyRelatedField(
-        source="produto",
-        queryset=Produto.objects.select_related("receita").all(),
-    )
-    quantidade_produzida = serializers.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        min_value=Decimal("0.01"),
-    )
-    data_validade = serializers.DateField()
-    custo = serializers.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        min_value=Decimal("0.00"),
-    )
-
-    def create(self, validated_data):
-        return registrar_producao(**validated_data)
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8

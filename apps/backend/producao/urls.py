@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
@@ -15,12 +14,3 @@ urlpatterns = [
     path("producao/pedidos/<int:pedido_id>/concluir/", ConcluirProducaoView.as_view(), name="concluir-producao"),
     path("", include(router.urls)),
 ]
-=======
-from django.urls import path
-
-from .views import RegistrarProducaoView
-
-urlpatterns = [
-    path("producao/", RegistrarProducaoView.as_view(), name="registrar-producao"),
-]
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8

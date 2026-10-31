@@ -1,6 +1,5 @@
 from django.db import models
 
-<<<<<<< HEAD
 
 # Converte status legados para a etapa operacional equivalente ao ler pedidos antigos.
 def status_operacional(status):
@@ -13,8 +12,6 @@ def status_operacional(status):
         "pedido_cancelado": "cancelado",
     }.get(status, status)
 
-=======
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 # models do fluxo de pedidos
 # migrations do Django criam e atualizam suas tabelas
 # `on_delete` define o comportamento ao excluir objetos pelo ORM
@@ -22,10 +19,7 @@ def status_operacional(status):
 # `CASCADE` propaga a exclusao pelo ORM
 # `PROTECT` impede excluir um objeto relacionado
 # `SET_NULL` limpa uma FK anulavel
-<<<<<<< HEAD
 # Guarda nome e contato usados pelos pedidos externos.
-=======
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 class Cliente(models.Model):
     id_cliente = models.AutoField(primary_key=True)
     nome = models.CharField(max_length=100)
@@ -36,10 +30,7 @@ class Cliente(models.Model):
         db_table = "cliente"
 
 
-<<<<<<< HEAD
 # Registra o rendimento e o custo de referência de cada receita.
-=======
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 class Receita(models.Model):
     id_receita = models.AutoField(primary_key=True)
     nome = models.CharField(max_length=100)
@@ -54,10 +45,7 @@ class Receita(models.Model):
         db_table = "receita"
 
 
-<<<<<<< HEAD
 # Representa um produto vendável e sua receita principal, quando houver.
-=======
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 class Produto(models.Model):
     id_produto = models.AutoField(primary_key=True)
     receita = models.ForeignKey(
@@ -75,10 +63,7 @@ class Produto(models.Model):
         db_table = "produto"
 
 
-<<<<<<< HEAD
 # Centraliza dados comerciais, entrega e status operacional do pedido.
-=======
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 class Pedido(models.Model):
     # choices centraliza valores aceitos pela aplicacao (nao cria constraints `CHECK` no banco)
     class Tipo(models.TextChoices):
@@ -91,18 +76,10 @@ class Pedido(models.Model):
 
     class Status(models.TextChoices):
         PEDIDO_FEITO = "pedido_feito", "Pedido feito"
-<<<<<<< HEAD
         EM_PRODUCAO = "em_producao", "Em produção"
         PRODUCAO_CONCLUIDA = "producao_concluida", "Produção concluída"
         CONCLUIDO = "concluido", "Concluído"
         CANCELADO = "cancelado", "Cancelado"
-=======
-        PAGAMENTO_PARCIAL = "pagamento_parcial", "Pagamento parcial"
-        EM_PRODUCAO = "pedido_em_producao", "Em produção"
-        PAGAMENTO_TOTAL = "pagamento_total", "Pagamento total"
-        CONCLUIDO = "pedido_concluido", "Concluído"
-        CANCELADO = "pedido_cancelado", "Cancelado"
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 
     id_pedido = models.AutoField(primary_key=True)
     cliente = models.ForeignKey(
@@ -133,10 +110,7 @@ class Pedido(models.Model):
         db_table = "pedido"
 
 
-<<<<<<< HEAD
 # Guarda cada produto ou receita, quantidade e especificações incluídas no pedido.
-=======
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 class ItemPedido(models.Model):
     id_item_pedido = models.AutoField(primary_key=True)
     pedido = models.ForeignKey(
@@ -173,7 +147,6 @@ class ItemPedido(models.Model):
     decoracao = models.CharField(max_length=200, null=True, blank=True)
 
     class Meta:
-<<<<<<< HEAD
         db_table = "item_pedido"
 
 
@@ -201,6 +174,3 @@ class Cancelamento(models.Model):
     class Meta:
         db_table = "cancelamento"
         managed = False
-=======
-        db_table = "item_pedido"
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8

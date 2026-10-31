@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 from datetime import date, timedelta
-=======
-from datetime import date
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
 from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -49,13 +45,8 @@ class EstoqueApiTests(SimpleTestCase):
             setattr(instance, campo, valor)
         return instance
 
-<<<<<<< HEAD
     # Cadastro de lote fica restrito aos fluxos automáticos de produção e cancelamento.
     def test_lista_consulta_atualiza_lote_e_bloqueia_cadastro_manual(self):
-=======
-    # testa a criacao, consulta, listagem e atualizacao de um lote, verificando se os endpoints da API respondem corretamente e se os dados retornados correspondem ao esperado, incluindo a validacao do campo calculado vencido
-    def test_cria_lista_consulta_e_atualiza_lote(self):
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
         dados = {
             "id_produto": self.produto.id_produto,
             "quantidade_disponivel": "4.00",
@@ -87,14 +78,7 @@ class EstoqueApiTests(SimpleTestCase):
                 format="json"
             )
 
-<<<<<<< HEAD
         self.assertEqual(criacao.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
-=======
-        self.assertEqual(criacao.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(criacao.data["id_produto"], 7)
-        self.assertEqual(criacao.data["quantidade_disponivel"], "4.00")
-        self.assertFalse(criacao.data["vencido"])
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
         self.assertEqual(consulta.status_code, status.HTTP_200_OK)
         self.assertEqual(listagem.status_code, status.HTTP_200_OK)
         self.assertEqual(len(listagem.data), 1)
@@ -122,7 +106,6 @@ class EstoqueApiTests(SimpleTestCase):
             self.assertTrue(serializer.get_vencido(vencido))
             self.assertFalse(serializer.get_vencido(self.lote))
 
-<<<<<<< HEAD
     def test_classifica_alertas_de_validade(self):
         serializer = EstoqueSerializer()
         hoje = date(2026, 1, 1)
@@ -131,8 +114,6 @@ class EstoqueApiTests(SimpleTestCase):
             self.assertEqual(serializer.get_alerta_validade(Estoque(data_validade=hoje + timedelta(days=7)))["nivel"], "atencao")
             self.assertEqual(serializer.get_alerta_validade(Estoque(data_validade=hoje + timedelta(days=15)))["nivel"], "preventivo")
 
-=======
->>>>>>> b6e39bc0499831f6b95da7f3f78788a3f1195ef8
     # testa a consulta de disponibilidade de produto e o encaminhamento para producao, verificando se a API retorna corretamente os dados de saldo e se indica quando encaminhar para producao
     def test_consulta_disponibilidade_e_encaminhamento_para_producao(self):
         with (
