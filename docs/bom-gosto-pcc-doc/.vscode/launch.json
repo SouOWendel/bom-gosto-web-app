@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "console": "externalTerminal",
-      "cwd": "c:/teste_latex/bom-gosto-web-app/docs/bom-gosto-pcc-doc",
-      "program": "c:/teste_latex/bom-gosto-web-app/docs/bom-gosto-pcc-doc/build/Debug/outDebug"
+      "cwd": "c:/teste_latex/bom-gosto-web-app/docs/bom-gosto-pcc-doc/capitulos",
+      "program": "c:/teste_latex/bom-gosto-web-app/docs/bom-gosto-pcc-doc/capitulos/build/Debug/outDebug"
     }
   ]
 }

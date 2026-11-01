@@ -117,28 +117,34 @@ O modelo conceitual apresentado na documentação deverá ser conferido com a ve
 Os requisitos funcionais descrevem as ações que o sistema deverá permitir. Eles foram organizados de acordo com as principais áreas do Bom Gosto: pedidos, estoque, inventário, produção, agenda, finanças, relatórios e usuários.
 
 
-\subsection{Pedidos}
+\subsection{Pedido}
 
 \begin{quadro}
     \centering
-    \tituloquadro{Requisitos funcionais de pedidos}
+    \tituloquadro{Requisitos funcionais de Pedido}
     \label{quadro:rf_pedidos}
 
     \begin{tabular}{|p{3cm}|p{11cm}|}
         \hline
         \textbf{Identificação} & \textbf{Requisito funcional} \\ \hline
 
-        RF01 & O sistema deve permitir cadastrar pedidos como internos, destinados ao abastecimento da vitrine, ou externos, realizados por clientes. \\ \hline
+        RF01 &O sistema deve permitir registrar pedido como Interno ou Externo. \\ \hline
 
-        RF02 & O sistema deve permitir classificar os pedidos externos como personalizados ou de vitrine. \\ \hline
+        RF02 &  O sistema deve permitir classificar pedido externo como Personalizado ou Vitrine. \\ \hline
 
-        RF03 & O sistema deve permitir registrar as informações dos pedidos personalizados, incluindo tipo de produto, quantidade ou peso, recheio, decoração, data e horário de entrega ou retirada, nome e telefone do cliente, endereço de entrega quando necessário, valor total, sinal e forma de pagamento. \\ \hline
+        RF03 & O sistema deve permitir registrar especificações do pedido, incluindo produto ou receita, quantidade, peso, recheio, decoração, data, horário, valor total, forma de pagamento registrada manualmente e, quando se tratar de pedido externo, cliente, contato e endereço. \\ \hline
 
-        RF04 & O sistema deve permitir editar as informações de um pedido antes de sua conclusão, solicitando confirmação antes de salvar as alterações. \\ \hline
+        RF04 & O sistema deve criar todo pedido inicialmente com status Pedido Feito. \\ \hline
 
-        RF05 & O sistema deve permitir atualizar o status do pedido, utilizando as etapas definidas para o projeto: Pedido Feito, Em Produção, Concluído e Cancelado. \\ \hline
+        RF05 & O sistema deve permitir visualizar e editar pedidos em qualquer etapa antes de Concluído, respeitando validações do status atual. \\ \hline
 
-        RF06 & Ao cancelar um pedido que já esteja em produção, o sistema deve solicitar a destinação dos itens preparados, permitindo encaminhá-los ao estoque ou registrá-los como perda ou descarte. \\ \hline
+        RF06 & O sistema deve impedir a exclusão de pedidos. O pedido deve ser editado ou cancelado. \\ \hline
+
+        RF07 & O sistema deve permitir atualizar o status operacional do pedido entre Pedido Feito, Em Produção, Produção Concluída, Concluído e Cancelado, conforme regras do fluxo. \\ \hline
+
+        RF08 & O sistema deve, ao criar ou editar pedido, informar disponibilidade de estoque, receitas aplicáveis, componentes ausentes e ingredientes insuficientes. \\ \hline
+
+        RF09 & O sistema deve exigir cliente ou dados mínimos de contato para pedidos externos e permitir pedidos internos sem cliente vinculado. \\ \hline
     \end{tabular}
 
     \vspace{0.2cm}
@@ -146,24 +152,28 @@ Os requisitos funcionais descrevem as ações que o sistema deverá permitir. El
 \end{quadro}
 
 
-\subsection{Estoque de Produtos}
+\subsection{Estoque}
 
 \begin{quadro}
     \centering
-    \tituloquadro{Requisitos funcionais de estoque de produtos (RF07--RF10)}
+    \tituloquadro{Requisitos funcionais de Estoque}
     \label{quadro:rf_estoque}
 
     \begin{tabular}{|p{3cm}|p{11cm}|}
         \hline
         \textbf{Identificação} & \textbf{Requisito funcional} \\ \hline
 
-        RF07 & O sistema deve permitir consultar a disponibilidade de produtos prontos e de itens preparados que possam ser reaproveitados em pedidos personalizados. \\ \hline
+        RF10 & O sistema deve permitir visualizar produtos prontos disponíveis em Estoque, com quantidade disponível, validade e custo. \\ \hline
 
-        RF08 & O sistema deve permitir registrar manualmente a entrada de itens parciais, como massas prontas provenientes de sobras de produção ou de pedidos cancelados. \\ \hline
+        RF11 & O sistema deve permitir editar informações permitidas dos produtos em estoque, sem exclusão. \\ \hline
 
-        RF09 & O sistema deve permitir cadastrar produtos prontos, informando a quantidade disponível, a data de validade, o preço de venda e o custo. \\ \hline
+        RF12 & O sistema deve emitir alertas de validade para produtos em Estoque, classificando-os como crítico, atenção ou preventivo conforme o prazo de vencimento. \\ \hline
 
-        RF10 & Quando os produtos ou itens necessários não estiverem disponíveis no estoque, o sistema deve encaminhar a demanda para o processo de produção. \\ \hline
+        RF13 & O sistema deve dar baixa automática no Estoque quando a confeiteira confirmar que um pedido consumiu produto pronto. \\ \hline
+
+        RF14 & O sistema deve adicionar automaticamente ao estoque o produto concluído em Produção. \\ \hline
+
+        RF15 & O sistema deve direcionar para Produção quando produto pronto ou componente reaproveitável não estiver disponível. \\ \hline
     \end{tabular}
 
     \vspace{0.2cm}
@@ -175,20 +185,39 @@ Os requisitos funcionais descrevem as ações que o sistema deverá permitir. El
 
 \begin{quadro}
     \centering
-    \tituloquadro{Requisitos funcionais de produção}
+    \tituloquadro{Requisitos funcionais de Produção}
     \label{quadro:rf_producao}
 
     \begin{tabular}{|p{3cm}|p{11cm}|}
         \hline
         \textbf{Identificação} & \textbf{Requisito funcional} \\ \hline
 
-        RF11 & O sistema deve permitir cadastrar e consultar receitas, com as quantidades necessárias de ingredientes calculadas por quilograma ou por unidade. \\ \hline
+        RF16 & O sistema deve permitir cadastrar, visualizar, editar e consultar receitas \\ \hline
 
-        RF12 & O sistema deve alertar a proprietária quando a quantidade de ingredientes disponível no inventário for insuficiente para preparar uma receita. \\ \hline
+        RF17 & O sistema deve permitir relacionar receitas a ingredientes, quantidades necessárias e rendimento. \\ \hline
 
-        RF13 & O sistema deve calcular o custo de produção de uma receita ou lote com base nas quantidades utilizadas e nos custos atuais dos ingredientes registrados no inventário. \\ \hline
+        RF18 & O sistema deve permitir relacionar produto à sua receita principal por meio de Produto.receita\_id e, quando necessário, registrar relações complementares entre receitas e produtos usando Receita\_Produto. \\ \hline
 
-        RF14 & Após a confirmação da produção, o sistema deve registrar a saída dos ingredientes utilizados e a entrada dos produtos fabricados no estoque, evitando o registro duplicado das movimentações. \\ \hline
+        RF19 & O sistema deve sugerir criação de nova receita quando não houver receita compatível com o pedido. \\ \hline
+
+        RF20 & O sistema deve alertar quando não houver ingredientes suficientes no Inventário para a produção prevista. \\ \hline
+
+        RF21 & O sistema deve permitir concluir produção a partir de um pedido em produção. \\ \hline
+
+        RF22 & O sistema deve, antes de concluir produção, exibir ingredientes previstos e permitir ajuste das quantidades reais utilizadas. \\ \hline
+
+        RF23 & O sistema deve solicitar data de validade antes de adicionar o produto produzido ao Estoque. \\ \hline
+
+        RF24 & O sistema deve calcular custo de produção com base nas quantidades confirmadas e nos custos atuais dos ingredientes. \\ \hline
+
+        RF25 &  O sistema deve, ao confirmar Produção Concluída, baixar ingredientes do Inventário e adicionar o produto ao Estoque automaticamente. \\ \hline
+
+        RF26 & O sistema deve, ao cancelar qualquer pedido ainda não concluído, exibir os ingredientes e produtos possivelmente utilizados, permitir que a confeiteira informe as quantidades reais utilizadas, inclusive 0, baixar do Inventário as quantidades confirmadas e solicitar o destino do resultado: descarte/perda ou envio ao Estoque. \\ \hline
+
+        RF27 & O sistema deve, quando o resultado de um pedido cancelado for enviado ao Estoque, criar um novo Produto e um novo lote de Estoque com base nas informações preenchidas pela confeiteira: nome do produto, quantidade aproveitável, data de validade, preço de venda e custo. \\ \hline
+
+        RF28 & O sistema deve impedir que a confirmação de Produção Concluída gere baixa duplicada no Inventário ou entrada duplicada no Estoque para o mesmo pedido. \\ \hline
+
     \end{tabular}
 
     \vspace{0.2cm}
@@ -196,20 +225,22 @@ Os requisitos funcionais descrevem as ações que o sistema deverá permitir. El
 \end{quadro}
 
 
-\subsection{Inventário de Ingredientes}
+\subsection{Inventário}
 
 \begin{quadro}
     \centering
-    \tituloquadro{Requisitos funcionais de inventário de ingredientes (RF15--RF16)}
+    \tituloquadro{Requisitos funcionais de Inventário}
     \label{quadro:rf_inventario}
 
     \begin{tabular}{|p{3cm}|p{11cm}|}
         \hline
         \textbf{Identificação} & \textbf{Requisito funcional} \\ \hline
 
-        RF15 & O sistema deve permitir registrar a entrada de ingredientes, incluindo quantidade, unidade de medida, custo unitário e data de validade. \\ \hline
+        RF29 & O sistema deve permitir cadastrar ingredientes com quantidade, custo unitário, data de validade e quantidade mínima. \\ \hline
 
-        RF16 & O sistema deve emitir alertas quando os ingredientes estiverem próximos da validade ou quando suas quantidades estiverem abaixo do limite mínimo definido. \\ \hline
+        RF30 & O sistema deve permitir visualizar e editar ingredientes cadastrados. \\ \hline
+
+        RF31 & O sistema deve emitir alertas de validade para ingredientes do Inventário e alertas de quantidade abaixo do mínimo, classificando a validade como crítico, atenção ou preventivo conforme o prazo de vencimento. \\ \hline 
     \end{tabular}
 
     \vspace{0.2cm}
@@ -221,20 +252,20 @@ Os requisitos funcionais descrevem as ações que o sistema deverá permitir. El
 
 \begin{quadro}
     \centering
-    \tituloquadro{Requisitos funcionais de agenda}
+    \tituloquadro{Requisitos funcionais de Agenda}
     \label{quadro:rf_agenda}
 
     \begin{tabular}{|p{3cm}|p{11cm}|}
         \hline
         \textbf{Identificação} & \textbf{Requisito funcional} \\ \hline
 
-        RF17 & O sistema deve permitir visualizar os pedidos cadastrados em um calendário, organizados por data e horário de entrega ou retirada. \\ \hline
+        RF32 & O sistema deve permitir registrar e exibir pedidos em calendário por data e horário. \\ \hline
 
-        RF18 & O sistema deve permitir consultar os detalhes de um pedido a partir da data correspondente no calendário. \\ \hline
+        RF33 & O sistema deve permitir abrir detalhes completos do pedido a partir do calendário. \\ \hline
 
-        RF19 & O sistema deve exibir os pedidos do dia em ordem de horário de entrega ou retirada. \\ \hline
+        RF34 & O sistema deve exibir pedidos do dia ordenados por horário de entrega ou retirada. \\ \hline
 
-        RF20 & O sistema deve permitir cadastrar manualmente lembretes ou tarefas relacionados aos pedidos. \\ \hline
+        RF35 & O sistema deve permitir agendamento manual de lembretes ou tarefas associadas aos pedidos. \\ \hline
     \end{tabular}
 
     \vspace{0.2cm}
@@ -246,18 +277,18 @@ Os requisitos funcionais descrevem as ações que o sistema deverá permitir. El
 
 \begin{quadro}
     \centering
-    \tituloquadro{Requisitos funcionais de finanças}
+    \tituloquadro{Requisitos funcionais de Finanças}
     \label{quadro:rf_financas}
 
     \begin{tabular}{|p{3cm}|p{11cm}|}
         \hline
         \textbf{Identificação} & \textbf{Requisito funcional} \\ \hline
 
-        RF21 & O sistema deve permitir registrar os valores de sinal e de quitação associados a cada pedido, mantendo a situação do pagamento separada do status do pedido. \\ \hline
+        RF36 & O sistema deve permitir registrar manualmente transações financeiras associadas aos pedidos, como sinal, quitação, estorno, entradas e saídas. \\ \hline
 
-        RF22 & O sistema deve manter um histórico de entradas e saídas financeiras para consulta dos valores movimentados em determinado período. \\ \hline
+        RF37 & O sistema deve manter histórico de transações financeiras para consulta de saldo e lucro bruto do período. \\ \hline
 
-        RF23 & O sistema deve utilizar os custos de produção registrados para apresentar informações sobre a margem de lucro dos pedidos, conforme os dados disponíveis. \\ \hline
+        RF38 & O sistema deve utilizar custos calculados pela Produção para exibir margem de lucro real de cada pedido. \\ \hline
     \end{tabular}
 
     \vspace{0.2cm}
@@ -265,7 +296,7 @@ Os requisitos funcionais descrevem as ações que o sistema deverá permitir. El
 \end{quadro}
 
 
-\subsection{Relatórios}
+\subsection{Relatório}
 
 \begin{quadro}
     \centering
@@ -276,9 +307,9 @@ Os requisitos funcionais descrevem as ações que o sistema deverá permitir. El
         \hline
         \textbf{Identificação} & \textbf{Requisito funcional} \\ \hline
 
-        RF24 & O sistema deve gerar relatórios com os custos de produção dos produtos e informações que auxiliem na definição dos preços de venda. \\ \hline
+        RF39 & O sistema deve permitir emitir relatórios de custo de produção por produto e sugestão de precificação. \\ \hline
 
-        RF25 & O sistema deve gerar relatórios sobre o rendimento da produção, relacionando a quantidade produzida aos ingredientes utilizados. \\ \hline
+        RF40 & O sistema deve permitir emitir relatórios de rendimento, comparando quantidade gerada e insumos consumidos. \\ \hline
     \end{tabular}
 
     \vspace{0.2cm}
@@ -290,22 +321,22 @@ Os requisitos funcionais descrevem as ações que o sistema deverá permitir. El
 
 \begin{quadro}
     \centering
-    \tituloquadro{Requisitos funcionais de usuário}
+    \tituloquadro{Requisitos funcionais de Usuário}
     \label{quadro:rf_usuario}
 
     \begin{tabular}{|p{3cm}|p{11cm}|}
         \hline
         \textbf{Identificação} & \textbf{Requisito funcional} \\ \hline
 
-        RF26 & O sistema deve permitir que a proprietária entre no sistema utilizando login e senha. \\ \hline
+        RF41 & O sistema deve permitir login com usuário e senha. \\ \hline
 
-        RF27 & No primeiro acesso, o sistema deve solicitar a alteração da senha provisória antes de liberar as demais funcionalidades. \\ \hline
+        RF42 & O sistema deve identificar primeiro acesso e redirecionar obrigatoriamente para alteração de senha. \\ \hline
 
-        RF28 & O sistema deve permitir que a proprietária altere sua senha por meio das configurações do perfil. \\ \hline
+        RF43 & O sistema deve permitir solicitação de nova senha por procedimento externo ou administrativo, sem tela de configuração de perfil.  \\ \hline
 
-        RF29 & O sistema deve permitir manter o acesso ativo ao reabrir o navegador, conforme as configurações de autenticação e as regras de segurança definidas para a sessão. \\ \hline
+        RF44 & O sistema deve manter o usuário logado automaticamente ao reabrir o navegador até logout manual ou expiração segura. \\ \hline
 
-        RF30 & O sistema deve permitir encerrar a sessão por meio da opção de sair do sistema (logout). \\ \hline
+        RF45 & O sistema deve permitir logout seguro. \\ \hline
     \end{tabular}
 
     \vspace{0.2cm}
@@ -326,17 +357,27 @@ Os requisitos não funcionais definem condições relacionadas ao uso, à segura
         \hline
         \textbf{Identificação} & \textbf{Categoria} & \textbf{Requisito não funcional} \\ \hline
 
-        RNF01 & Usabilidade & A interface deve ser simples de utilizar, com navegação clara e poucas etapas para realizar as tarefas. Deve considerar o uso em computadores, celulares e tablets, inclusive em telas sensíveis ao toque. \\ \hline
+        RNF01 & Usabilidade & A interface deve ser otimizada para uso individual pela confeiteira, com navegação simples, poucos cliques e boa experiência em telas sensíveis ao toque. \\ \hline
 
-        RNF02 & Controle financeiro & O sistema não deve realizar pagamentos ou cobranças reais. Os valores recebidos e as despesas serão registrados manualmente para facilitar o controle financeiro da confeitaria. \\ \hline
+        RNF02 & Centralidade do pedido & A navegação e os fluxos devem priorizar o acompanhamento do pedido e suas relações com Estoque, Produção, Inventário, Agenda e Finanças. \\ \hline
 
-        RNF03 & Prevenção de erros & O sistema deve solicitar confirmação antes de salvar alterações nos dados de um pedido, reduzindo o risco de modificações acidentais ou incorretas. \\ \hline
+        RNF03 & Escopo financeiro & O sistema não deve realizar pagamentos reais nem integrações de cobrança. Deve atuar apenas como registro manual do fluxo de caixa. \\ \hline
 
-        RNF04 & Cópia de segurança & O sistema deve permitir a realização de cópias de segurança dos dados, como pedidos, receitas e histórico, para ajudar a evitar a perda de informações. \\ \hline
+        RNF04 & Prevenção de erros & Operações críticas, como cancelamento, conclusão de produção, baixa de ingredientes e entrada em estoque, devem exigir confirmação clara da confeiteira. \\ \hline
 
-        RNF05 & Segurança da informação & O sistema deve restringir o acesso às funcionalidades administrativas a usuários autenticados. As senhas devem ser armazenadas de forma segura, utilizando técnicas apropriadas de proteção, e as páginas restritas não devem permitir acesso sem autenticação. \\ \hline
+        RNF05 & Integridade de dados & Pedidos não devem ser excluídos. O histórico operacional deve ser preservado por edição, cancelamento e registros relacionados disponíveis no banco atual. \\ \hline
 
-        RNF06 & Gerenciamento de sessão & O sistema deve utilizar um mecanismo seguro de autenticação para manter e validar a sessão da usuária, respeitando as regras definidas para sua duração e encerramento. \\ \hline
+        RNF06 & Compatibilidade com banco atual & As funcionalidades devem respeitar as tabelas e relacionamentos existentes. Novas promessas funcionais devem considerar as entidades Usuario, Pedido, Item\_Pedido, Produto, Receita, Ingrediente, Estoque, Agenda, Transação e Cancelamento. \\ \hline
+
+        RNF07 & Segurança &Senhas devem ser armazenadas de forma criptografada ou com hash seguro, e rotas protegidas devem impedir acesso sem autenticação. \\ \hline
+
+        RNF08 & Sessão & A sessão persistente deve ser implementada com mecanismo seguro, protegendo credenciais e permitindo encerramento por logout. \\ \hline
+
+        RNF09 & Confiabilidade & O sistema deve evitar movimentações parciais em operações de produção, estoque e inventário; quando possível, alterações relacionadas devem ocorrer de forma atômica. \\ \hline
+
+        RNF10 & Alertas & Alertas de validade próxima, estoque insuficiente, ingrediente insuficiente e ausência de receita devem ser objetivos e exibidos no momento em que ajudam a tomada de decisão. \\ \hline
+
+        RNF11 & Backup & O sistema deve possibilitar backups periódicos de pedidos, receitas, estoque, inventário e histórico financeiro manual. \\ \hline
     \end{tabular}
 
     \vspace{0.2cm}
