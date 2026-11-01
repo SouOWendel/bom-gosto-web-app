@@ -10,6 +10,7 @@ import {
   LucideClock,
   LucideFilter,
   LucideDownload,
+  LucideRefreshCw,
 } from '@lucide/angular';
 import { PageAction } from './page-greeting.model';
 
@@ -25,6 +26,7 @@ import { PageAction } from './page-greeting.model';
       LucideClock,
       LucideFilter,
       LucideDownload,
+      LucideRefreshCw,
     ),
   ],
   templateUrl: './page-greeting.component.html',
