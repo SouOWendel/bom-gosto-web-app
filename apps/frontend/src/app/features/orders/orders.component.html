@@ -1,8 +1,171 @@
 <div class="orders-page">
-	<header class="orders-page__header">
-		<div>
-			<h1 class="orders-page__title">Pedidos</h1>
-			<p class="orders-page__subtitle">Hello World</p>
-		</div>
-	</header>
+  <app-page-greeting
+    title="Gestão de Pedidos & Encomendas"
+    subtitle="42 pedidos ativos no mês de Setembro • 8 aguardando produção hoje"
+    [actions]="greetingActions"
+  />
+
+  <app-metric-cards [items]="summaryCards" />
+
+  <section class="orders-page__filters">
+    <div class="orders-page__filter-row">
+      <label class="orders-page__search">
+        <svg [lucideIcon]="'search'" [size]="15"></svg>
+        <input
+          type="search"
+          placeholder="Buscar pedido, cliente ou SKU..."
+          [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)"
+        />
+      </label>
+      <button type="button" class="orders-page__date">
+        <svg [lucideIcon]="'calendar'" [size]="15"></svg>
+        Setembro 2025 (15/09/2025)
+        <svg [lucideIcon]="'chevron-down'" [size]="14"></svg>
+      </button>
+    </div>
+
+    <div class="orders-page__category-tabs">
+      <button
+        type="button"
+        [class.is-active]="selectedCategory() === 'todos'"
+        (click)="setCategory('todos')"
+      >
+        Todos
+      </button>
+      <button
+        type="button"
+        [class.is-active]="selectedCategory() === 'bolos'"
+        (click)="setCategory('bolos')"
+      >
+        Bolos
+      </button>
+      <button
+        type="button"
+        [class.is-active]="selectedCategory() === 'doces'"
+        (click)="setCategory('doces')"
+      >
+        Doces &amp; Brigadeiros
+      </button>
+      <button
+        type="button"
+        [class.is-active]="selectedCategory() === 'kits'"
+        (click)="setCategory('kits')"
+      >
+        Kits Festa
+      </button>
+    </div>
+
+    <div class="orders-page__status-tabs">
+      <button
+        type="button"
+        class="status-tab status-tab--dark"
+        [class.is-active]="selectedStatus() === 'todos'"
+        (click)="setStatus('todos')"
+      >
+        Todos <b>42</b>
+      </button>
+      <button
+        type="button"
+        class="status-tab status-tab--yellow"
+        [class.is-active]="selectedStatus() === 'pendente'"
+        (click)="setStatus('pendente')"
+      >
+        Pendentes <b>4</b>
+      </button>
+      <button
+        type="button"
+        class="status-tab status-tab--rose"
+        [class.is-active]="selectedStatus() === 'confirmado'"
+        (click)="setStatus('confirmado')"
+      >
+        Confirmados <b>8</b>
+      </button>
+      <button
+        type="button"
+        class="status-tab status-tab--blue"
+        [class.is-active]="selectedStatus() === 'producao'"
+        (click)="setStatus('producao')"
+      >
+        Em Produção <b>7</b>
+      </button>
+      <button
+        type="button"
+        class="status-tab status-tab--green"
+        [class.is-active]="selectedStatus() === 'retirada'"
+        (click)="setStatus('retirada')"
+      >
+        Prontos para Entrega <b>5</b>
+      </button>
+    </div>
+  </section>
+
+  <section class="orders-table">
+    <div class="orders-table__head">
+      <span>Nº &amp; ENTREGA</span><span>CLIENTE &amp;<br />CONTATO</span
+      ><span>ITEM ENCOMENDADO</span> <span>TOTAL &amp;<br />PAGAMENTO</span
+      ><span>STATUS PRODUÇÃO</span><span>AÇÕES OPERACIONAIS</span>
+    </div>
+
+    @for (order of filteredOrders(); track order.id) {
+      <article class="order-row">
+        <div class="order-row__delivery">
+          <strong>{{ order.id }}</strong
+          ><b>{{ order.schedule }}</b
+          ><small>{{ order.status === 'retirada' ? 'Retirada' : 'Entrega Padrão' }}</small>
+        </div>
+        <div class="order-row__customer">
+          <strong>{{ order.customer }}</strong
+          ><span>{{ order.phone }}</span
+          ><small>{{ order.address }}</small>
+        </div>
+        <div class="order-row__item">
+          <img [src]="order.image" [alt]="order.item" /><strong>{{ order.item }}</strong>
+        </div>
+        <div class="order-row__total">
+          <strong>{{ order.total }}</strong
+          ><span>{{ order.payment }}</span>
+        </div>
+        <div class="order-row__status">
+          <span class="status-pill" [class]="'status-pill--' + order.status">{{
+            order.statusLabel
+          }}</span
+          ><small>{{ order.detail }}</small>
+        </div>
+        <div class="order-row__actions">
+          <div class="order-row__icons">
+            <button type="button" aria-label="Mensagem">
+              <svg [lucideIcon]="'message-square'" [size]="14"></svg>
+            </button>
+            <button type="button" aria-label="Imprimir">
+              <svg [lucideIcon]="'printer'" [size]="14"></svg>
+            </button>
+            <button type="button" aria-label="Editar">
+              <svg [lucideIcon]="'pencil'" [size]="14"></svg>
+            </button>
+            <button type="button" aria-label="Excluir">
+              <svg [lucideIcon]="'trash-2'" [size]="14"></svg>
+            </button>
+          </div>
+          <button type="button" class="order-row__action" (click)="completeOrder(order)">
+            {{ order.action }}
+          </button>
+        </div>
+      </article>
+    } @empty {
+      <div class="orders-table__empty">Nenhum pedido encontrado com os filtros selecionados.</div>
+    }
+
+    <footer class="orders-table__footer">
+      <span
+        >Mostrando {{ filteredOrders().length }} de 42 encomendas • Total em produção:
+        <strong>R$ 640,00</strong> hoje</span
+      >
+      <div>
+        <button type="button">‹</button><button type="button" class="is-current">1</button
+        ><button type="button">2</button><button type="button">3</button><span>...</span
+        ><button type="button">11</button><button type="button">›</button>
+      </div>
+    </footer>
+  </section>
 </div>
