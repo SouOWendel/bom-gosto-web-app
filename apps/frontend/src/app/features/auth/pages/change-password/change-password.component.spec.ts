@@ -102,7 +102,7 @@ describe('ChangePasswordComponent', () => {
       'new-strong-password123',
     );
     expect(authServiceSpy.user.update).toHaveBeenCalled();
-    expect(routerSpy.navigate).toHaveBeenCalledWith(['/dashboard']);
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/inicio']);
   });
 
   it('should handle API error on submit', () => {

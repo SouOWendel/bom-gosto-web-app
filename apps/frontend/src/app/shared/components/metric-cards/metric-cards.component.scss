@@ -1,0 +1,167 @@
+.metric-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--columns, 2), minmax(0, 1fr));
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.metric-card {
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: relative;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid rgba(123, 26, 46, 0.08);
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  &__label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  &__icon-wrap {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  &__value {
+    font-size: 1.65rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  &__trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin: 0;
+
+    &--up {
+      color: #059669;
+    }
+
+    &--down {
+      color: #dc2626;
+    }
+  }
+
+  &__subtext {
+    font-size: 0.78rem;
+    margin: 0;
+  }
+
+  // Vendas / Destaque primário (rosé / vinho)
+  &--vendas,
+  &--destaque {
+    background: linear-gradient(135deg, #fce7ec 0%, #f9d0d8 100%);
+    border: 1px solid rgba(123, 26, 46, 0.12);
+
+    .metric-card__label {
+      color: #7b1a2e;
+    }
+
+    .metric-card__icon-wrap {
+      background: rgba(123, 26, 46, 0.12);
+      color: #7b1a2e;
+    }
+
+    .metric-card__value {
+      color: #2b181b;
+    }
+  }
+
+  // Pedidos (azul suave)
+  &--pedidos {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+
+    .metric-card__label {
+      color: #1e40af;
+    }
+
+    .metric-card__icon-wrap {
+      background: rgba(59, 130, 246, 0.12);
+      color: #2563eb;
+    }
+
+    .metric-card__value {
+      color: #1e3a8a;
+    }
+
+    .metric-card__subtext {
+      color: #3b5fa8;
+    }
+  }
+
+  // Alerta (âmbar/laranja suave)
+  &--alerta {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 1px solid rgba(217, 119, 6, 0.2);
+
+    .metric-card__label {
+      color: #b45309;
+    }
+
+    .metric-card__icon-wrap {
+      background: rgba(217, 119, 6, 0.12);
+      color: #b45309;
+    }
+
+    .metric-card__value {
+      color: #78350f;
+    }
+
+    .metric-card__subtext {
+      color: #92400e;
+    }
+  }
+
+  // Neutro (branco/cinza padrão)
+  &--neutro {
+    background: #ffffff;
+    border: 1px solid #f1e4e4;
+
+    .metric-card__label {
+      color: #6b585b;
+    }
+
+    .metric-card__icon-wrap {
+      background: #fdf2f0;
+      color: #7b1a2e;
+    }
+
+    .metric-card__value {
+      color: #2b181b;
+    }
+
+    .metric-card__subtext {
+      color: #8c7377;
+    }
+  }
+}

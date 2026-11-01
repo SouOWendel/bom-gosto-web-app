@@ -1,9 +1,11 @@
 import { Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { LucideLock, LucideMail, LucideEye, LucideEyeOff } from '@lucide/angular';
 
 @Component({
 	selector: 'app-input-text',
 	standalone: true,
+	imports: [LucideLock, LucideMail, LucideEye, LucideEyeOff],
 	templateUrl: './input-text.component.html',
 	styleUrls: ['./input-text.component.scss'],
 	providers: [

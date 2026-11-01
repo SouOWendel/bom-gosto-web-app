@@ -1,0 +1,23 @@
+<header class="topbar">
+  <div class="topbar__left">
+    <svg
+      [lucideIcon]="'calendar'"
+      [size]="18"
+      [strokeWidth]="2"
+      class="topbar__calendar-icon"
+    ></svg>
+    <span class="topbar__date">{{ dataAtual() }}</span>
+  </div>
+
+  <div class="topbar__right">
+    <div class="topbar__search">
+      <svg [lucideIcon]="'search'" [size]="16" [strokeWidth]="2" class="topbar__search-icon"></svg>
+      <input
+        type="text"
+        class="topbar__search-input"
+        placeholder="Buscar pedidos, receitas ou clientes..."
+        aria-label="Buscar pedidos, receitas ou clientes"
+      />
+    </div>
+  </div>
+</header>

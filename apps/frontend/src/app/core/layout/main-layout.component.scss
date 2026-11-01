@@ -1,0 +1,13 @@
+.main-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #faf5f5;
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+}

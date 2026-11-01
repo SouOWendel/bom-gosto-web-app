@@ -5,11 +5,20 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { InputTextComponent } from '../../../../shared/components/input-text/input-text.component';
 import { LoginHeaderComponent } from '../../components/login-header/login-header.component';
 import { LoginFooterComponent } from '../../components/login-footer/login-footer.component';
+import { LucideArrowLeft, LucideArrowRight, LucideClock } from '@lucide/angular';
 
 @Component({
   selector: 'app-change-password',
   standalone: true,
-  imports: [ReactiveFormsModule, InputTextComponent, LoginHeaderComponent, LoginFooterComponent],
+  imports: [
+    ReactiveFormsModule,
+    InputTextComponent,
+    LoginHeaderComponent,
+    LoginFooterComponent,
+    LucideArrowLeft,
+    LucideArrowRight,
+    LucideClock,
+  ],
   templateUrl: './change-password.component.html',
   styleUrls: ['./change-password.component.scss'],
 })
@@ -74,7 +83,7 @@ export class ChangePasswordComponent implements OnInit, OnDestroy {
     this.authService.changePassword(currentPassword, newPassword).subscribe({
       next: () => {
         this.authService.user.update((user) => (user ? { ...user, primeiro_acesso: false } : user));
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/inicio']);
       },
       error: (error) => {
         this.errorMessage.set(error.error?.detail || 'Não foi possível alterar a senha.');
