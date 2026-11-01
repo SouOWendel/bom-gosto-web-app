@@ -1,11 +1,19 @@
 # Agent Directives & Code Conventions
 
-## Git & Commit Guidelines
-When generating, suggesting, or writing git commit messages, always adhere to the following rules:
+## Regras de Commits
 
-1. **Language:** Write the commit title and body strictly in Brazilian Portuguese (pt-BR). Keep Conventional Commit prefixes in English (e.g., `feat`, `fix`).
-2. **Format:** Use the *Conventional Commits* specification: `<type>[optional scope]: <description>`.
-   - Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`.
-3. **Tone:** Use the imperative mood for descriptions (e.g., "adiciona funcionalidade", not "adicionado" or "adicionei").
-4. **Scope:** Base the message strictly on staged changes (`git diff --cached`).
-5. **Formatting:** Capitalize appropriately, do not add a trailing period to the commit title, and keep the title under 50-72 characters.
+Toda mensagem de commit deve seguir rigorosamente o Conventional Commits:
+
+1. Use o formato `<tipo>[escopo opcional]: <descrição>`.
+2. Use apenas estes tipos: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test` e `chore`.
+3. Escreva título e corpo em Português do Brasil; mantenha os prefixos em inglês.
+4. Escreva a descrição no modo imperativo, sem ponto final no título.
+5. Baseie a mensagem exclusivamente nas alterações preparadas em `git diff --cached`.
+6. Mantenha o título entre 50 e 72 caracteres e a mensagem completa com no máximo 200 caracteres.
+7. Quando possível, use emoji para representar o tipo do commit.
+8. Em mensagens longas, use a primeira linha como título, uma linha em branco e um corpo resumido.
+
+O Husky valida automaticamente os commits:
+
+- `pre-commit`: executa `npx lint-staged`, aplicando o Prettier aos arquivos preparados.
+- `commit-msg`: executa `npx --no -- commitlint --edit "$1"` e bloqueia mensagens fora do padrão.
