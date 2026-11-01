@@ -5,9 +5,9 @@ services:
     container_name: bom-gosto-db
     restart: always
     environment:
-      POSTGRES_DB: db_confeitaria
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: ${POSTGRES_DB:-db_confeitaria}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
     ports:
       - '5432:5432'
     volumes:
@@ -15,7 +15,7 @@ services:
       - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
       - ./database/create_schema.sql:/docker-entrypoint-initdb.d/02-create-schema.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d db_confeitaria"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-db_confeitaria}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -34,11 +34,11 @@ services:
     environment:
       - DEBUG=1
       - DB_ENGINE=django.db.backends.postgresql
-      - DB_NAME=db_confeitaria
-      - DB_USER=postgres
-      - DB_PASSWORD=postgrespassword
+      - DB_NAME=${POSTGRES_DB:-db_confeitaria}
+      - DB_USER=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgrespassword}
       - DB_HOST=postgres
-      - DB_PORT=5432
+      - DB_PORT=${POSTGRES_PORT:-5432}
       - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,backend # permite que o Django aceite conexoes de hosts especificos (localhost, 127.0.0.1, backend)
     depends_on:
       postgres:
@@ -54,15 +54,13 @@ services:
     restart: always
     volumes: # Mapeia localmente para o Hot Reload do Angular
       - ./apps/frontend:/app
-      - /app/node_modules
+      - frontend_node_modules:/app/node_modules
     ports:
       - "4200:4200"
-    environment:
-      - CHOKIDAR_USEPOLLING=true # Garante a detecção de alterações no Windows/WSL2
     depends_on:
       - backend
-    command: npm run start -- --host 0.0.0.0
+    command: npm run start -- --host 0.0.0.0 --poll 1000
 
 volumes:
+  frontend_node_modules:
   postgres_data:
-
