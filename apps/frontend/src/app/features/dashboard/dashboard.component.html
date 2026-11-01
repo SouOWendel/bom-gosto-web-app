@@ -1,0 +1,110 @@
+<div class="dashboard">
+  <!-- Saudação -->
+  <app-page-greeting
+    [title]="'Bom dia, Chef ' + nomeChef + '! 👩‍🍳🔍'"
+    subtitle="🔔 Acesse os atalhos a seguir."
+    [actions]="greetingActions"
+  />
+
+  <!-- Métricas (2 cards) -->
+  <app-metric-cards [items]="metricas" />
+
+  <!-- Grade principal: Calendário + Agenda -->
+  <div class="dashboard__content-grid">
+    <!-- Coluna Esquerda: Calendário -->
+    <section class="dashboard__panel calendar-panel" aria-label="Calendário de encomendas">
+      <div class="calendar-panel__header">
+        <div class="calendar-panel__title-box">
+          <h2 class="calendar-panel__month">{{ mesAno }}</h2>
+          <span class="calendar-panel__hint">Clique em qualquer data para abrir as encomendas</span>
+        </div>
+        <div class="calendar-panel__nav">
+          <button type="button" class="btn-icon" aria-label="Mês anterior">
+            <svg [lucideIcon]="'chevron-left'" [size]="18" [strokeWidth]="2"></svg>
+          </button>
+          <span class="calendar-panel__month-label">Setembro</span>
+          <button type="button" class="btn-icon" aria-label="Próximo mês">
+            <svg [lucideIcon]="'chevron-right'" [size]="18" [strokeWidth]="2"></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Grade do Calendário -->
+      <div class="calendar-grid">
+        <div class="calendar-grid__weekdays">
+          @for (diaNome of diasSemana; track diaNome) {
+            <span class="calendar-grid__weekday">{{ diaNome }}</span>
+          }
+        </div>
+
+        <div class="calendar-grid__days">
+          @for (dia of diasCalendario(); track $index) {
+            @if (dia.numero === null) {
+              <div class="calendar-grid__cell calendar-grid__cell--empty"></div>
+            } @else {
+              <button
+                type="button"
+                class="calendar-grid__cell"
+                [class.calendar-grid__cell--today]="dia.isHoje"
+                [class.calendar-grid__cell--selected]="dia.dataStr === dataSelecionada()"
+                (click)="selecionarDia(dia)"
+                [attr.aria-label]="'Dia ' + dia.numero + ' de Setembro'"
+              >
+                <span class="cell-day-number">{{ dia.numero }}</span>
+                @if (dia.isHoje) {
+                  <span class="cell-today-pill">HOJE</span>
+                }
+
+                @if (dia.categorias.length > 0) {
+                  <div class="cell-dots">
+                    @for (cat of dia.categorias; track cat) {
+                      <span class="cell-dot cell-dot--{{ cat }}" [title]="cat"></span>
+                    }
+                  </div>
+                }
+              </button>
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Legenda -->
+      <div class="calendar-legend">
+        <div class="legend-item">
+          <span class="cell-dot cell-dot--bolo"></span>
+          <span>Bolos</span>
+        </div>
+        <div class="legend-item">
+          <span class="cell-dot cell-dot--doce"></span>
+          <span>Doces</span>
+        </div>
+        <div class="legend-item">
+          <span class="cell-dot cell-dot--kit"></span>
+          <span>Kits</span>
+        </div>
+      </div>
+
+      <!-- Botão rápido -->
+      <div class="calendar-footer">
+        <a routerLink="/pedidos" class="btn btn--outline-primary btn--block">
+          <svg [lucideIcon]="'plus'" [size]="16" [strokeWidth]="2.5"></svg>
+          <span>Novo Pedido para dia {{ getDiaDoMes(dataSelecionada()) }}</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Coluna Direita: Agenda de Produção -->
+    <app-dashboard-agenda
+      [pedidosFiltrados]="pedidosFiltrados()"
+      [contadoresCategoria]="contadoresCategoria()"
+      [filtroCategoria]="filtroCategoria()"
+      [dataSelecionada]="dataSelecionada()"
+      (filtroChanged)="setFiltro($event)"
+      (avancarStatusEvent)="avancarStatus($event)"
+      (abrirWhatsAppEvent)="abrirWhatsApp($event.telefone, $event.cliente)"
+    />
+  </div>
+
+  <!-- Lembretes Manuais -->
+  <app-dashboard-reminders />
+</div>

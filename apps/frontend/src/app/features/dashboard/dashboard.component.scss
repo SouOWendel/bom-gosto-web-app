@@ -1,0 +1,286 @@
+.dashboard {
+  padding: 1.5rem;
+  max-width: 1360px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  &__content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.35fr;
+    gap: 1.25rem;
+    align-items: start;
+
+    @media (max-width: 980px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__panel {
+    background: #fff;
+    border-radius: 0.8rem;
+    border: 1px solid rgba(123, 26, 46, 0.08);
+    box-shadow: 0 4px 16px rgba(123, 26, 46, 0.04);
+    padding: 1.25rem;
+  }
+}
+
+// ─── Botões globais (usados no dashboard) ───────────────────────────────────
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
+  border: 1.5px solid transparent;
+  line-height: 1.25;
+
+  &--primary {
+    background: #7b1a2e;
+    color: #fff;
+    border-color: #7b1a2e;
+
+    &:hover {
+      background: #6a1627;
+      border-color: #6a1627;
+    }
+  }
+
+  &--secondary {
+    background: #fff;
+    color: #3b282b;
+    border-color: #ddc8cb;
+
+    &:hover {
+      background: #faf0f1;
+      border-color: #c9a8ad;
+    }
+  }
+
+  &--outline-primary {
+    background: transparent;
+    color: #7b1a2e;
+    border-color: #7b1a2e;
+
+    &:hover {
+      background: rgba(123, 26, 46, 0.06);
+    }
+  }
+
+  &--sm {
+    padding: 0.3rem 0.65rem;
+    font-size: 0.78rem;
+  }
+
+  &--block {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.btn-icon {
+  background: none;
+  border: 1px solid #e8d7d9;
+  border-radius: 0.4rem;
+  padding: 0.25rem;
+  cursor: pointer;
+  color: #5c4346;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.15s,
+    color 0.15s;
+
+  &:hover {
+    background: #faf0f1;
+    color: #7b1a2e;
+  }
+}
+
+// ─── Calendário ─────────────────────────────────────────────────────────────
+.calendar-panel {
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  &__title-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  &__month {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #2b181b;
+    margin: 0;
+  }
+
+  &__hint {
+    font-size: 0.7rem;
+    color: #8c7377;
+  }
+
+  &__nav {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  &__month-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #3b282b;
+    padding: 0 0.35rem;
+  }
+}
+
+.calendar-grid {
+  margin-bottom: 0.75rem;
+
+  &__weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #8c7377;
+    margin-bottom: 0.35rem;
+    letter-spacing: 0.03em;
+  }
+
+  &__days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.2rem;
+  }
+
+  &__cell {
+    aspect-ratio: 1;
+    min-height: 38px;
+    background: #faf5f5;
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0.1rem;
+    font-family: inherit;
+    transition: background 0.12s;
+
+    &:hover:not(&--empty) {
+      background: #f2e2e4;
+    }
+
+    &--empty {
+      background: transparent;
+      cursor: default;
+    }
+
+    &--selected {
+      background: #7b1a2e !important;
+      color: #fff !important;
+
+      .cell-day-number {
+        color: #fff;
+        font-weight: 700;
+      }
+
+      .cell-today-pill {
+        background: #fff;
+        color: #7b1a2e;
+      }
+    }
+
+    &--today:not(&--selected) {
+      border-color: #7b1a2e;
+      background: #fff1f3;
+
+      .cell-day-number {
+        color: #7b1a2e;
+        font-weight: 700;
+      }
+    }
+  }
+}
+
+.cell-day-number {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #3f2e31;
+}
+
+.cell-today-pill {
+  font-size: 0.5rem;
+  font-weight: 700;
+  background: #7b1a2e;
+  color: #fff;
+  padding: 0 0.2rem;
+  border-radius: 3px;
+}
+
+.cell-dots {
+  display: flex;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.cell-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+
+  &--bolo {
+    background: #7b1a2e;
+  }
+
+  &--doce {
+    background: #d97706;
+  }
+
+  &--kit {
+    background: #059669;
+  }
+}
+
+.calendar-legend {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: #faf5f5;
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.7rem;
+  color: #5c4346;
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+}
+
+.calendar-footer {
+  margin-top: 0.5rem;
+}

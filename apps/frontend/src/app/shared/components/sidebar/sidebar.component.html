@@ -1,0 +1,92 @@
+<aside class="sidebar">
+  <!-- Top: Brand / Header -->
+  <div class="sidebar__brand">
+    <div class="sidebar__logo-badge" aria-hidden="true">
+      <svg lucideCakeSlice [size]="24" [strokeWidth]="2" ></svg>
+    </div>
+
+    <div class="sidebar__brand-text">
+      <span class="sidebar__brand-title">{{ brandTitle() }}</span>
+      <span class="sidebar__brand-subtitle">{{ brandSubtitle() }}</span>
+    </div>
+  </div>
+
+  <div class="sidebar__divider" role="separator"></div>
+
+  <!-- Navigation items -->
+  <nav class="sidebar__nav" aria-label="Navegação principal">
+    <ul class="sidebar__nav-list">
+      @for (item of items(); track item.id) {
+        <li class="sidebar__nav-item-wrapper">
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="sidebar__nav-item--active"
+            [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+            (click)="onItemClick(item)"
+            class="sidebar__nav-item"
+            [attr.aria-label]="item.label"
+          >
+            <!-- Ícone dinâmico da biblioteca Lucide -->
+            <span class="sidebar__nav-icon" aria-hidden="true">
+              <svg [lucideIcon]="getIconName(item.icon)" [size]="20" [strokeWidth]="2"></svg>
+            </span>
+
+            <span class="sidebar__nav-label">{{ item.label }}</span>
+
+            @if (item.badge) {
+              <span class="sidebar__nav-badge">{{ item.badge }}</span>
+            }
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+
+  <!-- Card de Usuário -->
+  <div class="sidebar__footer">
+    <div class="sidebar__profile-card">
+      <div class="sidebar__profile-avatar">
+				<div class="sidebar__avatar-fallback" aria-hidden="true">
+					<svg lucideUser [size]="22" [strokeWidth]="2" ></svg>
+				</div>
+      </div>
+
+      <div class="sidebar__profile-info">
+        <span class="sidebar__profile-name" [title]="user().name">{{ user().name }}</span>
+        <span class="sidebar__profile-role" [title]="user().role">{{ user().role }}</span>
+      </div>
+
+      <div class="sidebar__profile-actions">
+        <button
+          type="button"
+          class="sidebar__profile-menu-btn"
+          (click)="toggleUserMenu($event)"
+          aria-label="Opções do usuário"
+          [attr.aria-expanded]="isUserMenuOpen()"
+        >
+          <svg lucideEllipsisVertical [size]="18" [strokeWidth]="2"></svg>
+        </button>
+
+        <!-- Dropdown Menu de opções do perfil -->
+        @if (isUserMenuOpen()) {
+          <div class="sidebar__dropdown" (click)="$event.stopPropagation()">
+            <button type="button" class="sidebar__dropdown-item" (click)="onProfileClick()">
+              <svg lucideUser [size]="16" [strokeWidth]="2"></svg>
+              <span>Meu Perfil</span>
+            </button>
+            <div class="sidebar__dropdown-divider"></div>
+            <button type="button" class="sidebar__dropdown-item sidebar__dropdown-item--danger" (click)="handleLogout()">
+              <svg lucideLogOut [size]="16" [strokeWidth]="2"></svg>
+              <span>Sair do sistema</span>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Backdrop para fechar menu dropdown ao clicar fora -->
+@if (isUserMenuOpen()) {
+  <div class="sidebar__backdrop" (click)="closeUserMenu()" aria-hidden="true"></div>
+}
