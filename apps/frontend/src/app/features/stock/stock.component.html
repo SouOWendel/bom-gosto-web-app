@@ -1,8 +1,79 @@
 <div class="stock-page">
-	<header class="stock-page__header">
-		<div>
-			<h1 class="stock-page__title">Estoque</h1>
-			<p class="stock-page__subtitle">Controle de insumos, matérias-primas e movimentações</p>
-		</div>
-	</header>
+  <app-page-greeting
+    title="Estoque de Produtos Prontos"
+    subtitle="Acompanhe os lotes armazenados, custos e prazos de validade da pronta-entrega."
+    [actions]="greetingActions"
+  />
+
+  <app-metric-cards [items]="summaryCards" />
+
+  <section class="stock-page__filters" aria-label="Filtros do estoque">
+    <div class="stock-page__filter-row">
+      <div class="stock-page__categories" role="tablist" aria-label="Categorias">
+        <button
+          type="button"
+          class="is-active"
+          [class.is-active]="selectedCategory() === 'todos'"
+          (click)="setCategory('todos')"
+        >
+          Todos
+        </button>
+        <button
+          type="button"
+          [class.is-active]="selectedCategory() === 'bolos'"
+          (click)="setCategory('bolos')"
+        >
+          Bolos Artesanais
+        </button>
+        <button
+          type="button"
+          [class.is-active]="selectedCategory() === 'doces'"
+          (click)="setCategory('doces')"
+        >
+          Doces &amp; Brigadeiros
+        </button>
+        <button
+          type="button"
+          [class.is-active]="selectedCategory() === 'sobremesas'"
+          (click)="setCategory('sobremesas')"
+        >
+          Sobremesas Especiais
+        </button>
+      </div>
+      <label class="stock-page__search">
+        <svg [lucideIcon]="'search'" [size]="15"></svg>
+        <input
+          type="search"
+          placeholder="Filtrar por nome ou código..."
+          [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)"
+        />
+      </label>
+    </div>
+  </section>
+
+  <section class="stock-page__legend" aria-label="Legenda de validade">
+    <span>VALIDADE DOS LOTES</span>
+    <span><i class="stock-page__dot stock-page__dot--critical"></i>Crítico</span>
+    <span><i class="stock-page__dot stock-page__dot--attention"></i>Atenção</span>
+    <span><i class="stock-page__dot stock-page__dot--preventive"></i>Preventivo</span>
+  </section>
+
+  <section class="stock-grid" aria-label="Produtos armazenados">
+    @for (item of filteredItems(); track item.id) {
+      <app-stock-product-card [product]="item" />
+    } @empty {
+      <p class="stock-page__empty">Nenhum produto encontrado com os filtros selecionados.</p>
+    }
+  </section>
+
+  <footer class="stock-page__footer">
+    <span
+      >Mostrando <strong>{{ filteredItems().length }}</strong> de 28 produtos cadastrados</span
+    >
+    <div>
+      <button type="button" class="is-current">1</button><button type="button">2</button
+      ><button type="button">3</button><button type="button">›</button>
+    </div>
+  </footer>
 </div>
