@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import CadastroTesteView, LoginView, AlterarSenhaView, LogoutView, MeView
 
+# Publica autenticação, sessão e troca obrigatória da senha inicial.
 urlpatterns = [
     path("auth/cadastro-teste/", CadastroTesteView.as_view()),
     path("auth/login/", LoginView.as_view()),

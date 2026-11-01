@@ -1,0 +1,35 @@
+{
+	"github.copilot.chat.commitMessageGeneration.instructions": [
+		{
+			"text": "Gere a mensagem de commit inteiramente em Português do Brasil (pt-BR)."
+		},
+		{
+			"text": "Siga estritamente o padrão Conventional Commits."
+		},
+		{
+			"text": "Use um dos tipos: feat, fix, docs, style, refactor, perf, test ou chore."
+		},
+		{
+			"text": "Escreva a descrição no modo imperativo, sem ponto final."
+		},
+		{
+			"text": "Mantenha o título entre 50 e 72 caracteres sempre que possível."
+		},
+		{
+			"text": "Inclua um corpo detalhado, se necessário, com no máximo 72 caracteres por linha"
+		},
+		{
+			"text": "Inclua uma seção de rodapé, se necessário, com no máximo 72 caracteres por linha"
+		},
+		{
+			"text": "Evite mensagens genéricas como 'atualização' ou 'alterações'"
+		},
+		{
+			"text": "Baseie a mensagem exclusivamente nas alterações staged do repositório."
+		}
+	],
+	"git.autofetch": true,
+	"git.confirmSync": false,
+	"git.enableSmartCommit": true,
+	"git.suggestSmartCommit": true
+}

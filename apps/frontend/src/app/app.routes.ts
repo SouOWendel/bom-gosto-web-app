@@ -9,6 +9,7 @@ export const routes: Routes = [
 	},
 	{
 		path: 'dashboard',
+		title: 'Dashboard - Bom Gosto',
 		component: DashboardComponent,
 		canActivate: [authGuard],
 	},
