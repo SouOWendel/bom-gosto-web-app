@@ -4,6 +4,7 @@ import {
   LucideDynamicIcon,
   provideLucideIcons,
   LucideBanknote,
+  LucideCalendar,
   LucideReceipt,
   LucideTrendingUp,
   LucideTrendingDown,
@@ -20,6 +21,7 @@ import { MetricCardItem } from './metric-cards.model';
   providers: [
     provideLucideIcons(
       LucideBanknote,
+      LucideCalendar,
       LucideReceipt,
       LucideTrendingUp,
       LucideTrendingDown,
