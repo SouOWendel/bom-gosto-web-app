@@ -24,9 +24,9 @@ A base de código foi organizada sob a abordagem de \textit{Monorepo}, centraliz
 %%\end{figure}
 
 \section{Implementação dos Componentes}
-Considerando o estágio atual de desenvolvimento, a equipe priorizou a validação da arquitetura por meio de uma Prova de Conceito (POC) focada no Módulo de Usuário e Segurança. Foi implementada com sucesso a funcionalidade de Autenticação no \textit{Django}, dando vida para a Regra de Negócio de Acesso Restrito (RN08).
+Considerando o estágio atual de desenvolvimento, a equipe priorizou a validação da arquitetura por meio de uma Prova de Conceito (POC) focada no Módulo de Usuário e Segurança. Foi implementada com sucesso a funcionalidade de Autenticação no \textit{Django}, dando vida para a Regra de Negócio de Acesso Exclusivo (RN14).
 
-A implementação incluiu a criação e validação dos \textit{endpoints} de segurança, como as rotas \textit{/auth/login/}, \textit{/auth/alterar-senha/}, \textit{/auth/me/} e \textit{/auth/logout/}. Além disso, o banco de dados foi estruturado física e logicamente no \textit{PostgreSQL} para manter as tabelas essenciais como o “Usuario” para a realização dessa tarefa.
+A implementação incluiu a criação e validação dos \textit{endpoints} de segurança, como as rotas \textit{/auth/login/}, \textit{/auth/alterar-senha/}, \textit{/auth/me/} e \textit{/auth/logout/}. Além disso, o banco de dados foi estruturado física e logicamente no \textit{PostgreSQL} para manter as tabelas essenciais como a “Usuario” para a realização dessa tarefa.
 
 \section{Integração dos Módulos}
 A integração entre o \textit{front-end} e o \textit{back-end} ocorre por meio do consumo da \textit{API REST}. Em ambiente de desenvolvimento, essa comunicação é feita pelos \textit{containers Docker}, que estabelecem a rede interna necessária para que as requisições HTTP disparadas pela interface \textit{Angular} sejam processadas de maneira segura e isolada pelas rotas do \textit{Django}.
@@ -39,10 +39,10 @@ A integração entre o \textit{front-end} e o \textit{back-end} ocorre por meio 
 %%\end{figure}
 
 \section{Testes Realizados}
-Para garantir o funcionamento do código, o plano de desenvolvimento vai aplicar testes unitários em cada módulo e testes de integração entre o \textit{front-end} e o \textit{back-end}. Para isso, definiu-se a utilização do framework Pytest para as validações no \textit{back-end (API)} e do framework Jest para avaliar o comportamento dos componentes no \textit{front-end}. Neste semestre, foram iniciados os primeiros rascunhos e estruturas nos arquivos \textit{tests.py} presentes no repositório. Contudo, a implementação completa dos testes automatizados e osresultados finais estão previstas para o próximo ciclo de desenvolvimento.
+Para garantir o funcionamento do código, o plano de desenvolvimento vai aplicar testes unitários em cada módulo e testes de integração entre o \textit{front-end} e o \textit{back-end}. Para isso, definiu-se a utilização do framework Pytest para as validações no \textit{back-end (API)} e do framework Jest para avaliar o comportamento dos componentes no \textit{front-end}. Neste semestre, foram iniciados os primeiros rascunhos e estruturas nos arquivos \textit{tests.py} presentes no repositório. Contudo, a implementação completa dos testes automatizados e os resultados finais estão previstas para o próximo ciclo de desenvolvimento.
 
 \section{Resultados Obtidos}
-O estágio atual do projeto mostra a aptidão de desenvolvimento do projeto. A validação da da Autenticação e a configuração bem-sucedida do \textit{monorepo} e dos testes automatizados comprovam que a infraestrutura base está pronta para receber as regras de negócio mais complexas da confeitaria.
+O estágio atual do projeto mostra a aptidão de desenvolvimento do projeto. A validação da Autenticação e a configuração bem-sucedida do \textit{monorepo} e dos testes automatizados comprovam que a infraestrutura base está pronta para receber as regras de negócio mais complexas da confeitaria.
 
 \section{Limitações da Implementação}
 
