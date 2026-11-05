@@ -1,4 +1,8 @@
 import { Component } from '@angular/core';
+import { MetricCardsComponent } from '../../shared/components/metric-cards/metric-cards.component';
+import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
+import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
+import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
 
 interface InventoryItem {
   name: string;
@@ -21,11 +25,47 @@ interface InventoryItem {
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [],
+  imports: [PageGreetingComponent, MetricCardsComponent],
   templateUrl: './inventory.component.html',
   styleUrls: ['./inventory.component.scss'],
 })
 export class InventoryComponent {
+  readonly greetingActions: PageAction[] = [
+    { label: 'Entrada / Saída Rápida', icon: 'filter', variant: 'secondary' },
+    { label: 'Novo Insumo', icon: 'plus', variant: 'primary' },
+  ];
+
+  readonly summaryCards: MetricCardItem[] = [
+    {
+      label: 'Total de itens',
+      value: '64',
+      subtext: 'Ativos catalogados',
+      icon: 'package',
+      variant: 'destaque',
+    },
+    {
+      label: 'Valor em estoque',
+      value: 'R$ 4.820,00',
+      subtext: 'Custo médio ponderado',
+      icon: 'banknote',
+      variant: 'neutro',
+    },
+    {
+      label: 'Estoque baixo',
+      value: '4',
+      subtext: 'Itens em alerta',
+      icon: 'circle-alert',
+      variant: 'alerta',
+    },
+    {
+      label: 'Itens esgotados',
+      value: '1',
+      subtext: 'Item bloqueado',
+      icon: 'shopping-bag',
+      variant: 'neutro',
+    },
+  ];
+
   readonly inventoryItems: InventoryItem[] = [
     {
       name: 'Leite Condensado Moça 395g',
