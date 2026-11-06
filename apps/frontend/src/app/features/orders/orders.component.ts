@@ -2,13 +2,13 @@ import { Component, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   LucideDynamicIcon,
+  LucideBan,
   LucideCalendar,
   LucideChevronDown,
   LucideMessageSquare,
   LucidePencil,
   LucidePrinter,
   LucideSearch,
-  LucideTrash2,
   provideLucideIcons,
 } from '@lucide/angular';
 import { MetricCardsComponent } from '../../shared/components/metric-cards/metric-cards.component';
@@ -18,7 +18,7 @@ import { PageAction } from '../../shared/components/page-greeting/page-greeting.
 import { CancelProductionModalComponent } from '../../shared/components/cancel-production-modal/cancel-production-modal.component';
 import { CompleteProductionModalComponent } from '../../shared/components/complete-production-modal/complete-production-modal.component';
 
-type OrderStatus = 'retirada' | 'producao' | 'confirmado' | 'pendente';
+type OrderStatus = 'retirada' | 'producao' | 'confirmado' | 'pendente' | 'cancelado';
 type OrderCategory = 'bolos' | 'doces' | 'kits';
 
 interface Order {
@@ -51,13 +51,13 @@ interface Order {
   ],
   providers: [
     provideLucideIcons(
+      LucideBan,
       LucideCalendar,
       LucideChevronDown,
       LucideMessageSquare,
       LucidePencil,
       LucidePrinter,
       LucideSearch,
-      LucideTrash2,
     ),
   ],
   templateUrl: './orders.component.html',
@@ -242,13 +242,43 @@ export class OrdersComponent {
     this.selectedOrder.set(null);
   }
 
+  cancelOrder(order: Order): void {
+    this.selectedOrder.set(order);
+    this.isCancelModalOpen.set(true);
+  }
+
+  confirmOrderCancellation(): void {
+    const order = this.selectedOrder();
+
+    if (order) {
+      this.orders.update((orders) =>
+        orders.map((current) =>
+          current.id === order.id
+            ? {
+                ...current,
+                status: 'cancelado',
+                statusLabel: 'Cancelado',
+                detail: 'Cancelado c/ reaproveitamento',
+                action: 'Ver Detalhes',
+              }
+            : current,
+        ),
+      );
+    }
+
+    this.closeCancelModal();
+  }
+
   handleGreetingAction(action: PageAction): void {
     if (action.label === 'Cancelar em produção') {
+      const prodOrder = this.orders().find((o) => o.status === 'producao') || this.orders()[1];
+      this.selectedOrder.set(prodOrder);
       this.isCancelModalOpen.set(true);
     }
   }
 
   closeCancelModal(): void {
     this.isCancelModalOpen.set(false);
+    this.selectedOrder.set(null);
   }
 }

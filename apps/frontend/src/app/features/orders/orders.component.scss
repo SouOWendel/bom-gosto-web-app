@@ -131,6 +131,10 @@
   background: #fff0b5;
   color: #7b5d00;
 }
+.status-tab--gray {
+  background: #f1f3f5;
+  color: #495057;
+}
 .status-tab:not(.is-active) {
   opacity: 0.8;
 }
@@ -247,6 +251,10 @@
 .status-pill--pendente {
   background: #f8ddd8;
   color: #8d0d24 !important;
+}
+.status-pill--cancelado {
+  background: #f1f3f5;
+  color: #495057 !important;
 }
 .order-row__actions {
   display: flex;
