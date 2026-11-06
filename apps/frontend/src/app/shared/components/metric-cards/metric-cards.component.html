@@ -8,35 +8,35 @@
       [class.metric-card--alerta]="card.variant === 'alerta'"
       [class.metric-card--neutro]="card.variant === 'neutro' || !card.variant"
     >
-      <div class="metric-card__header">
-        <span class="metric-card__label">{{ card.label }}</span>
+      <div class="metric-card__content">
+        <div class="metric-card__body">
+          <span class="metric-card__label">{{ card.label }}</span>
+          <span class="metric-card__value">{{ card.value }}</span>
+
+          @if (card.trend) {
+            <p
+              class="metric-card__trend"
+              [class.metric-card__trend--up]="card.trend.direction !== 'down'"
+              [class.metric-card__trend--down]="card.trend.direction === 'down'"
+            >
+              @if (card.trend.direction === 'down') {
+                <svg [lucideIcon]="'trending-down'" [size]="13" [strokeWidth]="2"></svg>
+              } @else {
+                <svg [lucideIcon]="'trending-up'" [size]="13" [strokeWidth]="2"></svg>
+              }
+              {{ card.trend.value }}
+            </p>
+          }
+
+          @if (card.subtext) {
+            <p class="metric-card__subtext">{{ card.subtext }}</p>
+          }
+        </div>
+
         @if (card.icon) {
           <div class="metric-card__icon-wrap" aria-hidden="true">
             <svg [lucideIcon]="card.icon" [size]="22" [strokeWidth]="1.75"></svg>
           </div>
-        }
-      </div>
-
-      <div class="metric-card__body">
-        <span class="metric-card__value">{{ card.value }}</span>
-
-        @if (card.trend) {
-          <p
-            class="metric-card__trend"
-            [class.metric-card__trend--up]="card.trend.direction !== 'down'"
-            [class.metric-card__trend--down]="card.trend.direction === 'down'"
-          >
-            @if (card.trend.direction === 'down') {
-              <svg [lucideIcon]="'trending-down'" [size]="13" [strokeWidth]="2"></svg>
-            } @else {
-              <svg [lucideIcon]="'trending-up'" [size]="13" [strokeWidth]="2"></svg>
-            }
-            {{ card.trend.value }}
-          </p>
-        }
-
-        @if (card.subtext) {
-          <p class="metric-card__subtext">{{ card.subtext }}</p>
         }
       </div>
     </div>

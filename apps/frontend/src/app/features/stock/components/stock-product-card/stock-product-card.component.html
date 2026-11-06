@@ -1,0 +1,62 @@
+<article class="stock-product-card">
+  <div class="stock-product-card__image">
+    <img [src]="product().image" [alt]="product().name" />
+    <span class="stock-product-card__status stock-product-card__status--{{ product().status }}">
+      <i></i>{{ product().statusLabel }}
+    </span>
+    <span class="stock-product-card__code">#{{ product().id }}</span>
+  </div>
+
+  <div class="stock-product-card__body">
+    <span class="stock-product-card__category">{{ product().categoryLabel }}</span>
+    <h2>{{ product().name }}</h2>
+    <p>{{ product().description }}</p>
+
+    <section class="stock-product-card__sizes" aria-label="Tamanhos disponíveis">
+      <span>TAMANHOS DISPONÍVEIS</span>
+      <div>
+        @for (size of product().sizes; track size.label) {
+          <b
+            >{{ size.label }} <small>{{ size.value }}</small></b
+          >
+        }
+      </div>
+    </section>
+
+    <div class="stock-product-card__pricing">
+      <div>
+        <small>Preço Base</small>
+        <strong
+          >{{ product().basePrice }} <em>/ {{ product().priceUnit }}</em></strong
+        >
+      </div>
+      <div>
+        <small>Margem</small>
+        <strong>{{ product().margin }}</strong>
+      </div>
+    </div>
+
+    <div class="stock-product-card__metadata">
+      <span><b>✿</b> {{ product().quantity }} {{ product().unit }}</span>
+      <span
+        ><svg [lucideIcon]="'calendar'" [size]="12"></svg> Validade: {{ product().expiry }}</span
+      >
+    </div>
+
+    <div class="stock-product-card__actions">
+      <button type="button" (click)="technicalSheet.emit(product())">
+        <svg [lucideIcon]="'file-text'" [size]="13"></svg>
+        Ficha Técnica
+      </button>
+      <button type="button" (click)="pricing.emit(product())">Precificar Venda</button>
+      <button
+        type="button"
+        class="stock-product-card__edit"
+        aria-label="Editar produto"
+        (click)="edit.emit(product())"
+      >
+        <svg [lucideIcon]="'pencil'" [size]="14"></svg>
+      </button>
+    </div>
+  </div>
+</article>

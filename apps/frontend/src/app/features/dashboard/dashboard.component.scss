@@ -1,7 +1,5 @@
 .dashboard {
   padding: 1.5rem;
-  max-width: 1360px;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -9,7 +7,7 @@
   &__content-grid {
     display: grid;
     grid-template-columns: 1fr 1.35fr;
-    gap: 1.25rem;
+    gap: 1.5rem;
     align-items: start;
 
     @media (max-width: 980px) {

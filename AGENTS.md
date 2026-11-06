@@ -1,5 +1,9 @@
 # Agent Directives & Code Conventions
 
+## Reutilização de Componentes
+
+Ao implementar interfaces no frontend, utilize sempre que possível e quando parecer necessário os componentes já existentes em `apps/frontend/src/app/shared`. Antes de criar um novo componente, verifique se há um componente compartilhado adequado e reutilize-o ou estenda-o quando isso preservar a consistência da aplicação.
+
 ## Regras de Commits
 
 Toda mensagem de commit deve seguir rigorosamente o Conventional Commits:
