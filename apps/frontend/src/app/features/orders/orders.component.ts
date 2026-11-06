@@ -15,6 +15,8 @@ import { MetricCardsComponent } from '../../shared/components/metric-cards/metri
 import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
 import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
+import { CancelProductionModalComponent } from '../../shared/components/cancel-production-modal/cancel-production-modal.component';
+import { CompleteProductionModalComponent } from '../../shared/components/complete-production-modal/complete-production-modal.component';
 
 type OrderStatus = 'retirada' | 'producao' | 'confirmado' | 'pendente';
 type OrderCategory = 'bolos' | 'doces' | 'kits';
@@ -39,12 +41,33 @@ interface Order {
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, LucideDynamicIcon, PageGreetingComponent, MetricCardsComponent],
-  providers: [provideLucideIcons(LucideCalendar, LucideChevronDown, LucideMessageSquare, LucidePencil, LucidePrinter, LucideSearch, LucideTrash2)],
+  imports: [
+    CommonModule,
+    LucideDynamicIcon,
+    PageGreetingComponent,
+    MetricCardsComponent,
+    CancelProductionModalComponent,
+    CompleteProductionModalComponent,
+  ],
+  providers: [
+    provideLucideIcons(
+      LucideCalendar,
+      LucideChevronDown,
+      LucideMessageSquare,
+      LucidePencil,
+      LucidePrinter,
+      LucideSearch,
+      LucideTrash2,
+    ),
+  ],
   templateUrl: './orders.component.html',
   styleUrls: ['./orders.component.scss'],
 })
 export class OrdersComponent {
+  readonly isCancelModalOpen = signal(false);
+  readonly isCompleteModalOpen = signal(false);
+  readonly selectedOrder = signal<Order | null>(null);
+
   readonly greetingActions: PageAction[] = [
     { label: 'Filtro Avançado', icon: 'filter', variant: 'secondary' },
     { label: '+ Novo Pedido', icon: 'plus', variant: 'primary' },
@@ -52,10 +75,34 @@ export class OrdersComponent {
   ];
 
   readonly summaryCards: MetricCardItem[] = [
-    { label: 'Hoje em produção', value: 'R$ 640,00', subtext: '4 entregas programadas', icon: 'calendar', variant: 'destaque' },
-    { label: 'Prontos p/ retirada', value: '5 encomendas', subtext: 'Aguardando clientes', icon: 'package', variant: 'alerta' },
-    { label: 'Pagamentos pendentes', value: 'R$ 340,00', subtext: '2 pedidos com saldo', icon: 'banknote', variant: 'pedidos' },
-    { label: 'Meta mensal concluída', value: '78% atingido', subtext: 'Meta em andamento', icon: 'trending-up', variant: 'neutro' },
+    {
+      label: 'Hoje em produção',
+      value: 'R$ 640,00',
+      subtext: '4 entregas programadas',
+      icon: 'calendar',
+      variant: 'destaque',
+    },
+    {
+      label: 'Prontos p/ retirada',
+      value: '5 encomendas',
+      subtext: 'Aguardando clientes',
+      icon: 'package',
+      variant: 'alerta',
+    },
+    {
+      label: 'Pagamentos pendentes',
+      value: 'R$ 340,00',
+      subtext: '2 pedidos com saldo',
+      icon: 'banknote',
+      variant: 'pedidos',
+    },
+    {
+      label: 'Meta mensal concluída',
+      value: '78% atingido',
+      subtext: 'Meta em andamento',
+      icon: 'trending-up',
+      variant: 'neutro',
+    },
   ];
 
   readonly searchTerm = signal('');
@@ -155,6 +202,26 @@ export class OrdersComponent {
   }
 
   completeOrder(order: Order): void {
+    if (order.status === 'producao') {
+      this.selectedOrder.set(order);
+      this.isCompleteModalOpen.set(true);
+      return;
+    }
+
+    this.finishOrder(order);
+  }
+
+  confirmOrderCompletion(): void {
+    const order = this.selectedOrder();
+
+    if (order) {
+      this.finishOrder(order);
+    }
+
+    this.closeCompleteModal();
+  }
+
+  private finishOrder(order: Order): void {
     this.orders.update((orders) =>
       orders.map((current) =>
         current.id === order.id
@@ -168,5 +235,20 @@ export class OrdersComponent {
           : current,
       ),
     );
+  }
+
+  closeCompleteModal(): void {
+    this.isCompleteModalOpen.set(false);
+    this.selectedOrder.set(null);
+  }
+
+  handleGreetingAction(action: PageAction): void {
+    if (action.label === 'Cancelar em produção') {
+      this.isCancelModalOpen.set(true);
+    }
+  }
+
+  closeCancelModal(): void {
+    this.isCancelModalOpen.set(false);
   }
 }

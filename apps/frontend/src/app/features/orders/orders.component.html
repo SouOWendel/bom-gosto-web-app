@@ -3,6 +3,7 @@
     title="Gestão de Pedidos & Encomendas"
     subtitle="42 pedidos ativos no mês de Setembro • 8 aguardando produção hoje"
     [actions]="greetingActions"
+    (actionClick)="handleGreetingAction($event)"
   />
 
   <app-metric-cards [items]="summaryCards" />
@@ -24,6 +25,18 @@
         <svg [lucideIcon]="'chevron-down'" [size]="14"></svg>
       </button>
     </div>
+
+    @if (isCancelModalOpen()) {
+      <app-cancel-production-modal (closed)="closeCancelModal()" (confirmed)="closeCancelModal()" />
+    }
+
+    @if (isCompleteModalOpen() && selectedOrder(); as order) {
+      <app-complete-production-modal
+        [order]="order"
+        (closed)="closeCompleteModal()"
+        (confirmed)="confirmOrderCompletion()"
+      />
+    }
 
     <div class="orders-page__category-tabs">
       <button

@@ -1,95 +1,124 @@
 :host {
-	display: block;
+  display: block;
 }
 
 .field {
-	display: flex;
-	flex-direction: column;
-	gap: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 
-	&__label {
-		font-size: 0.8rem;
-		font-weight: 500;
-		color: var(--color-text);
-		letter-spacing: 0.01em;
-	}
+  &__label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--color-text);
+    letter-spacing: 0.01em;
+  }
 
-	&__wrapper {
-		position: relative;
-		display: flex;
-		align-items: center;
-	}
+  &__wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
 
-	&__icon {
-		position: absolute;
-		display: flex;
-		align-items: center;
-		pointer-events: none;
-		color: #9ca3af;
+  &__icon {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    color: #9ca3af;
 
-		svg {
-			width: 1rem;
-			height: 1rem;
-		}
+    svg {
+      width: 1rem;
+      height: 1rem;
+    }
 
-		&--left {
-			left: 0.85rem;
-		}
-	}
+    &--left {
+      left: 0.85rem;
+    }
+  }
 
-	&__input {
-		width: 100%;
-		padding: 0.7rem 0.85rem 0.7rem 2.5rem;
-		border: 1.5px solid var(--color-border);
-		border-radius: 0.5rem;
-		font-size: 0.9rem;
-		color: var(--color-text);
-		background-color: var(--color-white);
-		outline: none;
-		transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  &__input {
+    width: 100%;
+    padding: 0.7rem 0.85rem 0.7rem 2.5rem;
+    border: 1.5px solid var(--color-border);
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--color-text);
+    background-color: var(--color-white);
+    outline: none;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
 
-		&::placeholder {
-			color: #c1c7d0;
-			font-size: 0.85rem;
-		}
+    &::placeholder {
+      color: #c1c7d0;
+      font-size: 0.85rem;
+    }
 
-		&:focus {
-			border-color: var(--color-primary);
-			box-shadow: 0 0 0 3px rgba(123, 26, 46, 0.12);
-		}
+    &:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(123, 26, 46, 0.12);
+    }
 
-		&:disabled {
-			background-color: #f3f4f6;
-			cursor: not-allowed;
-			opacity: 0.7;
-		}
-	}
+    &:disabled {
+      background-color: #f3f4f6;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+  }
 
-	// Campo com toggle de senha: adiciona padding à direita
-	&__wrapper--password &__input {
-		padding-right: 2.75rem;
-	}
+  &__wrapper:not(&__wrapper--password):not(&__wrapper--suffix) &__input {
+    padding-right: 0.85rem;
+  }
 
-	&__toggle {
-		position: absolute;
-		right: 0.75rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: none;
-		border: none;
-		cursor: pointer;
-		padding: 0.2rem;
-		color: #9ca3af;
-		transition: color 0.2s ease;
+  &__wrapper--compact &__input {
+    padding-top: 0.38rem;
+    padding-bottom: 0.38rem;
+    font-size: 0.8rem;
+    padding-left: 2rem;
+  }
 
-		svg {
-			width: 1.05rem;
-			height: 1.05rem;
-		}
+  &__wrapper--compact &__icon {
+    left: 0.6rem;
+  }
 
-		&:hover {
-			color: var(--color-primary);
-		}
-	}
+  &__suffix {
+    position: absolute;
+    right: 0.6rem;
+    color: #8d9992;
+    font-size: 0.7rem;
+    pointer-events: none;
+  }
+
+  &__wrapper--suffix &__input {
+    padding-right: 2rem;
+  }
+
+  // Campo com toggle de senha: adiciona padding à direita
+  &__wrapper--password &__input {
+    padding-right: 2.75rem;
+  }
+
+  &__toggle {
+    position: absolute;
+    right: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.2rem;
+    color: #9ca3af;
+    transition: color 0.2s ease;
+
+    svg {
+      width: 1.05rem;
+      height: 1.05rem;
+    }
+
+    &:hover {
+      color: var(--color-primary);
+    }
+  }
 }

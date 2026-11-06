@@ -3,15 +3,17 @@
     <label class="field__label" [for]="inputId">{{ label }}</label>
   }
 
-  <div class="field__wrapper" [class.field__wrapper--password]="type === 'password'">
-    <!-- Ícone do lado esquerdo -->
-    <span class="field__icon field__icon--left" aria-hidden="true">
-      @if (type === 'password') {
-        <svg lucideLock [size]="16" />
-      } @else {
-        <svg lucideMail [size]="16" />
-      }
-    </span>
+  <div
+    class="field__wrapper"
+    [class.field__wrapper--password]="type === 'password'"
+    [class.field__wrapper--suffix]="suffix"
+    [class.field__wrapper--compact]="size === 'compact'"
+  >
+    @if (icon) {
+      <span class="field__icon field__icon--left" aria-hidden="true">
+        <svg [lucideIcon]="type === 'password' ? 'lock' : icon" [size]="16" />
+      </span>
+    }
 
     <input
       class="field__input"
@@ -25,7 +27,10 @@
       (blur)="handleBlur()"
     />
 
-    <!-- Botão de toggle para senha -->
+    @if (suffix) {
+      <span class="field__suffix">{{ suffix }}</span>
+    }
+
     @if (type === 'password') {
       <button
         type="button"
@@ -35,9 +40,9 @@
         tabindex="-1"
       >
         @if (showPassword) {
-          <svg lucideEyeOff [size]="17" />
+          <svg [lucideIcon]="'eye-off'" [size]="17" />
         } @else {
-          <svg lucideEye [size]="17" />
+          <svg [lucideIcon]="'eye'" [size]="17" />
         }
       </button>
     }

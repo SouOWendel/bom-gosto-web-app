@@ -1,0 +1,89 @@
+<div class="modal-backdrop" role="presentation" (click)="close()">
+  <section
+    class="complete-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="complete-production-modal-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="complete-modal__header">
+      <div class="complete-modal__title-wrap">
+        <span class="complete-modal__success-icon">
+          <svg [lucideIcon]="'check'" [size]="17"></svg>
+        </span>
+        <div>
+          <h2 id="complete-production-modal-title">Confirmar Conclusão da Produção</h2>
+          <p>
+            Revise o consumo real dos ingredientes antes de finalizar a ordem
+            <strong>{{ order().id }}</strong
+            >.
+          </p>
+        </div>
+      </div>
+      <span class="complete-modal__ingredient-count">{{ ingredients.length }} ingredientes</span>
+    </header>
+
+    <div class="complete-modal__content">
+      <section class="complete-modal__section">
+        <div class="complete-modal__section-heading">
+          <div>
+            <h3>Ajuste de consumo</h3>
+            <p>Informe as quantidades efetivamente utilizadas.</p>
+          </div>
+        </div>
+
+        <div class="ingredients-table">
+          <div class="ingredients-table__head">
+            <span>INGREDIENTE</span><span>QTD. TEÓRICA</span><span>CONSUMO REAL</span>
+          </div>
+          @for (ingredient of ingredients; track ingredient.name) {
+            <div class="ingredients-table__row">
+              <span>
+                <strong>{{ ingredient.name }}</strong>
+                <small>{{ ingredient.lot }}</small>
+              </span>
+              <span class="ingredients-table__theoretical">{{
+                ingredient.theoreticalQuantity
+              }}</span>
+              <app-input-text
+                label=""
+                [inputId]="'consumption-' + ingredient.name"
+                type="number"
+                icon="hash"
+                [suffix]="ingredient.unit"
+                size="compact"
+                [(ngModel)]="ingredient.quantity"
+              />
+            </div>
+          }
+        </div>
+      </section>
+
+      <label class="complete-modal__expiration">
+        <span>Data de validade do lote produzido <b>*</b></span>
+        <app-input-text
+          label=""
+          inputId="production-expiration"
+          type="date"
+          icon="calendar"
+          size="compact"
+          [(ngModel)]="expirationDate"
+        />
+        <small id="expiration-helper">Esta data será vinculada ao novo lote no estoque.</small>
+      </label>
+    </div>
+
+    <footer class="complete-modal__footer">
+      <span>Os saldos serão atualizados após a confirmação.</span>
+      <button
+        type="button"
+        class="complete-modal__primary"
+        [disabled]="!expirationDate"
+        (click)="confirm()"
+      >
+        <svg [lucideIcon]="'check'" [size]="14"></svg>
+        Confirmar Baixa e Enviar para Estoque
+      </button>
+    </footer>
+  </section>
+</div>
