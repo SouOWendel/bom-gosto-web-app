@@ -20,6 +20,8 @@
     border-color 0.15s ease,
     color 0.15s ease;
 
+  text-decoration: none;
+
   &:hover:not(:disabled) {
     background: #fff7f5;
   }
@@ -41,6 +43,28 @@
 
     &:hover:not(:disabled) {
       background: #6f0e1e;
+    }
+
+    &--secondary {
+      background: #fff;
+      color: #62484a;
+      border-color: #e5d7d9;
+    }
+
+    &--danger {
+      background: #b42335;
+      border-color: #b42335;
+      color: #fff;
+
+      &:hover:not(:disabled) {
+        background: #8f1728;
+      }
+    }
+
+    &--ghost {
+      border-color: transparent;
+      background: transparent;
+      color: #62484a;
     }
   }
 
