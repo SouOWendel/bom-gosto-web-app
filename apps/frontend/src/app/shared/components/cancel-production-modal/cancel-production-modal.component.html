@@ -148,10 +148,10 @@
         preenchido. Confirmação habilitada.</span
       >
       <div>
-        <button type="button" class="cancel-modal__secondary" (click)="close()">Voltar</button>
-        <button type="button" class="cancel-modal__primary" (click)="confirm()">
+        <app-button type="button" variant="outline" (click)="close()">Voltar</app-button>
+        <app-button type="button" variant="danger" (click)="confirm()">
           Confirmar cancelamento
-        </button>
+        </app-button>
       </div>
     </footer>
   </section>

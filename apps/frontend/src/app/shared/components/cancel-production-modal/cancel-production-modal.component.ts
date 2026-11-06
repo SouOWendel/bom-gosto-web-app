@@ -11,6 +11,7 @@ import {
   provideLucideIcons,
 } from '@lucide/angular';
 import { InputTextComponent } from '../input-text/input-text.component';
+import { ButtonComponent } from '../button/button.component';
 
 interface Ingredient {
   name: string;
@@ -21,7 +22,7 @@ interface Ingredient {
 @Component({
   selector: 'app-cancel-production-modal',
   standalone: true,
-  imports: [FormsModule, InputTextComponent, LucideDynamicIcon],
+  imports: [FormsModule, InputTextComponent, ButtonComponent, LucideDynamicIcon],
   providers: [
     provideLucideIcons(
       LucideAlertTriangle,
