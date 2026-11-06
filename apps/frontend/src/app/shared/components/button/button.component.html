@@ -1,0 +1,11 @@
+<button
+  [type]="type"
+  [disabled]="disabled"
+  [attr.aria-label]="ariaLabel || null"
+  class="button"
+  [class.button--primary]="variant === 'primary'"
+  [class.button--outline]="variant === 'outline'"
+  [class.button--small]="size === 'small'"
+>
+  <ng-content />
+</button>
