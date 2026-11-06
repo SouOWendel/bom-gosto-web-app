@@ -9,6 +9,7 @@ import {
   LucideLock,
   LucideMail,
   LucidePackage,
+  LucideSearch,
   provideLucideIcons,
 } from '@lucide/angular';
 
@@ -25,6 +26,7 @@ import {
       LucideLock,
       LucideMail,
       LucidePackage,
+      LucideSearch,
     ),
     {
       provide: NG_VALUE_ACCESSOR,
