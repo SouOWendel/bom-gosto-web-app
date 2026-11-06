@@ -1,4 +1,4 @@
-import { Component, HostListener, output } from '@angular/core';
+import { Component, HostListener, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   LucideAlertTriangle,
@@ -19,6 +19,12 @@ interface Ingredient {
   observation: string;
 }
 
+export interface CancelProductionOrder {
+  id: string;
+  customer?: string;
+  item: string;
+}
+
 @Component({
   selector: 'app-cancel-production-modal',
   standalone: true,
@@ -37,6 +43,7 @@ interface Ingredient {
   styleUrls: ['./cancel-production-modal.component.scss'],
 })
 export class CancelProductionModalComponent {
+  readonly order = input<CancelProductionOrder | null>(null);
   reuseProductName = 'Brownie de cacau reaproveitado';
   reuseQuantity = '12';
   reuseExpiration = '2026-10-30';
