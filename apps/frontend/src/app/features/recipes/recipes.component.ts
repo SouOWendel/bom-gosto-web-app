@@ -18,13 +18,13 @@ interface Recipe {
 }
 
 @Component({
-  selector: 'app-products',
+  selector: 'app-recipes',
   standalone: true,
   imports: [FormsModule, ButtonComponent, InputTextComponent, PageGreetingComponent],
-  templateUrl: './products.component.html',
-  styleUrls: ['./products.component.scss'],
+  templateUrl: './recipes.component.html',
+  styleUrls: ['./recipes.component.scss'],
 })
-export class ProductsComponent {
+export class RecipesComponent {
   readonly searchTerm = signal('');
   readonly selectedCategory = signal('Todas as receitas');
   readonly selectedUnit = signal('Todas as unidades');

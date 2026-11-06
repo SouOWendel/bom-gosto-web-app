@@ -1,6 +1,6 @@
-<div class="products-page">
-  <header class="products-page__header">
-    <span class="products-page__eyebrow">ATELIÊ BOM GOSTO · PRODUÇÃO ARTESANAL</span>
+<div class="recipes-page">
+  <header class="recipes-page__header">
+    <span class="recipes-page__eyebrow">ATELIÊ BOM GOSTO · PRODUÇÃO ARTESANAL</span>
     <app-page-greeting
       title="Receitas"
       subtitle="Consulte suas fichas técnicas, rendimentos e custos de ingredientes."
@@ -8,13 +8,13 @@
     />
   </header>
 
-  <section class="products-page__filters" aria-label="Filtros de receitas">
-    <nav class="products-page__tabs" aria-label="Categorias de receitas">
+  <section class="recipes-page__filters" aria-label="Filtros de receitas">
+    <nav class="recipes-page__tabs" aria-label="Categorias de receitas">
       @for (category of categories; track category) {
         <button
           type="button"
-          class="products-page__tab"
-          [class.products-page__tab--active]="selectedCategory() === category"
+          class="recipes-page__tab"
+          [class.recipes-page__tab--active]="selectedCategory() === category"
           (click)="onCategoryChange(category)"
         >
           {{ category }}
@@ -31,7 +31,7 @@
       }
     </nav>
 
-    <div class="products-page__filter-row">
+    <div class="recipes-page__filter-row">
       <app-input-text
         label="Buscar receita"
         inputId="recipe-search"
@@ -62,17 +62,17 @@
     </div>
   </section>
 
-  <section class="products-page__table-card" aria-labelledby="recipes-table-title">
-    <header class="products-page__table-header">
+  <section class="recipes-page__table-card" aria-labelledby="recipes-table-title">
+    <header class="recipes-page__table-header">
       <div>
         <h2 id="recipes-table-title">Fichas técnicas</h2>
         <span>{{ totalRecipes() }} receitas cadastradas</span>
       </div>
-      <button type="button" class="products-page__sort">⇵ Mais recentes⌄</button>
+      <button type="button" class="recipes-page__sort">⇵ Mais recentes⌄</button>
     </header>
 
-    <div class="products-page__table-wrap">
-      <table class="products-page__table">
+    <div class="recipes-page__table-wrap">
+      <table class="recipes-page__table">
         <thead>
           <tr>
             <th>Receita / Código</th>
@@ -102,14 +102,14 @@
                 <strong>{{ formatCurrency(recipe.unitCost) }}</strong>
                 <small>/ {{ recipe.unit }}</small>
               </td>
-              <td class="products-page__actions">
+              <td class="recipes-page__actions">
                 <app-button size="small" variant="outline">Ver ficha</app-button>
-                <button type="button" class="products-page__more" aria-label="Mais ações">⋮</button>
+                <button type="button" class="recipes-page__more" aria-label="Mais ações">⋮</button>
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="products-page__empty">
+              <td colspan="6" class="recipes-page__empty">
                 Nenhuma receita encontrada com os filtros selecionados.
               </td>
             </tr>
@@ -118,17 +118,17 @@
       </table>
     </div>
 
-    <div class="products-page__note">
+    <div class="recipes-page__note">
       ⓘ Custos baseados apenas nos ingredientes do inventário. Custo por unidade = custo total ÷
       rendimento.
     </div>
-    <footer class="products-page__footer">
+    <footer class="recipes-page__footer">
       <span
         >Mostrando 1–{{ totalRecipes() }} de 24 receitas<br /><small
           >6 receitas por página</small
         ></span
       >
-      <nav class="products-page__pagination" aria-label="Paginação">
+      <nav class="recipes-page__pagination" aria-label="Paginação">
         <button type="button" class="is-current">1</button>
         <button type="button">2</button>
         <button type="button">3</button>

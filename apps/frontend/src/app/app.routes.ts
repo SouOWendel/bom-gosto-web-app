@@ -29,7 +29,7 @@ export const routes: Routes = [
         path: 'receitas',
         title: 'Receitas - Bom Gosto',
         loadComponent: () =>
-          import('./features/products/products.component').then((m) => m.ProductsComponent),
+          import('./features/recipes/recipes.component').then((m) => m.RecipesComponent),
       },
       {
         path: 'receitas/nova-receita',
