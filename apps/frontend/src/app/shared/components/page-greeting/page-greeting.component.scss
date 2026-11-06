@@ -2,12 +2,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 1rem;
 
   &__text {
     display: flex;
+    flex: 1;
     flex-direction: column;
+    min-width: 0;
     gap: 0.25rem;
   }
 
@@ -27,7 +29,9 @@
 
   &__actions {
     display: flex;
+    flex-shrink: 0;
     gap: 0.75rem;
     flex-wrap: wrap;
+    justify-content: flex-end;
   }
 }

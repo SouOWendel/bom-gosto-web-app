@@ -1,8 +1,131 @@
 <div class="inventory-page">
-	<header class="inventory-page__header">
-		<div>
-			<h1 class="inventory-page__title">Inventário</h1>
-			<p class="inventory-page__subtitle">Balanço físico, auditoria e acompanhamento de lotes</p>
-		</div>
-	</header>
+  <app-page-greeting
+    title="Controle de Estoque &amp; Matérias-Primas"
+    subtitle="Gestão técnica de ingredientes, embalagens e insumos com alertas automáticos de reposição para produção artesanal contínua."
+    [actions]="greetingActions"
+  />
+
+  <app-metric-cards [items]="summaryCards" />
+
+  <section class="inventory-page__panel" aria-label="Lista de matérias-primas">
+    <div class="inventory-page__filters">
+      <div class="inventory-page__tabs" role="tablist" aria-label="Categorias do inventário">
+        <button type="button" class="inventory-page__tab inventory-page__tab--active">
+          Todos (64)
+        </button>
+        <button type="button" class="inventory-page__tab">Ingredientes Base (38)</button>
+        <button type="button" class="inventory-page__tab">Embalagens &amp; Caixas (18)</button>
+        <button type="button" class="inventory-page__tab">Descartáveis &amp; Utensílios (8)</button>
+      </div>
+      <div class="inventory-page__filter-row">
+        <button type="button" class="inventory-page__alert-filter">
+          Em Alerta de Reposição (4)
+          <span class="inventory-page__alert-count">4</span>
+        </button>
+        <label class="inventory-page__search">
+          <svg class="inventory-page__icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="6" />
+            <path d="m16 16 4 4" />
+          </svg>
+          <input type="search" placeholder="Filtrar por nome, código, lote..." />
+        </label>
+      </div>
+    </div>
+
+    <div class="inventory-page__legend" aria-label="Legenda de status">
+      <strong>Status de estoque</strong>
+      <span class="inventory-page__legend-item"
+        ><i class="inventory-page__dot inventory-page__dot--critical"></i>Crítico</span
+      >
+      <span class="inventory-page__legend-item"
+        ><i class="inventory-page__dot inventory-page__dot--attention"></i>Atenção</span
+      >
+      <span class="inventory-page__legend-item"
+        ><i class="inventory-page__dot inventory-page__dot--preventive"></i>Preventivo</span
+      >
+      <span class="inventory-page__muted"
+        >0–7 dias &nbsp;&nbsp; 7–15 dias &nbsp;&nbsp; 15–45 dias</span
+      >
+    </div>
+
+    <div class="inventory-page__table-wrap">
+      <table class="inventory-page__table">
+        <thead>
+          <tr>
+            <th>Insumo / Código</th>
+            <th>Nível</th>
+            <th>Unidade</th>
+            <th>Mínimo</th>
+            <th>Status</th>
+            <th>Validade</th>
+            <th>Custo</th>
+            <th>Últ. Mov. / Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of inventoryItems; track item.code) {
+            <tr>
+              <td>
+                <strong class="inventory-page__item-name">{{ item.name }}</strong>
+                <small class="inventory-page__item-code">{{ item.code }} · {{ item.lot }}</small>
+              </td>
+              <td>
+                <span class="inventory-page__level"
+                  >{{ item.level }} <small>{{ item.percentage }}%</small></span
+                >
+                <span
+                  class="inventory-page__level-bar inventory-page__level-bar--{{ item.percentage }}"
+                  role="progressbar"
+                  [attr.aria-label]="'Nível de estoque: ' + item.percentage + '%'"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  [attr.aria-valuenow]="item.percentage"
+                ></span>
+              </td>
+              <td>
+                {{ item.unit }}<br /><span class="inventory-page__muted">{{ item.packaging }}</span>
+              </td>
+              <td>{{ item.minimum }}</td>
+              <td>
+                <span class="inventory-page__pill inventory-page__pill--{{ item.status }}"
+                  >• {{ item.statusLabel }}</span
+                >
+              </td>
+              <td>
+                <span class="inventory-page__muted"
+                  >{{ item.expiration }}<br />{{ item.expirationDetail }}</span
+                >
+              </td>
+              <td>
+                <strong>{{ item.cost }}</strong
+                ><br /><span class="inventory-page__muted">/ un</span>
+              </td>
+              <td>
+                <span class="inventory-page__muted"
+                  >{{ item.lastMovement }}<br />{{ item.author }}</span
+                >
+                <div class="inventory-page__actions-cell">
+                  <button type="button" class="inventory-page__row-action">Entrada</button>
+                  <button type="button" class="inventory-page__row-menu" aria-label="Mais ações">
+                    ⋮
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="inventory-page__footer">
+      <span>5 de 64 insumos</span>
+      <div class="inventory-page__pagination" aria-label="Paginação">
+        <button type="button" aria-label="Página anterior">‹</button>
+        <button type="button" class="is-current">1</button>
+        <button type="button">2</button>
+        <button type="button">3</button>
+        <button type="button" aria-label="Próxima página">›</button>
+      </div>
+    </footer>
+  </section>
 </div>
