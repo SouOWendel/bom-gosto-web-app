@@ -75,15 +75,10 @@
 
     <footer class="complete-modal__footer">
       <span>Os saldos serão atualizados após a confirmação.</span>
-      <button
-        type="button"
-        class="complete-modal__primary"
-        [disabled]="!expirationDate"
-        (click)="confirm()"
-      >
+      <app-button type="button" variant="primary" [disabled]="!expirationDate" (click)="confirm()">
         <svg [lucideIcon]="'check'" [size]="14"></svg>
         Confirmar Baixa e Enviar para Estoque
-      </button>
+      </app-button>
     </footer>
   </section>
 </div>
