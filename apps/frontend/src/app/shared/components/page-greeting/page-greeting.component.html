@@ -14,33 +14,39 @@
     <div class="page-greeting__actions">
       @for (action of actions(); track action.label) {
         @if (action.route) {
-          <a
-            [routerLink]="action.route"
-            class="btn"
-            [class.btn--primary]="action.variant === 'primary' || !action.variant"
-            [class.btn--secondary]="action.variant === 'secondary'"
-            [class.btn--outline-primary]="action.variant === 'outline-primary'"
+          <app-button
+            [route]="action.route"
+            [variant]="
+              action.variant === 'secondary'
+                ? 'secondary'
+                : action.variant === 'outline-primary'
+                  ? 'outline'
+                  : 'primary'
+            "
             (click)="onActionClick(action)"
           >
             @if (action.icon) {
               <svg [lucideIcon]="action.icon" [size]="16" [strokeWidth]="2"></svg>
             }
             <span>{{ action.label }}</span>
-          </a>
+          </app-button>
         } @else {
-          <button
+          <app-button
             type="button"
-            class="btn"
-            [class.btn--primary]="action.variant === 'primary' || !action.variant"
-            [class.btn--secondary]="action.variant === 'secondary'"
-            [class.btn--outline-primary]="action.variant === 'outline-primary'"
+            [variant]="
+              action.variant === 'secondary'
+                ? 'secondary'
+                : action.variant === 'outline-primary'
+                  ? 'outline'
+                  : 'primary'
+            "
             (click)="onActionClick(action)"
           >
             @if (action.icon) {
               <svg [lucideIcon]="action.icon" [size]="16" [strokeWidth]="2"></svg>
             }
             <span>{{ action.label }}</span>
-          </button>
+          </app-button>
         }
       }
     </div>

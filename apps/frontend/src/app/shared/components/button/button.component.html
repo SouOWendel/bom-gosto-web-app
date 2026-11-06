@@ -1,0 +1,30 @@
+@if (route) {
+  <a
+    [routerLink]="route"
+    class="button"
+    [class.button--primary]="variant === 'primary'"
+    [class.button--secondary]="variant === 'secondary'"
+    [class.button--outline]="variant === 'outline'"
+    [class.button--danger]="variant === 'danger'"
+    [class.button--ghost]="variant === 'ghost'"
+    [class.button--small]="size === 'small'"
+    [attr.aria-label]="ariaLabel || null"
+  >
+    <ng-content />
+  </a>
+} @else {
+  <button
+    [type]="type"
+    [disabled]="disabled"
+    [attr.aria-label]="ariaLabel || null"
+    class="button"
+    [class.button--primary]="variant === 'primary'"
+    [class.button--secondary]="variant === 'secondary'"
+    [class.button--outline]="variant === 'outline'"
+    [class.button--danger]="variant === 'danger'"
+    [class.button--ghost]="variant === 'ghost'"
+    [class.button--small]="size === 'small'"
+  >
+    <ng-content />
+  </button>
+}

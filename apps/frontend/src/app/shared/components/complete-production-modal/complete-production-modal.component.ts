@@ -2,6 +2,7 @@ import { Component, HostListener, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideCheck, LucideDynamicIcon, provideLucideIcons } from '@lucide/angular';
 import { InputTextComponent } from '../input-text/input-text.component';
+import { ButtonComponent } from '../button/button.component';
 
 interface ProductionIngredient {
   name: string;
@@ -19,7 +20,7 @@ interface ProductionOrder {
 @Component({
   selector: 'app-complete-production-modal',
   standalone: true,
-  imports: [FormsModule, InputTextComponent, LucideDynamicIcon],
+  imports: [FormsModule, InputTextComponent, ButtonComponent, LucideDynamicIcon],
   providers: [provideLucideIcons(LucideCheck)],
   templateUrl: './complete-production-modal.component.html',
   styleUrls: ['./complete-production-modal.component.scss'],
