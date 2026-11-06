@@ -40,8 +40,8 @@ interface StockItem extends StockProductCardItem {
 })
 export class StockComponent {
   readonly greetingActions: PageAction[] = [
-    { label: 'Atualizar Estoque em Lote', icon: 'refresh-cw', variant: 'secondary' },
-    { label: 'Cadastrar Novo Produto', icon: 'plus', variant: 'primary' },
+    { label: 'Atualizar Estoque', icon: 'refresh-cw', variant: 'secondary' },
+    { label: 'Nova Produção (Pedidos)', route: '/pedidos', icon: 'plus', variant: 'primary' },
   ];
 
   readonly summaryCards: MetricCardItem[] = [
@@ -61,8 +61,8 @@ export class StockComponent {
     },
     {
       label: 'Alertas de validade',
-      value: '7 lotes',
-      subtext: '2 críticos • 3 atenção • 2 preventivos',
+      value: '4 lotes',
+      subtext: '1 crítico • 1 atenção • 2 preventivos',
       icon: 'calendar',
       variant: 'alerta',
     },
@@ -88,8 +88,8 @@ export class StockComponent {
         { label: 'M', value: '2,5 kg' },
         { label: 'G', value: '3,5 kg' },
       ],
-      expiry: '18/09/2024',
-      expiryDetail: 'Vence em 2 dias',
+      expiry: 'Hoje (15/09/2026)',
+      expiryDetail: 'Vence hoje',
       status: 'critico',
       statusLabel: 'Crítico',
       image: '/images/auth-cake.jpg',
@@ -110,7 +110,7 @@ export class StockComponent {
         { label: 'M', value: '2,5 kg' },
         { label: 'G', value: '3,5 kg' },
       ],
-      expiry: '21/09/2024',
+      expiry: '20/09/2026',
       expiryDetail: 'Vence em 5 dias',
       status: 'atencao',
       statusLabel: 'Atenção',
@@ -131,7 +131,7 @@ export class StockComponent {
         { label: 'P', value: '1,2 kg' },
         { label: 'M', value: '2 kg' },
       ],
-      expiry: '27/09/2024',
+      expiry: '26/09/2026',
       expiryDetail: 'Vence em 11 dias',
       status: 'preventivo',
       statusLabel: 'Preventivo',
@@ -152,8 +152,8 @@ export class StockComponent {
         { label: '25', value: 'un.' },
         { label: '50', value: 'un.' },
       ],
-      expiry: '19/09/2024',
-      expiryDetail: 'Vence em 3 dias',
+      expiry: '29/09/2026',
+      expiryDetail: 'Vence em 14 dias',
       status: 'preventivo',
       statusLabel: 'Preventivo',
       image: '/images/auth-cake.jpg',

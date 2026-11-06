@@ -13,7 +13,10 @@
         </span>
         <div>
           <h2 id="cancel-modal-title">Cancelar pedido em produção?</h2>
-          <p>Pedido #1214 · Helena Duarte · 20 brownies de cacau</p>
+          <p>
+            Pedido {{ order()?.id || '#1085' }} · {{ order()?.customer || 'João Pedro' }} ·
+            {{ order()?.item || 'Kit Festa Aniversário' }}
+          </p>
         </div>
       </div>
       <button type="button" class="cancel-modal__close" aria-label="Fechar" (click)="close()">
@@ -148,10 +151,10 @@
         preenchido. Confirmação habilitada.</span
       >
       <div>
-        <button type="button" class="cancel-modal__secondary" (click)="close()">Voltar</button>
-        <button type="button" class="cancel-modal__primary" (click)="confirm()">
+        <app-button type="button" variant="outline" (click)="close()">Voltar</app-button>
+        <app-button type="button" variant="danger" (click)="confirm()">
           Confirmar cancelamento
-        </button>
+        </app-button>
       </div>
     </footer>
   </section>

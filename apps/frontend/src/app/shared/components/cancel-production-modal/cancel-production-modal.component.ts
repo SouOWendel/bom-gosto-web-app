@@ -1,4 +1,4 @@
-import { Component, HostListener, output } from '@angular/core';
+import { Component, HostListener, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   LucideAlertTriangle,
@@ -11,6 +11,7 @@ import {
   provideLucideIcons,
 } from '@lucide/angular';
 import { InputTextComponent } from '../input-text/input-text.component';
+import { ButtonComponent } from '../button/button.component';
 
 interface Ingredient {
   name: string;
@@ -18,10 +19,16 @@ interface Ingredient {
   observation: string;
 }
 
+export interface CancelProductionOrder {
+  id: string;
+  customer?: string;
+  item: string;
+}
+
 @Component({
   selector: 'app-cancel-production-modal',
   standalone: true,
-  imports: [FormsModule, InputTextComponent, LucideDynamicIcon],
+  imports: [FormsModule, InputTextComponent, ButtonComponent, LucideDynamicIcon],
   providers: [
     provideLucideIcons(
       LucideAlertTriangle,
@@ -36,6 +43,7 @@ interface Ingredient {
   styleUrls: ['./cancel-production-modal.component.scss'],
 })
 export class CancelProductionModalComponent {
+  readonly order = input<CancelProductionOrder | null>(null);
   reuseProductName = 'Brownie de cacau reaproveitado';
   reuseQuantity = '12';
   reuseExpiration = '2026-10-30';

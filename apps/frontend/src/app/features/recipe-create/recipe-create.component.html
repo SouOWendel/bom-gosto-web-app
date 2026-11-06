@@ -1,0 +1,184 @@
+<div class="recipe-page">
+  <header class="recipe-page__intro">
+    <span class="recipe-page__eyebrow">PRODUTOS / RECEITAS · NOVA FICHA TÉCNICA</span>
+    <h1>Cadastrar Receita</h1>
+    <p>
+      O cuidado de cada criação começa na ficha técnica. Defina proporções, rendimento e modo de
+      preparo.
+    </p>
+  </header>
+
+  <form (ngSubmit)="saveRecipe()">
+    <section class="recipe-card" aria-labelledby="identification-title">
+      <div class="recipe-card__heading">
+        <h2 id="identification-title">Identificação da receita</h2>
+        <p>Ficha demonstrativa FT-032 · Campos com * são obrigatórios.</p>
+      </div>
+      <div class="recipe-grid recipe-grid--two">
+        <label
+          >Nome da receita *
+          <app-input-text
+            [(ngModel)]="recipeName"
+            name="recipeName"
+            label=""
+            inputId="recipe-name"
+            icon=""
+            size="compact"
+          />
+        </label>
+        <label
+          >Categoria *
+          <select [(ngModel)]="category" name="category">
+            <option>Doces &amp; Sobremesas</option>
+            <option>Bolos</option>
+            <option>Salgados</option>
+          </select>
+        </label>
+      </div>
+      <div class="recipe-grid recipe-grid--three">
+        <label
+          >Produto associado *
+          <select [(ngModel)]="product" name="product">
+            <option>Brownie de cacau 60 g · DOC-0032</option>
+            <option>Brigadeiro tradicional · DOC-0018</option>
+          </select>
+        </label>
+        <label
+          >Rendimento *
+          <app-input-text
+            [(ngModel)]="yield"
+            name="yield"
+            label=""
+            inputId="recipe-yield"
+            type="number"
+            icon=""
+            size="compact"
+          />
+        </label>
+        <label
+          >Unidade de rendimento *
+          <select [(ngModel)]="yieldUnit" name="yieldUnit">
+            <option>Unidade (un)</option>
+            <option>Quilograma (kg)</option>
+            <option>Porção</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="recipe-card" aria-labelledby="ingredients-title">
+      <div class="recipe-card__heading">
+        <h2 id="ingredients-title">Ingredientes e proporções</h2>
+        <p>
+          Quantidades exatas para 1 receita · Selecione cada ingrediente do cadastro de estoque.
+        </p>
+      </div>
+      <div class="ingredient-table">
+        <div class="ingredient-table__header">
+          <span>Ingrediente do estoque *</span><span>Quant. *</span><span>Un. *</span
+          ><span>Custo de referência</span><span>Custo</span><span></span>
+        </div>
+        @for (ingredient of ingredients; track ingredient.code + $index) {
+          <div class="ingredient-table__row">
+            <select
+              [(ngModel)]="ingredient.name"
+              [name]="'ingredient-' + $index"
+              aria-label="Ingrediente"
+            >
+              <option>{{ ingredient.name }} · {{ ingredient.code }}</option>
+              <option>Leite condensado · INS-047</option>
+              <option>Creme de leite · INS-048</option>
+            </select>
+            <app-input-text
+              [(ngModel)]="ingredient.quantity"
+              [name]="'quantity-' + $index"
+              label=""
+              [inputId]="'quantity-' + $index"
+              type="number"
+              icon=""
+              size="compact"
+            />
+            <select [(ngModel)]="ingredient.unit" [name]="'unit-' + $index" aria-label="Unidade">
+              <option>g</option>
+              <option>kg</option>
+              <option>un</option>
+            </select>
+            <span
+              >R$ {{ ingredient.unitCost.toFixed(2).replace('.', ',') }} /
+              {{ ingredient.unit }}</span
+            >
+            <strong
+              >R$
+              {{
+                (
+                  (ingredient.quantity / (ingredient.unit === 'un' ? 1 : 1000)) *
+                  ingredient.unitCost
+                )
+                  .toFixed(2)
+                  .replace('.', ',')
+              }}</strong
+            >
+            <app-button
+              type="button"
+              variant="outline"
+              size="small"
+              ariaLabel="Remover ingrediente"
+              (click)="removeIngredient($index)"
+              >×</app-button
+            >
+          </div>
+        }
+      </div>
+      <div class="recipe-card__actions">
+        <app-button type="button" variant="outline" (click)="addIngredient()"
+          >＋ Adicionar ingrediente</app-button
+        >
+        <strong>Ingredientes: R$ {{ totalCost.toFixed(2).replace('.', ',') }}</strong>
+      </div>
+      <div class="recipe-note">
+        ⓘ Vínculo previsto para integração: quantidade produzida + rendimento da receita +
+        quantidade de cada ingrediente. Ex.: 40 un × 20 un × 400 g = 800 g de chocolate.
+      </div>
+    </section>
+
+    <section class="recipe-card" aria-labelledby="preparation-title">
+      <div class="recipe-card__heading">
+        <h2 id="preparation-title">Modo de preparo</h2>
+        <p>Instruções da dona confeiteira para padronizar o lote.</p>
+      </div>
+      <label class="sr-only" for="preparation">Etapas de preparo</label>
+      <textarea
+        id="preparation"
+        [(ngModel)]="preparation"
+        name="preparation"
+        rows="6"
+        required
+      ></textarea>
+    </section>
+
+    <div class="recipe-summary">
+      <div>
+        <span>Custo total da receita</span
+        ><strong>R$ {{ totalCost.toFixed(2).replace('.', ',') }}</strong
+        ><small>Custo dos ingredientes do inventário</small>
+      </div>
+      <div>
+        <span>Rendimento padrão</span><strong>{{ yield }} unidades</strong
+        ><small>Porção de aproximadamente 60 g</small>
+      </div>
+      <div>
+        <span>Custo por unidade</span
+        ><strong>R$ {{ (totalCost / (yield || 1)).toFixed(2).replace('.', ',') }}</strong
+        ><small>R$ {{ totalCost.toFixed(2).replace('.', ',') }} ÷ {{ yield }} unidades</small>
+      </div>
+    </div>
+    <footer class="recipe-footer">
+      <app-button type="button" variant="outline">‹ Voltar</app-button>
+      <span>Confira os ingredientes e o rendimento antes de salvar.</span>
+      <div>
+        <app-button type="button" variant="outline">Cancelar</app-button
+        ><app-button type="submit" variant="primary">✓ Salvar receita</app-button>
+      </div>
+    </footer>
+  </form>
+</div>

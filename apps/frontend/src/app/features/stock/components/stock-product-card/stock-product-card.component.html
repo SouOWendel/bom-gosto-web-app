@@ -44,19 +44,27 @@
     </div>
 
     <div class="stock-product-card__actions">
-      <button type="button" (click)="technicalSheet.emit(product())">
+      <app-button
+        type="button"
+        variant="outline"
+        size="small"
+        (click)="technicalSheet.emit(product())"
+      >
         <svg [lucideIcon]="'file-text'" [size]="13"></svg>
         Ficha Técnica
-      </button>
-      <button type="button" (click)="pricing.emit(product())">Precificar Venda</button>
-      <button
+      </app-button>
+      <app-button type="button" variant="primary" size="small" (click)="pricing.emit(product())"
+        >Precificar Venda</app-button
+      >
+      <app-button
         type="button"
-        class="stock-product-card__edit"
+        variant="ghost"
+        size="small"
         aria-label="Editar produto"
         (click)="edit.emit(product())"
       >
         <svg [lucideIcon]="'pencil'" [size]="14"></svg>
-      </button>
+      </app-button>
     </div>
   </div>
 </article>
