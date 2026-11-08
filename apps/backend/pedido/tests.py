@@ -72,6 +72,10 @@ class PedidoApiTests(APITestCase):
 		self.assertEqual(consulta.status_code, status.HTTP_200_OK)
 		self.assertEqual(len(consulta.data["itens"]), 1)
 
+		listagem = self.client.get("/api/pedido/")
+		self.assertEqual(listagem.status_code, status.HTTP_200_OK)
+		self.assertEqual(len(listagem.data), 1)
+
 		atualizacao = self.client.patch(
 			f"/api/pedido/{pedido_id}/",
 			{"forma_pagamento": "pix"},
@@ -99,15 +103,6 @@ class PedidoEstoqueIntegrationTests(SimpleTestCase):
         with self.assertRaises(serializers.ValidationError):
             serializer.validate({})
 
-    # cria um serializer de item de pedido com o pedido fornecido para simular a chamada do serializer de pedido
-    # o serializer é responsavel por transformar os dados do modelo em um formato que pode ser facilmente convertido em JSON e enviado para o cliente, alem de validar os dados recebidos do cliente antes de salvar no banco de dados
-    def make_item_serializer(self, pedido):
-        serializer = ItemPedidoSerializer()
-        serializer.parent = SimpleNamespace(
-            parent=SimpleNamespace(instance=pedido)
-        )
-        return serializer
-
     # verifica que um item de vitrine consulta a disponibilidade e encaminha para producao se o saldo for insuficiente
     def test_item_de_vitrine_consulta_servico_de_estoque(self):
         pedido = SimpleNamespace(
@@ -115,6 +110,7 @@ class PedidoEstoqueIntegrationTests(SimpleTestCase):
             subtipo=Pedido.Subtipo.VITRINE,
         )
         item = SimpleNamespace(
+            pedido=pedido,
             produto_id=12,
             quantidade=2,
             quantidade_peso=None,
@@ -130,9 +126,7 @@ class PedidoEstoqueIntegrationTests(SimpleTestCase):
             "estoque.models.Estoque.objects.verificar_disponibilidade",
             return_value=resultado,
         ) as verificar:
-            verificacao = self.make_item_serializer(pedido).get_verificacao_estoque(
-                item
-            )
+            verificacao = ItemPedidoSerializer().get_verificacao_estoque(item)
 
         verificar.assert_called_once_with(12, 2)
         self.assertEqual(verificacao["quantidade_disponivel"], Decimal("1.00"))
@@ -144,9 +138,9 @@ class PedidoEstoqueIntegrationTests(SimpleTestCase):
             tipo=Pedido.Tipo.EXTERNO,
             subtipo=Pedido.Subtipo.PERSONALIZADO,
         )
-        item = SimpleNamespace(produto_id=None)
+        item = SimpleNamespace(pedido=pedido, produto_id=None)
 
-        verificacao = self.make_item_serializer(pedido).get_verificacao_estoque(item)
+        verificacao = ItemPedidoSerializer().get_verificacao_estoque(item)
 
         self.assertFalse(verificacao["verificado"])
         self.assertTrue(verificacao["encaminhar_para_producao"])
@@ -157,9 +151,9 @@ class PedidoEstoqueIntegrationTests(SimpleTestCase):
             tipo=Pedido.Tipo.INTERNO,
             subtipo=None,
         )
-        item = SimpleNamespace(produto_id=12, quantidade=2)
+        item = SimpleNamespace(pedido=pedido, produto_id=12, quantidade=2)
 
-        verificacao = self.make_item_serializer(pedido).get_verificacao_estoque(item)
+        verificacao = ItemPedidoSerializer().get_verificacao_estoque(item)
 
         self.assertIsNone(verificacao)
 

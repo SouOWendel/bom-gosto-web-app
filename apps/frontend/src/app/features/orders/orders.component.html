@@ -1,7 +1,7 @@
 <div class="orders-page">
   <app-page-greeting
     title="Gestão de Pedidos & Encomendas"
-    subtitle="42 pedidos ativos no mês de Setembro • 8 aguardando produção hoje"
+    [subtitle]="ordersSubtitle()"
     [actions]="greetingActions"
     (actionClick)="handleGreetingAction($event)"
   />
@@ -16,7 +16,7 @@
           type="search"
           placeholder="Buscar pedido, cliente ou SKU..."
           [value]="searchTerm()"
-          (input)="searchTerm.set($any($event.target).value)"
+          (input)="onSearch($any($event.target).value)"
         />
       </label>
       <button type="button" class="orders-page__date">
@@ -80,7 +80,7 @@
         [class.is-active]="selectedStatus() === 'todos'"
         (click)="setStatus('todos')"
       >
-        Todos <b>42</b>
+        Todos <b>{{ statusCounts().todos }}</b>
       </button>
       <button
         type="button"
@@ -88,7 +88,7 @@
         [class.is-active]="selectedStatus() === 'pendente'"
         (click)="setStatus('pendente')"
       >
-        Pendentes <b>4</b>
+        Pendentes <b>{{ statusCounts().pendente }}</b>
       </button>
       <button
         type="button"
@@ -96,7 +96,7 @@
         [class.is-active]="selectedStatus() === 'confirmado'"
         (click)="setStatus('confirmado')"
       >
-        Confirmados <b>8</b>
+        Confirmados <b>{{ statusCounts().confirmado }}</b>
       </button>
       <button
         type="button"
@@ -104,7 +104,7 @@
         [class.is-active]="selectedStatus() === 'producao'"
         (click)="setStatus('producao')"
       >
-        Em Produção <b>7</b>
+        Em Produção <b>{{ statusCounts().producao }}</b>
       </button>
       <button
         type="button"
@@ -112,7 +112,7 @@
         [class.is-active]="selectedStatus() === 'retirada'"
         (click)="setStatus('retirada')"
       >
-        Prontos para Entrega <b>5</b>
+        Prontos para Entrega <b>{{ statusCounts().retirada }}</b>
       </button>
       <button
         type="button"
@@ -120,7 +120,7 @@
         [class.is-active]="selectedStatus() === 'cancelado'"
         (click)="setStatus('cancelado')"
       >
-        Cancelados
+        Cancelados <b>{{ statusCounts().cancelado }}</b>
       </button>
     </div>
   </section>
@@ -132,7 +132,7 @@
       ><span>STATUS PRODUÇÃO</span><span>AÇÕES OPERACIONAIS</span>
     </div>
 
-    @for (order of filteredOrders(); track order.id) {
+    @for (order of paginatedOrders(); track order.id) {
       <article class="order-row">
         <div class="order-row__delivery">
           <strong>{{ order.id }}</strong
@@ -188,13 +188,36 @@
 
     <footer class="orders-table__footer">
       <span
-        >Mostrando {{ filteredOrders().length }} de 42 encomendas • Total em produção:
-        <strong>R$ 640,00</strong> hoje</span
+        >Mostrando {{ visibleRange().start }}–{{ visibleRange().end }} de
+        {{ filteredOrders().length }} encomendas</span
       >
       <div>
-        <button type="button">‹</button><button type="button" class="is-current">1</button
-        ><button type="button">2</button><button type="button">3</button><span>...</span
-        ><button type="button">11</button><button type="button">›</button>
+        <button
+          type="button"
+          aria-label="Página anterior"
+          [disabled]="currentPage() === 1"
+          (click)="goToPage(currentPage() - 1)"
+        >
+          ‹
+        </button>
+        @for (page of pageNumbers(); track page) {
+          <button
+            type="button"
+            [class.is-current]="currentPage() === page"
+            [attr.aria-current]="currentPage() === page ? 'page' : null"
+            (click)="goToPage(page)"
+          >
+            {{ page }}
+          </button>
+        }
+        <button
+          type="button"
+          aria-label="Próxima página"
+          [disabled]="currentPage() === totalPages() || totalPages() === 0"
+          (click)="goToPage(currentPage() + 1)"
+        >
+          ›
+        </button>
       </div>
     </footer>
   </section>

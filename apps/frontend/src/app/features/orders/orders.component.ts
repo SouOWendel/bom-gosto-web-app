@@ -81,6 +81,8 @@ export class OrdersComponent implements OnInit {
   readonly loadError = signal<string | null>(null);
   readonly actionError = signal<string | null>(null);
   readonly operationInProgress = signal(false);
+  readonly currentPage = signal(1);
+  readonly pageSize = 6;
   @ViewChild(CancelProductionModalComponent)
   private cancelProductionModal?: CancelProductionModalComponent;
   @ViewChild(CompleteProductionModalComponent)
@@ -93,14 +95,31 @@ export class OrdersComponent implements OnInit {
   ];
 
   readonly orders = signal<OrderRow[]>([]);
+  readonly statusCounts = computed(() => {
+    const orders = this.orders();
+    return {
+      todos: orders.length,
+      pendente: orders.filter((order) => order.status === 'pendente').length,
+      confirmado: orders.filter((order) => order.status === 'confirmado').length,
+      producao: orders.filter((order) => order.status === 'producao').length,
+      retirada: orders.filter((order) => order.status === 'retirada').length,
+      cancelado: orders.filter((order) => order.status === 'cancelado').length,
+    };
+  });
+  readonly waitingProductionCount = computed(
+    () => this.orders().filter((order) => order.apiOrder.status === 'pedido_feito').length,
+  );
+  readonly ordersSubtitle = computed(
+    () =>
+      `${this.orders().length} pedidos cadastrados • ${this.waitingProductionCount()} aguardando produção`,
+  );
 
   get summaryCards(): MetricCardItem[] {
     const orders = this.orders();
     const inProduction = orders.filter((order) => order.status === 'producao');
     const ready = orders.filter(
       (order) =>
-        order.apiOrder.status === 'producao_concluida' &&
-        order.apiOrder.tipo === 'externo',
+        order.apiOrder.status === 'producao_concluida' && order.apiOrder.tipo === 'externo',
     ).length;
     const pendingBalance = orders
       .filter((order) => order.status !== 'cancelado' && order.status !== 'retirada')
@@ -109,8 +128,7 @@ export class OrdersComponent implements OnInit {
           total +
           Math.max(
             0,
-            this.toNumber(order.apiOrder.valor_total) -
-              this.toNumber(order.apiOrder.valor_sinal),
+            this.toNumber(order.apiOrder.valor_total) - this.toNumber(order.apiOrder.valor_sinal),
           ),
         0,
       );
@@ -143,7 +161,10 @@ export class OrdersComponent implements OnInit {
       },
       {
         label: 'Pedidos ativos',
-        value: String(orders.filter((order) => order.status !== 'cancelado' && order.status !== 'retirada').length),
+        value: String(
+          orders.filter((order) => order.status !== 'cancelado' && order.status !== 'retirada')
+            .length,
+        ),
         subtext: 'Dados carregados da API',
         icon: 'trending-up',
         variant: 'neutro',
@@ -171,6 +192,24 @@ export class OrdersComponent implements OnInit {
       return matchesTerm && matchesCategory && matchesStatus;
     });
   });
+  readonly paginatedOrders = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredOrders().slice(start, start + this.pageSize);
+  });
+  readonly totalPages = computed(() => Math.ceil(this.filteredOrders().length / this.pageSize));
+  readonly pageNumbers = computed(() =>
+    Array.from({ length: this.totalPages() }, (_, index) => index + 1),
+  );
+  readonly visibleRange = computed(() => {
+    const total = this.filteredOrders().length;
+    if (total === 0) {
+      return { start: 0, end: 0 };
+    }
+    return {
+      start: (this.currentPage() - 1) * this.pageSize + 1,
+      end: Math.min(this.currentPage() * this.pageSize, total),
+    };
+  });
 
   ngOnInit(): void {
     this.loadOrders();
@@ -178,10 +217,23 @@ export class OrdersComponent implements OnInit {
 
   setCategory(category: 'todos' | OrderCategory): void {
     this.selectedCategory.set(category);
+    this.currentPage.set(1);
   }
 
   setStatus(status: 'todos' | OrderStatus): void {
     this.selectedStatus.set(status);
+    this.currentPage.set(1);
+  }
+
+  onSearch(value: string): void {
+    this.searchTerm.set(value);
+    this.currentPage.set(1);
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
   }
 
   completeOrder(order: OrderRow): void {
@@ -321,6 +373,7 @@ export class OrdersComponent implements OnInit {
       next: (orders) => {
         this.orders.set(orders.map((order) => this.toOrderRow(order)));
         this.loadError.set(null);
+        this.currentPage.set(1);
       },
       error: (error: unknown) => {
         this.loadError.set(this.errorDetail(error));
@@ -348,10 +401,7 @@ export class OrdersComponent implements OnInit {
           this.handleActionError(`Estoque insuficiente para iniciar a produção: ${names}.`);
           return;
         }
-        if (
-          order.apiOrder.tipo === 'externo' &&
-          !analysis.encaminhar_para_producao
-        ) {
+        if (order.apiOrder.tipo === 'externo' && !analysis.encaminhar_para_producao) {
           this.domainApi.consumeStock(order.apiOrder.id_pedido).subscribe({
             next: (updatedOrder) => this.finishActionWithOrder(updatedOrder),
             error: (error: unknown) =>
@@ -470,7 +520,7 @@ export class OrdersComponent implements OnInit {
       payment:
         order.valor_sinal !== '0.00' && order.valor_sinal !== '0'
           ? `Sinal: ${this.formatCurrency(this.toNumber(order.valor_sinal))}`
-          : order.forma_pagamento ?? 'Pagamento não informado',
+          : (order.forma_pagamento ?? 'Pagamento não informado'),
       status,
       statusLabel: this.statusLabel(status),
       schedule: this.formatSchedule(order.data_entrega, order.horario_entrega),
@@ -526,7 +576,11 @@ export class OrdersComponent implements OnInit {
 
   private toCategory(value: string): OrderCategory | null {
     const normalized = value.toLocaleLowerCase('pt-BR');
-    if (normalized.includes('brigadeiro') || normalized.includes('doce') || normalized.includes('docinho')) {
+    if (
+      normalized.includes('brigadeiro') ||
+      normalized.includes('doce') ||
+      normalized.includes('docinho')
+    ) {
       return 'doces';
     }
     if (normalized.includes('kit') || normalized.includes('festa')) {

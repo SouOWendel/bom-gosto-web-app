@@ -11,16 +11,16 @@
     <div class="inventory-page__filters">
       <div class="inventory-page__tabs" role="tablist" aria-label="Categorias do inventário">
         <button type="button" class="inventory-page__tab inventory-page__tab--active">
-          Todos (64)
+          Todos ({{ totalItems() }})
         </button>
-        <button type="button" class="inventory-page__tab">Ingredientes Base (38)</button>
-        <button type="button" class="inventory-page__tab">Embalagens &amp; Caixas (18)</button>
-        <button type="button" class="inventory-page__tab">Descartáveis &amp; Utensílios (8)</button>
+        <button type="button" class="inventory-page__tab">Ingredientes Base</button>
+        <button type="button" class="inventory-page__tab">Embalagens &amp; Caixas</button>
+        <button type="button" class="inventory-page__tab">Descartáveis &amp; Utensílios</button>
       </div>
       <div class="inventory-page__filter-row">
         <button type="button" class="inventory-page__alert-filter">
-          Em Alerta de Reposição (4)
-          <span class="inventory-page__alert-count">4</span>
+          Em Alerta de Reposição ({{ belowMinimumCount() }})
+          <span class="inventory-page__alert-count">{{ belowMinimumCount() }}</span>
         </button>
         <label class="inventory-page__search">
           <svg class="inventory-page__icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -63,7 +63,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (item of inventoryItems; track item.code) {
+          @for (item of paginatedInventoryItems(); track item.code) {
             <tr>
               <td>
                 <strong class="inventory-page__item-name">{{ item.name }}</strong>
@@ -118,13 +118,37 @@
     </div>
 
     <footer class="inventory-page__footer">
-      <span>5 de 64 insumos</span>
+      <span
+        >Mostrando {{ visibleRange().start }}–{{ visibleRange().end }} de
+        {{ totalItems() }} insumos</span
+      >
       <div class="inventory-page__pagination" aria-label="Paginação">
-        <button type="button" aria-label="Página anterior">‹</button>
-        <button type="button" class="is-current">1</button>
-        <button type="button">2</button>
-        <button type="button">3</button>
-        <button type="button" aria-label="Próxima página">›</button>
+        <button
+          type="button"
+          aria-label="Página anterior"
+          [disabled]="currentPage() === 1"
+          (click)="goToPage(currentPage() - 1)"
+        >
+          ‹
+        </button>
+        @for (page of pageNumbers(); track page) {
+          <button
+            type="button"
+            [class.is-current]="currentPage() === page"
+            [attr.aria-current]="currentPage() === page ? 'page' : null"
+            (click)="goToPage(page)"
+          >
+            {{ page }}
+          </button>
+        }
+        <button
+          type="button"
+          aria-label="Próxima página"
+          [disabled]="currentPage() === totalPages() || totalPages() === 0"
+          (click)="goToPage(currentPage() + 1)"
+        >
+          ›
+        </button>
       </div>
     </footer>
   </section>
