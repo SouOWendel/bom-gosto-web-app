@@ -54,8 +54,7 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
 
     # Confere o saldo do produto pronto e sinaliza quando o item precisa de Produção.
     def get_verificacao_estoque(self, item):
-        pedido_serializer = self.parent.parent
-        pedido = pedido_serializer.instance
+        pedido = item.pedido
         if (
             pedido is None
             or pedido.tipo != Pedido.Tipo.EXTERNO

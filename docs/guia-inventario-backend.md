@@ -221,6 +221,7 @@ try {
 }
 ```
 
+<<<<<<< HEAD
 O registro não é removido pelo teste. Confirme o estado final com `GET` ou com a consulta SQL da etapa 2. A limpeza de registros de teste deve ser feita de acordo com o procedimento de manutenção do banco do projeto.
 
 ## 10. Movimentação simples do MVP
@@ -255,3 +256,10 @@ Invoke-RestMethod -Method Post `
 ```
 
 O MVP não mantém histórico de movimentações.
+=======
+O registro não é removido pelo teste. Confirme o estado final com `GET` ou consulte diretamente o PostgreSQL pelo Docker, substituindo `1` pelo ID do ingrediente testado:
+
+```powershell
+docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT * FROM ingrediente WHERE id_ingrediente = 1;"
+```
+>>>>>>> origin/dev

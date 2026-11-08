@@ -91,7 +91,12 @@ export class OrdersComponent implements OnInit {
   readonly isEditModalOpen = signal(false);
   readonly creationInProgress = signal(false);
   readonly operationInProgress = signal(false);
+<<<<<<< HEAD
   readonly products = signal<Product[]>([]);
+=======
+  readonly currentPage = signal(1);
+  readonly pageSize = 6;
+>>>>>>> origin/dev
   @ViewChild(CancelProductionModalComponent)
   private cancelProductionModal?: CancelProductionModalComponent;
   @ViewChild(CompleteProductionModalComponent)
@@ -104,6 +109,24 @@ export class OrdersComponent implements OnInit {
   ];
 
   readonly orders = signal<OrderRow[]>([]);
+  readonly statusCounts = computed(() => {
+    const orders = this.orders();
+    return {
+      todos: orders.length,
+      pendente: orders.filter((order) => order.status === 'pendente').length,
+      confirmado: orders.filter((order) => order.status === 'confirmado').length,
+      producao: orders.filter((order) => order.status === 'producao').length,
+      retirada: orders.filter((order) => order.status === 'retirada').length,
+      cancelado: orders.filter((order) => order.status === 'cancelado').length,
+    };
+  });
+  readonly waitingProductionCount = computed(
+    () => this.orders().filter((order) => order.apiOrder.status === 'pedido_feito').length,
+  );
+  readonly ordersSubtitle = computed(
+    () =>
+      `${this.orders().length} pedidos cadastrados • ${this.waitingProductionCount()} aguardando produção`,
+  );
 
   get summaryCards(): MetricCardItem[] {
     const orders = this.orders();
@@ -201,6 +224,24 @@ export class OrdersComponent implements OnInit {
       return matchesTerm && matchesCategory && matchesStatus;
     });
   });
+  readonly paginatedOrders = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredOrders().slice(start, start + this.pageSize);
+  });
+  readonly totalPages = computed(() => Math.ceil(this.filteredOrders().length / this.pageSize));
+  readonly pageNumbers = computed(() =>
+    Array.from({ length: this.totalPages() }, (_, index) => index + 1),
+  );
+  readonly visibleRange = computed(() => {
+    const total = this.filteredOrders().length;
+    if (total === 0) {
+      return { start: 0, end: 0 };
+    }
+    return {
+      start: (this.currentPage() - 1) * this.pageSize + 1,
+      end: Math.min(this.currentPage() * this.pageSize, total),
+    };
+  });
 
   ngOnInit(): void {
     this.loadOrders();
@@ -223,10 +264,23 @@ export class OrdersComponent implements OnInit {
 
   setCategory(category: 'todos' | OrderCategory): void {
     this.selectedCategory.set(category);
+    this.currentPage.set(1);
   }
 
   setStatus(status: 'todos' | OrderStatus): void {
     this.selectedStatus.set(status);
+    this.currentPage.set(1);
+  }
+
+  onSearch(value: string): void {
+    this.searchTerm.set(value);
+    this.currentPage.set(1);
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
   }
 
   completeOrder(order: OrderRow): void {
@@ -434,6 +488,7 @@ export class OrdersComponent implements OnInit {
       next: (orders) => {
         this.orders.set(orders.map((order) => this.toOrderRow(order)));
         this.loadError.set(null);
+        this.currentPage.set(1);
       },
       error: (error: unknown) => {
         this.loadError.set(this.errorDetail(error));

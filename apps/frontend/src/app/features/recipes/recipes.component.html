@@ -16,13 +16,7 @@
         >
           {{ category }}
           @if (category === 'Todas as receitas') {
-            <span>(24)</span>
-          } @else if (category === 'Bolos') {
-            <span>(8)</span>
-          } @else if (category === 'Doces e brigadeiros') {
-            <span>(10)</span>
-          } @else {
-            <span>(6)</span>
+            <span>({{ recipes().length }})</span>
           }
         </button>
       }
@@ -48,7 +42,7 @@
         Unidade de rendimento
         <select
           [ngModel]="selectedUnit()"
-          (ngModelChange)="selectedUnit.set($event)"
+          (ngModelChange)="onUnitChange($event)"
           aria-label="Filtrar por unidade"
         >
           <option>Todas as unidades</option>
@@ -81,7 +75,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (recipe of filteredRecipes(); track recipe.code) {
+          @for (recipe of paginatedRecipes(); track recipe.code) {
             <tr>
               <td>
                 <strong>{{ recipe.name }}</strong>
@@ -121,16 +115,36 @@
     </div>
     <footer class="recipes-page__footer">
       <span
-        >Mostrando 1–{{ totalRecipes() }} de 24 receitas<br /><small
-          >6 receitas por página</small
-        ></span
+        >Mostrando {{ visibleRange().start }}–{{ visibleRange().end }} de
+        {{ totalRecipes() }} receitas<br /><small>6 receitas por página</small></span
       >
       <nav class="recipes-page__pagination" aria-label="Paginação">
-        <button type="button" class="is-current">1</button>
-        <button type="button">2</button>
-        <button type="button">3</button>
-        <button type="button">4</button>
-        <button type="button">›</button>
+        <button
+          type="button"
+          aria-label="Página anterior"
+          [disabled]="currentPage() === 1"
+          (click)="goToPage(currentPage() - 1)"
+        >
+          ‹
+        </button>
+        @for (page of pageNumbers(); track page) {
+          <button
+            type="button"
+            [class.is-current]="currentPage() === page"
+            [attr.aria-current]="currentPage() === page ? 'page' : null"
+            (click)="goToPage(page)"
+          >
+            {{ page }}
+          </button>
+        }
+        <button
+          type="button"
+          aria-label="Próxima página"
+          [disabled]="currentPage() === totalPages() || totalPages() === 0"
+          (click)="goToPage(currentPage() + 1)"
+        >
+          ›
+        </button>
       </nav>
     </footer>
   </section>

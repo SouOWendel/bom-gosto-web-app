@@ -56,6 +56,26 @@ docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT cu
 docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT id_usuario, login, primeiro_acesso FROM usuario;"
 ```
 
+### Consultar dados persistidos
+
+Exemplos de queries para confirmar que as alterações foram gravadas no PostgreSQL:
+
+```powershell
+docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT * FROM pedido ORDER BY id_pedido DESC LIMIT 10;"  
+
+docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT * FROM receita ORDER BY id_receita DESC LIMIT 10;"  
+
+docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT * FROM ingrediente ORDER BY id_ingrediente DESC LIMIT 10;"  
+
+docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT * FROM estoque ORDER BY id_estoque DESC LIMIT 10;"
+```
+
+Para conferir um registro específico, filtre pelo identificador. Substitua `1` pelo ID exibido pela aplicação ou pela API:
+
+```powershell
+docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT * FROM ingrediente WHERE id_ingrediente = 1;"
+```
+
 Verificar a conexão usando as configurações do Django:
 
 ```powershell

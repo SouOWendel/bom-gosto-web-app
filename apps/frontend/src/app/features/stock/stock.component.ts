@@ -89,6 +89,8 @@ export class StockComponent implements OnInit {
 
   readonly selectedCategory = signal<'todos' | StockCategory>('todos');
   readonly searchTerm = signal('');
+  readonly currentPage = signal(1);
+  readonly pageSize = 6;
 
   readonly stockItems = computed<StockItem[]>(() =>
     this.stockLots().map((lot) => this.toStockItem(lot)),
@@ -107,9 +109,39 @@ export class StockComponent implements OnInit {
       return matchesTerm && (category === 'todos' || item.category === category);
     });
   });
+  readonly paginatedItems = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredItems().slice(start, start + this.pageSize);
+  });
+  readonly totalPages = computed(() => Math.ceil(this.filteredItems().length / this.pageSize));
+  readonly pageNumbers = computed(() =>
+    Array.from({ length: this.totalPages() }, (_, index) => index + 1),
+  );
+  readonly visibleRange = computed(() => {
+    const total = this.filteredItems().length;
+    if (total === 0) {
+      return { start: 0, end: 0 };
+    }
+    return {
+      start: (this.currentPage() - 1) * this.pageSize + 1,
+      end: Math.min(this.currentPage() * this.pageSize, total),
+    };
+  });
 
   setCategory(category: 'todos' | StockCategory): void {
     this.selectedCategory.set(category);
+    this.currentPage.set(1);
+  }
+
+  onSearch(value: string): void {
+    this.searchTerm.set(value);
+    this.currentPage.set(1);
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
   }
 
   ngOnInit(): void {
@@ -117,6 +149,7 @@ export class StockComponent implements OnInit {
       next: (lots) => {
         this.stockLots.set(lots);
         this.loadError.set(null);
+        this.currentPage.set(1);
       },
       error: (error: unknown) => {
         const detail = this.errorDetail(error);

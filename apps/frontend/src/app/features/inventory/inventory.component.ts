@@ -58,6 +58,27 @@ export class InventoryComponent implements OnInit {
   readonly movementError = signal<string | null>(null);
   readonly searchTerm = signal('');
   readonly alertOnly = signal(false);
+  readonly currentPage = signal(1);
+  readonly pageSize = 5;
+  readonly totalItems = computed(() => this.filteredInventoryItems().length);
+  readonly paginatedInventoryItems = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredInventoryItems().slice(start, start + this.pageSize);
+  });
+  readonly totalPages = computed(() => Math.ceil(this.totalItems() / this.pageSize));
+  readonly pageNumbers = computed(() =>
+    Array.from({ length: this.totalPages() }, (_, index) => index + 1),
+  );
+  readonly visibleRange = computed(() => {
+    const total = this.totalItems();
+    if (total === 0) {
+      return { start: 0, end: 0 };
+    }
+    return {
+      start: (this.currentPage() - 1) * this.pageSize + 1,
+      end: Math.min(this.currentPage() * this.pageSize, total),
+    };
+  });
 
   readonly greetingActions: PageAction[] = [
     { label: 'Novo Insumo', icon: 'plus', variant: 'primary' },
@@ -142,6 +163,7 @@ export class InventoryComponent implements OnInit {
       next: (ingredients) => {
         this.ingredients.set(ingredients);
         this.loadError.set(null);
+        this.currentPage.set(1);
       },
       error: (error: unknown) => {
         const detail = this.errorDetail(error);
@@ -149,6 +171,16 @@ export class InventoryComponent implements OnInit {
         console.error('Falha ao carregar o inventário de insumos.', error);
       },
     });
+  }
+
+  onSearch(value: string): void {
+    this.searchTerm.set(value);
+    this.currentPage.set(1);
+  }
+
+  setAlertFilter(value: boolean): void {
+    this.alertOnly.set(value);
+    this.currentPage.set(1);
   }
 
   handleGreetingAction(action: PageAction): void {
@@ -234,6 +266,12 @@ export class InventoryComponent implements OnInit {
           console.error('Falha ao cadastrar insumo.', error);
         },
       });
+    }
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
     }
   }
 
