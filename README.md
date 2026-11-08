@@ -37,7 +37,7 @@ Na raiz do projeto, inicie o ambiente completo:
 docker compose up -d --build
 ```
 
-O Compose inicia o PostgreSQL, cria o schema inicial em um banco novo, aplica as migrations do Django e sobe os servidores:
+O Compose inicia o PostgreSQL e o backend aplica `python manage.py migrate --noinput` antes de subir o servidor. As migrations Django criam e controlam as 11 tabelas ativas de aplicação. O Compose não executa `database/create_schema.sql`.
 
 - Frontend: http://localhost:4200
 - Backend: http://localhost:8000
@@ -58,7 +58,7 @@ Para parar os containers sem apagar o banco:
 docker compose down
 ```
 
-Para preservar o banco atual, não remova o volume PostgreSQL ao atualizar os serviços. O schema de referência em `database/create_schema.sql` serve para instalações novas; não o execute sobre um banco existente nem gere migrations para os models de tabelas preexistentes. Consulte os guias abaixo para os fluxos específicos:
+Para preservar o banco atual, não remova o volume PostgreSQL ao atualizar os serviços. `database/create_schema.sql` é somente uma referência legada e não deve ser executado no banco da aplicação. Consulte os guias abaixo para os fluxos específicos:
 
 - [Guia do Docker](docs/docker.md): inicialização, migrations, banco e diagnóstico.
 - [POC de autenticação](docs/auth-poc.md): cadastro de teste, login, sessão e troca de senha.
@@ -79,7 +79,7 @@ bom-gosto-web-app/
 ├── apps/
 │   ├── frontend/           # Aplicação Angular (PWA / UI Mobile-First)
 │   └── backend/            # API REST Django (Módulos Administrativo e Fábrica)
-├── database/               # Scripts de inicialização do PostgreSQL
+├── database/               # Scripts SQL de referência legada
 ├── .commitlintrc.json      # Regras do Commitlint
 ├── .husky/                 # Hooks do Git (commit-msg, pre-commit)
 ├── .prettierrc             # Configuração de formatação do Prettier

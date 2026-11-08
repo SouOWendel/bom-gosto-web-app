@@ -1,7 +1,7 @@
 from django.db import models
 
 
-# Relaciona cada receita aos ingredientes e às quantidades da composição.
+# relaciona cada receita aos ingredientes e as quantidades da composicao
 class IngredienteReceita(models.Model):
     id_ingrediente_receita = models.AutoField(primary_key=True)
     receita = models.ForeignKey(
@@ -22,6 +22,9 @@ class IngredienteReceita(models.Model):
 
     class Meta:
         db_table = "ingrediente_receita"
-        managed = False
-
-
+        constraints = [
+            models.UniqueConstraint(
+                fields=("ingrediente", "receita"),
+                name="uq_ingrediente_receita",
+            ),
+        ]

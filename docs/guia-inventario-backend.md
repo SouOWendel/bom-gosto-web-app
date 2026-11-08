@@ -8,15 +8,15 @@ Este guia descreve como iniciar o projeto com Docker e testar manualmente a API 
 
 O módulo expõe operações de criação, consulta e atualização de ingredientes. A exclusão não está disponível.
 
-O model Django mapeia a tabela `ingrediente`, definida em `database/create_schema.sql`, com `managed = False`. A API usa o PostgreSQL configurado no Docker Compose para ler e gravar ingredientes, mas o Django não cria nem altera essa tabela por migrations. A tabela deve existir no banco antes de usar os endpoints.
+O model Django mapeia a tabela `ingrediente`. As migrations Django criam e controlam as 11 tabelas ativas de aplicação, incluindo essa tabela. A API usa o PostgreSQL configurado no Docker Compose para ler e gravar ingredientes.
 
-Em uma instalação nova, o Compose executa `database/create_schema.sql` quando cria o volume PostgreSQL. Os scripts de inicialização não são executados novamente em um volume já existente. Não execute `makemigrations` para o app `inventario` nem `database/create_schema.sql` completo contra um banco existente.
+O Compose não executa `database/create_schema.sql`. O arquivo `create_schema.sql` permanece somente como referência legada e não deve ser executado no banco da aplicação.
 
 ## Pré-requisitos
 
 - Docker Desktop em execução.
 - PowerShell aberto na raiz do repositório.
-- Tabela `ingrediente` presente no banco `db_confeitaria`.
+- Banco `db_confeitaria` disponível. As migrations do backend criam as tabelas ativas.
 
 ## 1. Iniciar o ambiente
 
@@ -25,7 +25,7 @@ docker compose up --build -d
 docker compose ps
 ```
 
-O backend executa as migrations dos outros apps já configurados e inicia o servidor. Até o momento, o app `inventario` não tem migration própria.
+O backend aplica as migrations com `python manage.py migrate --noinput` e inicia o servidor.
 
 Se algum serviço não iniciar, consulte os logs:
 
@@ -38,13 +38,13 @@ A API fica disponível em `http://127.0.0.1:8000/api`.
 
 ## 2. Confirmar que a tabela existe
 
-O model é `managed = False`, portanto não cria a tabela. Confirme que o schema inicial criou `ingrediente`:
+Confirme que as migrations criaram a tabela `ingrediente`:
 
 ```powershell
 docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'ingrediente'"
 ```
 
-O resultado deve conter `id_ingrediente`, `nome`, `quantidade_disponivel`, `custo_unitario`, `data_validade` e `quantidade_minima`. Se não houver linhas, pare aqui: o banco existente não recebeu o schema inicial. Não recrie o volume com `docker compose down -v` se precisar preservar os dados.
+O resultado deve conter `id_ingrediente`, `nome`, `quantidade_disponivel`, `custo_unitario`, `data_validade` e `quantidade_minima`. Se não houver linhas, confira os logs do backend e o estado das migrations. Não execute o schema SQL legado nem remova o volume para corrigir o banco ativo.
 
 ## 3. Criar um usuário temporário de teste
 

@@ -1,66 +1,69 @@
 services:
-  # BANCO DE DADOS: PostgreSQL
-  postgres:
-    image: postgres:16-alpine
-    container_name: bom-gosto-db
-    restart: always
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-db_confeitaria}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
-    ports:
-      - '5432:5432'
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-      - ./database/create_schema.sql:/docker-entrypoint-initdb.d/02-create-schema.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-db_confeitaria}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+    # banco de dados PostgreSQL
+    postgres:
+        image: postgres:16-alpine
+        container_name: bom-gosto-db
+        restart: always
+        environment:
+            POSTGRES_DB: ${POSTGRES_DB:-db_confeitaria}
+            POSTGRES_USER: ${POSTGRES_USER:-postgres}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
+        ports:
+            - '5432:5432'
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-db_confeitaria}',
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 5
 
-  # BACKEND: API Rest Django
-  backend:
-    build:
-      context: ./apps/backend
-      dockerfile: Dockerfile.dev
-    container_name: bom-gosto-backend
-    restart: always
-    volumes: # Mapeia localmente para o Hot Reload do DJANGO
-      - ./apps/backend:/app
-    ports:
-      - "8000:8000"
-    environment:
-      - DEBUG=1
-      - DB_ENGINE=django.db.backends.postgresql
-      - DB_NAME=${POSTGRES_DB:-db_confeitaria}
-      - DB_USER=${POSTGRES_USER:-postgres}
-      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgrespassword}
-      - DB_HOST=postgres
-      - DB_PORT=${POSTGRES_PORT:-5432}
-      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,backend # permite que o Django aceite conexoes de hosts especificos (localhost, 127.0.0.1, backend)
-    depends_on:
-      postgres:
-        condition: service_healthy
-    command: sh -c "python manage.py migrate --fake-initial && python manage.py runserver 0.0.0.0:8000"
-  
-  # FRONTEND: Angular PWA
-  frontend:
-    build:
-      context: ./apps/frontend
-      dockerfile: Dockerfile.dev
-    container_name: bom-gosto-frontend
-    restart: always
-    volumes: # Mapeia localmente para o Hot Reload do Angular
-      - ./apps/frontend:/app
-      - frontend_node_modules:/app/node_modules
-    ports:
-      - "4200:4200"
-    depends_on:
-      - backend
-    command: npm run start -- --host 0.0.0.0 --poll 1000
+    # backend da api Django
+    backend:
+        build:
+            context: ./apps/backend
+            dockerfile: Dockerfile.dev
+        container_name: bom-gosto-backend
+        restart: always
+        volumes: # mapeia os arquivos locais para o hot reload do Django
+            - ./apps/backend:/app
+        ports:
+            - '8000:8000'
+        environment:
+            - DEBUG=1
+            - DB_ENGINE=django.db.backends.postgresql
+            - DB_NAME=${POSTGRES_DB:-db_confeitaria}
+            - DB_USER=${POSTGRES_USER:-postgres}
+            - DB_PASSWORD=${POSTGRES_PASSWORD:-postgrespassword}
+            - DB_HOST=postgres
+            - DB_PORT=${POSTGRES_PORT:-5432}
+            - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,backend # permite que o Django aceite conexoes de hosts especificos (localhost, 127.0.0.1, backend)
+            - ENABLE_TEST_USER_REGISTRATION=${ENABLE_TEST_USER_REGISTRATION:-0}
+        depends_on:
+            postgres:
+                condition: service_healthy
+        command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
+
+    # frontend Angular PWA
+    frontend:
+        build:
+            context: ./apps/frontend
+            dockerfile: Dockerfile.dev
+        container_name: bom-gosto-frontend
+        restart: always
+        volumes: # Mapeia localmente para o Hot Reload do Angular
+            - ./apps/frontend:/app
+            - frontend_node_modules:/app/node_modules
+        ports:
+            - '4200:4200'
+        depends_on:
+            - backend
+        command: npm run start -- --host 0.0.0.0 --poll 1000
 
 volumes:
-  frontend_node_modules:
-  postgres_data:
+    frontend_node_modules:
+    postgres_data:

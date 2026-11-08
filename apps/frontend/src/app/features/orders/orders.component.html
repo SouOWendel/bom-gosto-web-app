@@ -27,7 +27,11 @@
     </div>
 
     @if (isCancelModalOpen()) {
-      <app-cancel-production-modal (closed)="closeCancelModal()" (confirmed)="closeCancelModal()" />
+      <app-cancel-production-modal
+        [order]="selectedOrder()"
+        (closed)="closeCancelModal()"
+        (confirmed)="confirmOrderCancellation()"
+      />
     }
 
     @if (isCompleteModalOpen() && selectedOrder(); as order) {
@@ -110,6 +114,14 @@
       >
         Prontos para Entrega <b>5</b>
       </button>
+      <button
+        type="button"
+        class="status-tab status-tab--gray"
+        [class.is-active]="selectedStatus() === 'cancelado'"
+        (click)="setStatus('cancelado')"
+      >
+        Cancelados
+      </button>
     </div>
   </section>
 
@@ -156,8 +168,13 @@
             <button type="button" aria-label="Editar">
               <svg [lucideIcon]="'pencil'" [size]="14"></svg>
             </button>
-            <button type="button" aria-label="Excluir">
-              <svg [lucideIcon]="'trash-2'" [size]="14"></svg>
+            <button
+              type="button"
+              aria-label="Cancelar pedido"
+              title="Cancelar pedido"
+              (click)="cancelOrder(order)"
+            >
+              <svg [lucideIcon]="'ban'" [size]="14"></svg>
             </button>
           </div>
           <button type="button" class="order-row__action" (click)="completeOrder(order)">

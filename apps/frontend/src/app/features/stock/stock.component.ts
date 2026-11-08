@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   LucideChevronDown,
@@ -15,8 +15,10 @@ import { PageGreetingComponent } from '../../shared/components/page-greeting/pag
 import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
 import { StockProductCardComponent } from './components/stock-product-card/stock-product-card.component';
 import { StockProductCardItem } from './components/stock-product-card/stock-product-card.model';
+import { StockLot } from '../../core/models/api.model';
+import { DomainApiService } from '../../core/services/domain-api.service';
 
-type StockCategory = 'bolos' | 'doces' | 'sobremesas';
+type StockCategory = 'bolos' | 'doces' | 'sobremesas' | 'outros';
 
 interface StockItem extends StockProductCardItem {
   category: StockCategory;
@@ -38,127 +40,57 @@ interface StockItem extends StockProductCardItem {
   templateUrl: './stock.component.html',
   styleUrls: ['./stock.component.scss'],
 })
-export class StockComponent {
+export class StockComponent implements OnInit {
+  private readonly domainApi = inject(DomainApiService);
+  private readonly stockLots = signal<StockLot[]>([]);
+
+  readonly loadError = signal<string | null>(null);
+
   readonly greetingActions: PageAction[] = [
-    { label: 'Atualizar Estoque em Lote', icon: 'refresh-cw', variant: 'secondary' },
-    { label: 'Cadastrar Novo Produto', icon: 'plus', variant: 'primary' },
+    { label: 'Atualizar Estoque', icon: 'refresh-cw', variant: 'secondary' },
+    { label: 'Nova Produção (Pedidos)', route: '/pedidos', icon: 'plus', variant: 'primary' },
   ];
 
-  readonly summaryCards: MetricCardItem[] = [
-    {
-      label: 'Produtos armazenados',
-      value: '41 itens',
-      subtext: '4 categorias ativas',
-      icon: 'package',
-      variant: 'destaque',
-    },
-    {
-      label: 'Custo total em estoque',
-      value: 'R$ 8.940',
-      subtext: 'Atualizado hoje, 09:30',
-      icon: 'banknote',
-      variant: 'neutro',
-    },
-    {
-      label: 'Alertas de validade',
-      value: '7 lotes',
-      subtext: '2 críticos • 3 atenção • 2 preventivos',
-      icon: 'calendar',
-      variant: 'alerta',
-    },
-  ];
+  get summaryCards(): MetricCardItem[] {
+    const lots = this.stockLots();
+    const critical = lots.filter(
+      (lot) => lot.vencido || lot.alerta_validade?.nivel === 'critico',
+    ).length;
+    const attention = lots.filter((lot) => lot.alerta_validade?.nivel === 'atencao').length;
+    const preventive = lots.filter((lot) => lot.alerta_validade?.nivel === 'preventivo').length;
+    const totalCost = lots.reduce((total, lot) => total + this.toNumber(lot.custo), 0);
+
+    return [
+      {
+        label: 'Produtos armazenados',
+        value: `${lots.length} lotes`,
+        subtext: 'Lotes retornados pela API',
+        icon: 'package',
+        variant: 'destaque',
+      },
+      {
+        label: 'Custo total em estoque',
+        value: this.formatCurrency(totalCost),
+        subtext: 'Soma do custo informado por lote',
+        icon: 'banknote',
+        variant: 'neutro',
+      },
+      {
+        label: 'Alertas de validade',
+        value: `${critical + attention + preventive} lotes`,
+        subtext: `${critical} críticos • ${attention} atenção • ${preventive} preventivos`,
+        icon: 'calendar',
+        variant: 'alerta',
+      },
+    ];
+  }
 
   readonly selectedCategory = signal<'todos' | StockCategory>('todos');
   readonly searchTerm = signal('');
 
-  readonly stockItems = signal<StockItem[]>([
-    {
-      id: 'ART-0104',
-      name: 'Bolo Trufado de Chocolate Belga',
-      category: 'bolos',
-      categoryLabel: 'Bolos artesanais',
-      description: 'Massa chiffon de cacau 100%, recheio cremoso de brigadeiro belga.',
-      quantity: 8,
-      unit: 'unidades',
-      basePrice: 'R$ 95,00',
-      priceUnit: 'kg',
-      margin: '71.4%',
-      sizes: [
-        { label: 'P', value: '1,5 kg' },
-        { label: 'M', value: '2,5 kg' },
-        { label: 'G', value: '3,5 kg' },
-      ],
-      expiry: '18/09/2024',
-      expiryDetail: 'Vence em 2 dias',
-      status: 'critico',
-      statusLabel: 'Crítico',
-      image: '/images/auth-cake.jpg',
-    },
-    {
-      id: 'ART-0129',
-      name: 'Red Velvet com Frutas Vermelhas',
-      category: 'bolos',
-      categoryLabel: 'Bolos artesanais',
-      description: 'Pão de ló aveludado com recheio de frutas vermelhas e cream cheese.',
-      quantity: 12,
-      unit: 'unidades',
-      basePrice: 'R$ 105,00',
-      priceUnit: 'kg',
-      margin: '68.2%',
-      sizes: [
-        { label: 'P', value: '1,5 kg' },
-        { label: 'M', value: '2,5 kg' },
-        { label: 'G', value: '3,5 kg' },
-      ],
-      expiry: '21/09/2024',
-      expiryDetail: 'Vence em 5 dias',
-      status: 'atencao',
-      statusLabel: 'Atenção',
-      image: '/images/auth-cake.jpg',
-    },
-    {
-      id: 'ART-0131',
-      name: 'Delícia de Morango & Ninho',
-      category: 'sobremesas',
-      categoryLabel: 'Sobremesas especiais',
-      description: 'Massa amanteigada de baunilha, chantilly leve e morangos frescos.',
-      quantity: 6,
-      unit: 'unidades',
-      basePrice: 'R$ 88,00',
-      priceUnit: 'kg',
-      margin: '64.8%',
-      sizes: [
-        { label: 'P', value: '1,2 kg' },
-        { label: 'M', value: '2 kg' },
-      ],
-      expiry: '27/09/2024',
-      expiryDetail: 'Vence em 11 dias',
-      status: 'preventivo',
-      statusLabel: 'Preventivo',
-      image: '/images/auth-cake.jpg',
-    },
-    {
-      id: 'DOC-0015',
-      name: 'Coleção Brigadeiros Nobres',
-      category: 'doces',
-      categoryLabel: 'Doces & brigadeiros',
-      description: 'Caixa luxo com 25 unidades sortidas, pronta para presente.',
-      quantity: 15,
-      unit: 'caixas',
-      basePrice: 'R$ 28,50',
-      priceUnit: 'caixa',
-      margin: '59.6%',
-      sizes: [
-        { label: '25', value: 'un.' },
-        { label: '50', value: 'un.' },
-      ],
-      expiry: '19/09/2024',
-      expiryDetail: 'Vence em 3 dias',
-      status: 'preventivo',
-      statusLabel: 'Preventivo',
-      image: '/images/auth-cake.jpg',
-    },
-  ]);
+  readonly stockItems = computed<StockItem[]>(() =>
+    this.stockLots().map((lot) => this.toStockItem(lot)),
+  );
 
   readonly filteredItems = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
@@ -176,5 +108,93 @@ export class StockComponent {
 
   setCategory(category: 'todos' | StockCategory): void {
     this.selectedCategory.set(category);
+  }
+
+  ngOnInit(): void {
+    this.domainApi.getStock().subscribe({
+      next: (lots) => {
+        this.stockLots.set(lots);
+        this.loadError.set(null);
+      },
+      error: (error: unknown) => {
+        const detail = this.errorDetail(error);
+        this.loadError.set(detail);
+        console.error('Falha ao carregar os lotes de estoque.', error);
+      },
+    });
+  }
+
+  private toStockItem(lot: StockLot): StockItem {
+    const alertLevel = lot.alerta_validade?.nivel;
+    const isCritical = lot.vencido || alertLevel === 'critico';
+    const status = isCritical ? 'critico' : alertLevel === 'atencao' ? 'atencao' : 'preventivo';
+
+    return {
+      id: String(lot.id_estoque),
+      name: `Produto #${lot.id_produto}`,
+      category: 'outros',
+      categoryLabel: 'Categoria não informada',
+      description: `Lote #${lot.id_estoque} • Produto #${lot.id_produto}`,
+      quantity: this.toNumber(lot.quantidade_disponivel),
+      unit: 'un.',
+      basePrice: this.formatCurrencyOrUnavailable(lot.custo),
+      priceUnit: 'lote',
+      margin: 'Não informada',
+      sizes: [],
+      expiry: this.formatDate(lot.data_validade),
+      expiryDetail: this.expiryDetail(lot),
+      status,
+      statusLabel: isCritical
+        ? 'Crítico'
+        : alertLevel === 'atencao'
+          ? 'Atenção'
+          : alertLevel === 'preventivo'
+            ? 'Preventivo'
+            : 'Sem alerta',
+      image: '/images/auth-cake.jpg',
+    };
+  }
+
+  private toNumber(value: string | null): number {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : 0;
+  }
+
+  private formatCurrency(value: number): string {
+    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  private formatCurrencyOrUnavailable(value: string | null): string {
+    return value === null ? 'Não informado' : this.formatCurrency(this.toNumber(value));
+  }
+
+  private formatDate(value: string | null): string {
+    if (value === null) {
+      return 'Não informada';
+    }
+
+    const date = new Date(`${value}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('pt-BR');
+  }
+
+  private expiryDetail(lot: StockLot): string {
+    const alert = lot.alerta_validade;
+    if (lot.vencido && alert === null) {
+      return 'Vencido';
+    }
+    if (alert === null) {
+      return lot.data_validade === null ? 'Sem validade informada' : 'Sem alerta';
+    }
+    if (alert.dias_para_vencer < 0) {
+      return `Vencido há ${Math.abs(alert.dias_para_vencer)} dia(s)`;
+    }
+    if (alert.dias_para_vencer === 0) {
+      return 'Vence hoje';
+    }
+    return `Vence em ${alert.dias_para_vencer} dia(s)`;
+  }
+
+  private errorDetail(error: unknown): string {
+    return error instanceof Error ? error.message : 'Erro desconhecido ao consultar a API.';
   }
 }

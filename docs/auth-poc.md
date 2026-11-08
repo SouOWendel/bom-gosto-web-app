@@ -23,7 +23,9 @@ docker compose up -d --build
 docker compose ps
 ```
 
-O Compose usa o banco `db_confeitaria`, cria o schema inicial em um volume novo e executa as migrations do Django antes de iniciar o backend. A tabela `usuario` é criada por `database/create_schema.sql`.
+O Compose usa o banco `db_confeitaria` e inicia o backend com `python manage.py migrate --noinput`. As migrations Django criam e controlam as 11 tabelas ativas de aplicação, incluindo `usuario`. O Compose não executa `database/create_schema.sql`. Este último é apenas uma referência legada.
+
+O cadastro temporario fica desabilitado por padrao, mesmo em Docker. Para habilita-lo somente no ambiente local, defina `ENABLE_TEST_USER_REGISTRATION=1` antes de iniciar/recriar o servico `backend`. O endpoint tambem exige `DEBUG=True` e CSRF. Em ambientes fora de desenvolvimento, defina `DJANGO_SECRET_KEY` e mantenha `DEBUG=False`.
 
 O Angular fica em `http://localhost:4200` e o Django em `http://127.0.0.1:8000`. O [proxy do Angular](../apps/frontend/proxy.conf.json) encaminha `/api` para `http://backend:8000` dentro da rede Docker.
 
@@ -42,6 +44,8 @@ Abra `http://localhost:4200/auth/login`. O Angular envia as requisicoes para `/a
 
 O front-end nao acessa o PostgreSQL diretamente.
 
+Antes do login ou de qualquer requisição que altere dados, consulte `GET /auth/csrf/` e envie o cookie `csrftoken` tambem no cabecalho `X-CSRFToken`. O login rotaciona o token CSRF. Por isso, o front-end deve ler o cookie atualizado em cada requisicao, em vez de reutilizar o token anterior ao login. Requisicoes `GET` nao precisam do cabecalho.
+
 ## Endpoints
 
 Base direta do back-end: `http://127.0.0.1:8000/api`
@@ -50,7 +54,7 @@ Ao usar o front-end, o proxy utiliza o mesmo caminho com `http://localhost:4200/
 
 ### POST /auth/cadastro-teste/
 
-Cria um usuario temporario para testes locais. Funciona somente com `DEBUG=True`, recebe apenas o login e gera uma senha temporaria de seis digitos.
+Cria um usuario temporario para testes locais. Exige `DEBUG=True` e `ENABLE_TEST_USER_REGISTRATION=1`, recebe apenas o login e gera uma senha temporaria de seis digitos. A opcao fica desabilitada por padrao.
 
 Body:
 
@@ -71,10 +75,21 @@ Resposta:
 ```
 
 A senha temporaria e retornada para o teste e salva no banco como hash compativel com o Django. Em producao, esse endpoint deve permanecer desabilitado.
+Como toda operacao `POST`, exige o token CSRF obtido por `GET /auth/csrf/`.
+
+### GET /auth/csrf/
+
+Garante o cookie `csrftoken` e retorna um token que pode ser enviado no cabecalho `X-CSRFToken`:
+
+```json
+{
+  "csrf_token": "token-csrf"
+}
+```
 
 ### POST /auth/login/
 
-Autentica o usuario e cria uma sessao Django.
+Autentica o usuario e cria uma sessao Django. Exige o token CSRF obtido por `GET /auth/csrf/`. O login rotaciona o token, entao obtenha o valor atualizado do cookie `csrftoken` antes da proxima requisicao mutavel.
 
 Body:
 
@@ -95,7 +110,7 @@ Resposta:
 }
 ```
 
-Se o usuario ja estiver autenticado, retorna `409`. Login ou senha ausentes retornam `400`; credenciais invalidas retornam `401`.
+Se o usuario ja estiver autenticado, retorna `409`. Login ou senha ausentes retornam `400`. Credenciais invalidas retornam `401`.
 
 ### GET /auth/me/
 
@@ -114,7 +129,7 @@ Sem uma sessao valida, retorna `401`.
 
 ### POST /auth/alterar-senha/
 
-Altera a senha do usuario autenticado e define `primeiro_acesso` como `false`.
+Altera a senha do usuario autenticado e define `primeiro_acesso` como `false`. Exige sessao autenticada e token CSRF.
 
 Body:
 
@@ -138,7 +153,7 @@ A senha atual deve estar correta. A nova senha deve ser diferente e ter pelo men
 
 ### POST /auth/logout/
 
-Encerra a sessao do usuario autenticado:
+Encerra a sessao do usuario autenticado. Exige sessao autenticada e token CSRF:
 
 ```json
 {
@@ -150,12 +165,15 @@ Encerra a sessao do usuario autenticado:
 
 ### 1. Criar usuario temporario
 
-O endpoint abaixo esta habilitado somente com `DEBUG=True`, como no ambiente de desenvolvimento atual.
+O endpoint abaixo fica desabilitado por padrao. Para habilitar no Docker local, defina a variavel `ENABLE_TEST_USER_REGISTRATION=1` e recrie somente o servico backend. Não remova o volume do banco. Antes de chamar o endpoint, obtenha o token CSRF como mostrado abaixo.
 
 **cURL (Linux / macOS / Git Bash):**
 
 ```bash
+csrf=$(curl -s -c cookies.txt http://127.0.0.1:8000/api/auth/csrf/ | jq -r .csrf_token)
 curl -X POST http://127.0.0.1:8000/api/auth/cadastro-teste/ \
+  -b cookies.txt -c cookies.txt \
+  -H "X-CSRFToken: $csrf" \
   -H "Content-Type: application/json" \
   -d '{"login": "usuario"}'
 ```
@@ -163,12 +181,26 @@ curl -X POST http://127.0.0.1:8000/api/auth/cadastro-teste/ \
 **PowerShell (Windows):**
 
 ```powershell
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+
+Invoke-RestMethod `
+  -Method Get `
+  -Uri "http://127.0.0.1:8000/api/auth/csrf/" `
+  -WebSession $session
+
+function Get-CsrfHeaders {
+  $cookie = $session.Cookies.GetCookies([uri]"http://127.0.0.1:8000")["csrftoken"]
+  return @{ "X-CSRFToken" = $cookie.Value }
+}
+
 $body = @{ login = "usuario" } | ConvertTo-Json
 
 $cadastro = Invoke-RestMethod `
   -Method Post `
   -Uri "http://127.0.0.1:8000/api/auth/cadastro-teste/" `
   -ContentType "application/json" `
+  -Headers (Get-CsrfHeaders) `
+  -WebSession $session `
   -Body $body
 
 $cadastro
@@ -184,8 +216,6 @@ FROM usuario;
 ### 2. Fazer login e consultar a sessao
 
 ```powershell
-$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-
 $body = @{
   login = "usuario"
   senha = $cadastro.senha_temporaria
@@ -196,6 +226,7 @@ Invoke-RestMethod `
   -Uri "http://127.0.0.1:8000/api/auth/login/" `
   -WebSession $session `
   -ContentType "application/json" `
+  -Headers (Get-CsrfHeaders) `
   -Body $body
 
 Invoke-RestMethod `
@@ -219,6 +250,7 @@ Invoke-RestMethod `
   -Uri "http://127.0.0.1:8000/api/auth/alterar-senha/" `
   -WebSession $session `
   -ContentType "application/json" `
+  -Headers (Get-CsrfHeaders) `
   -Body $body
 ```
 
@@ -230,7 +262,8 @@ Consulte `/auth/me/` novamente. Agora `primeiro_acesso` deve ser `false`.
 Invoke-RestMethod `
   -Method Post `
   -Uri "http://127.0.0.1:8000/api/auth/logout/" `
-  -WebSession $session
+  -WebSession $session `
+  -Headers (Get-CsrfHeaders)
 ```
 
 Depois do logout, uma chamada para `/auth/me/` usando a mesma sessao deve retornar `401`.
@@ -245,6 +278,7 @@ Invoke-RestMethod `
   -Uri "http://127.0.0.1:8000/api/auth/login/" `
   -WebSession $session `
   -ContentType "application/json" `
+  -Headers (Get-CsrfHeaders) `
   -Body $body
 ```
 

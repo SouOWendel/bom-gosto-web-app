@@ -1,6 +1,6 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
   LucideDynamicIcon,
   provideLucideIcons,
@@ -14,6 +14,8 @@ import { MetricCardsComponent } from '../../shared/components/metric-cards/metri
 import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
 import { DashboardAgendaComponent } from './components/dashboard-agenda/dashboard-agenda.component';
 import { DashboardRemindersComponent } from './components/dashboard-reminders/dashboard-reminders.component';
+import { Order } from '../../core/models/api.model';
+import { DomainApiService } from '../../core/services/domain-api.service';
 
 export interface ResumoCard {
   titulo: string;
@@ -34,7 +36,7 @@ export interface PedidoSimulado {
   modalidade: 'RETIRADA' | 'DELIVERY';
   titulo: string;
   descricao?: string;
-  categoria: CategoriaPedido;
+  categoria: CategoriaPedido | null;
   status: StatusPedido;
   statusLabel: string;
   cliente: string;
@@ -69,10 +71,16 @@ export interface DiaCalendario {
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
+  private readonly api = inject(DomainApiService);
+  private readonly router = inject(Router);
+  private readonly orderData = signal<Order[]>([]);
+
   // Informações do Cabeçalho
   readonly nomeChef = 'Rosangela';
-  readonly mesAno = 'Setembro de 2026';
+  get mesAno(): string {
+    return this.monthLabel(this.dataSelecionada());
+  }
 
   readonly greetingActions: PageAction[] = [
     {
@@ -89,133 +97,59 @@ export class DashboardComponent {
     },
   ];
 
-  readonly metricas: MetricCardItem[] = [
-    {
-      label: 'VENDAS DE HOJE',
-      value: 'R$ 840,00',
-      icon: 'banknote',
-      variant: 'vendas',
-      trend: {
-        value: '+14% em relação à meta do dia',
-        direction: 'up',
+  get metricas(): MetricCardItem[] {
+    const orders = this.orderData();
+    const scheduled = orders.filter((order) =>
+      ['pedido_feito', 'em_producao', 'producao_concluida'].includes(order.status),
+    );
+
+    return [
+      {
+        label: 'VENDAS DE HOJE',
+        value: '—',
+        icon: 'banknote',
+        variant: 'vendas',
+        trend: {
+          value: 'Data de conclusão não disponível na API',
+          direction: 'up',
+        },
       },
-    },
-    {
-      label: 'PEDIDOS AGENDADOS',
-      value: '3 pedidos',
-      icon: 'receipt',
-      variant: 'pedidos',
-      subtext: '1 pronto • 1 em finalização • 1 confirmado',
-    },
-  ];
+      {
+        label: 'PEDIDOS AGENDADOS',
+        value: `${scheduled.length} pedidos`,
+        icon: 'receipt',
+        variant: 'pedidos',
+        subtext: `${orders.filter((order) => order.status === 'producao_concluida').length} prontos • ${orders.filter((order) => order.status === 'em_producao').length} em produção • ${orders.filter((order) => order.status === 'pedido_feito').length} confirmados`,
+      },
+    ];
+  }
 
   // Dia atualmente selecionado no calendário (YYYY-MM-DD)
-  readonly dataSelecionada = signal<string>('2026-09-15');
+  readonly dataSelecionada = signal<string>(this.toDateKey(new Date()));
 
   // Filtro de categorias da agenda: 'todos' | 'bolo' | 'doce' | 'kit'
   readonly filtroCategoria = signal<string>('todos');
 
   // Base simulada de pedidos
-  readonly pedidos = signal<PedidoSimulado[]>([
-    {
-      id: 1,
-      data: '2026-09-15',
-      horario: '10:00',
-      modalidade: 'RETIRADA',
-      titulo: 'Bolo de Chocolate Belga 2kg',
-      descricao: 'Massa cacau 100%, recheio trufado e granulado belga callebaut',
-      categoria: 'bolo',
-      status: 'pronto',
-      statusLabel: 'Pronto para Retirada',
-      cliente: 'Ana Souza',
-      telefone: '(11) 98765-4321',
-      pagamentoInfo: 'PIX Confirmado: R$ 120,00',
-    },
-    {
-      id: 2,
-      data: '2026-09-15',
-      horario: '14:30',
-      modalidade: 'RETIRADA',
-      titulo: 'Kit Festa Celebração',
-      descricao: 'Bolo 2,5kg + 50 Brigadeiros Nobres',
-      categoria: 'kit',
-      status: 'em_producao',
-      statusLabel: 'Em Produção',
-      cliente: 'Beatriz Santos',
-      telefone: '(11) 97755-4411',
-      etapaProducao: 'Cozinhando & Cobertura — 75% Concluído',
-      progressoPct: 75,
-      pagamentoInfo: 'Sinal 50%: R$ 245,00 (R$ 245 restante)',
-      botaoAcao: 'Avançar para Pronto',
-    },
-    {
-      id: 3,
-      data: '2026-09-15',
-      horario: '18:00',
-      modalidade: 'DELIVERY',
-      titulo: 'Bolo Red Velvet Especial',
-      descricao: 'Bolo 1,8kg massa red velvet com cream cheese',
-      categoria: 'bolo',
-      status: 'confirmado',
-      statusLabel: 'Confirmado',
-      cliente: 'Beatriz Santos',
-      telefone: '(11) 97755-4411',
-      endereco: 'Rua das Flores, 123 — Vila Mariana',
-      pagamentoInfo: 'Valor Total: R$ 180,00',
-      botaoAcao: 'Iniciar Preparo',
-    },
-    {
-      id: 4,
-      data: '2026-09-19',
-      horario: '11:00',
-      modalidade: 'RETIRADA',
-      titulo: 'Bolo 1kg massa branca + 50 salgados',
-      categoria: 'kit',
-      status: 'confirmado',
-      statusLabel: 'Confirmado',
-      cliente: 'Vivi',
-      telefone: '(11) 97456-1003',
-      pagamentoInfo: 'Valor Total: R$ 162,63',
-      botaoAcao: 'Iniciar Preparo',
-    },
-    {
-      id: 5,
-      data: '2026-09-22',
-      horario: '14:00',
-      modalidade: 'RETIRADA',
-      titulo: 'Caseirinho vulcão formigueiro',
-      categoria: 'bolo',
-      status: 'confirmado',
-      statusLabel: 'Confirmado',
-      cliente: 'Natália',
-      telefone: '(11) 98123-1485',
-      pagamentoInfo: 'Valor Total: R$ 40,00',
-      botaoAcao: 'Iniciar Preparo',
-    },
-    {
-      id: 6,
-      data: '2026-09-26',
-      horario: '17:30',
-      modalidade: 'RETIRADA',
-      titulo: 'Bolo 1kg massa branca delícia de limão',
-      categoria: 'bolo',
-      status: 'confirmado',
-      statusLabel: 'Confirmado',
-      cliente: 'Licilene Alves',
-      telefone: '(11) 97654-3210',
-      pagamentoInfo: 'Sinal 50%: R$ 60,45',
-      botaoAcao: 'Iniciar Preparo',
-    },
-  ]);
+  readonly pedidos = signal<PedidoSimulado[]>([]);
+
+  ngOnInit(): void {
+    this.api.getOrders().subscribe({
+      next: (orders) => this.setOrders(orders),
+      error: (error) => console.error('Falha ao carregar os pedidos do dashboard.', error),
+    });
+  }
 
   // Dias da semana para cabeçalho do calendário
   readonly diasSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
 
-  // Geração da grade de Setembro de 2026 (1 de set. começou numa terça-feira)
   readonly diasCalendario = computed<DiaCalendario[]>(() => {
     const dias: DiaCalendario[] = [];
-    const totalDias = 30;
-    const diaSemanaInicio = 2; // Terça-feira (0=Dom, 1=Seg, 2=Ter)
+    const selecionada = new Date(`${this.dataSelecionada()}T00:00:00`);
+    const ano = selecionada.getFullYear();
+    const mes = selecionada.getMonth();
+    const totalDias = new Date(ano, mes + 1, 0).getDate();
+    const diaSemanaInicio = new Date(ano, mes, 1).getDay();
 
     // Preenchimento de dias vazios antes do dia 1
     for (let i = 0; i < diaSemanaInicio; i++) {
@@ -227,24 +161,26 @@ export class DashboardComponent {
       });
     }
 
-    const mapaCategorias: Record<number, CategoriaPedido[]> = {
-      4: ['doce'],
-      5: ['doce'],
-      12: ['bolo'],
-      15: ['bolo', 'kit'],
-      19: ['bolo', 'kit', 'doce'],
-      22: ['bolo'],
-      26: ['bolo'],
-    };
+    const mapaCategorias = new Map<string, Set<CategoriaPedido>>();
+    for (const pedido of this.pedidos()) {
+      if (
+        !pedido.categoria ||
+        !pedido.data.startsWith(`${ano}-${String(mes + 1).padStart(2, '0')}`)
+      ) {
+        continue;
+      }
+      const categorias = mapaCategorias.get(pedido.data) ?? new Set<CategoriaPedido>();
+      categorias.add(pedido.categoria);
+      mapaCategorias.set(pedido.data, categorias);
+    }
 
     for (let n = 1; n <= totalDias; n++) {
-      const diaFormatado = n < 10 ? `0${n}` : `${n}`;
-      const dataStr = `2026-09-${diaFormatado}`;
+      const dataStr = this.toDateKey(new Date(ano, mes, n));
       dias.push({
         numero: n,
         dataStr,
-        isHoje: n === 15,
-        categorias: mapaCategorias[n] || [],
+        isHoje: dataStr === this.toDateKey(new Date()),
+        categorias: [...(mapaCategorias.get(dataStr) ?? [])],
       });
     }
 
@@ -291,37 +227,23 @@ export class DashboardComponent {
 
   // Interatividade simulada: transição de status do pedido
   avancarStatus(pedido: PedidoSimulado): void {
-    this.pedidos.update((lista) =>
-      lista.map((p) => {
-        if (p.id !== pedido.id) return p;
-
-        if (p.status === 'confirmado') {
-          return {
-            ...p,
-            status: 'em_producao' as StatusPedido,
-            statusLabel: 'Em Produção',
-            etapaProducao: 'Massa & Recheio em preparo',
-            progressoPct: 35,
-            botaoAcao: 'Avançar para Pronto',
-          };
-        }
-
-        if (p.status === 'em_producao') {
-          return {
-            ...p,
-            status: 'pronto' as StatusPedido,
-            statusLabel: 'Pronto para Retirada',
-            progressoPct: 100,
-            botaoAcao: undefined,
-          };
-        }
-
-        return p;
-      }),
-    );
+    if (pedido.status === 'confirmado') {
+      this.api.startProduction(pedido.id).subscribe({
+        next: () => this.reloadOrders(),
+        error: (error) => console.error('Falha ao iniciar a producao do pedido.', error),
+      });
+      return;
+    }
+    if (pedido.status === 'em_producao') {
+      void this.router.navigate(['/pedidos']);
+    }
   }
 
   abrirWhatsApp(telefone: string, cliente: string): void {
+    if (!telefone.trim()) {
+      console.error('O pedido nao possui telefone de contato para abrir o WhatsApp.');
+      return;
+    }
     const numLimpo = telefone.replace(/\D/g, '');
     const msg = encodeURIComponent(
       `Olá ${cliente}! Aqui é da Confeitaria Bom Gosto referente à sua encomenda.`,
@@ -333,5 +255,68 @@ export class DashboardComponent {
     if (!dataStr) return '';
     const partes = dataStr.split('-');
     return partes[2] ?? '';
+  }
+
+  private reloadOrders(): void {
+    this.api.getOrders().subscribe({
+      next: (orders) => this.setOrders(orders),
+      error: (error) => console.error('Falha ao atualizar os pedidos do dashboard.', error),
+    });
+  }
+
+  private setOrders(orders: Order[]): void {
+    const activeOrders = orders.filter((order) => order.status !== 'cancelado');
+    this.orderData.set(orders);
+    this.pedidos.set(activeOrders.map((order) => this.toDashboardOrder(order)));
+  }
+
+  private toDashboardOrder(order: Order): PedidoSimulado {
+    const statusMap: Record<Order['status'], { status: StatusPedido; label: string }> = {
+      pedido_feito: { status: 'confirmado', label: 'Confirmado' },
+      em_producao: { status: 'em_producao', label: 'Em Produção' },
+      producao_concluida: { status: 'pronto', label: 'Produção Concluída' },
+      concluido: { status: 'entregue', label: 'Concluído' },
+      cancelado: { status: 'entregue', label: 'Cancelado' },
+    };
+    const status = statusMap[order.status];
+    const subtotal = Number(order.valor_total);
+
+    return {
+      id: order.id_pedido,
+      data: order.data_entrega ?? '',
+      horario: order.horario_entrega?.slice(0, 5) ?? '—',
+      modalidade: order.endereco_entrega ? 'DELIVERY' : 'RETIRADA',
+      titulo: `Pedido #${order.id_pedido}`,
+      descricao: `${order.itens.length} item(ns)`,
+      categoria: null,
+      status: status.status,
+      statusLabel: status.label,
+      cliente: order.cliente ? `Cliente #${order.cliente}` : 'Cliente não informado',
+      telefone: '',
+      endereco: order.endereco_entrega ?? undefined,
+      pagamentoInfo: `Total: ${this.formatCurrency(subtotal)} • Sinal: ${this.formatCurrency(Number(order.valor_sinal))}`,
+      botaoAcao: order.status === 'pedido_feito' ? 'Iniciar Preparo' : undefined,
+    };
+  }
+
+  private monthLabel(dateKey: string): string {
+    if (!dateKey) {
+      return '';
+    }
+    return new Date(`${dateKey}T00:00:00`).toLocaleDateString('pt-BR', {
+      month: 'long',
+      year: 'numeric',
+    });
+  }
+
+  private toDateKey(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private formatCurrency(value: number): string {
+    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 }
