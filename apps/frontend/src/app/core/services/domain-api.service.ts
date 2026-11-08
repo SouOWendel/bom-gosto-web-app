@@ -2,103 +2,129 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import {
-    ApiCollection,
-    CancelOrderPayload,
-    CompleteProductionPayload,
-    Ingredient,
-    Order,
-    ProductionAnalysis,
-    Recipe,
-    StockLot,
+  ApiCollection,
+  CancelOrderPayload,
+  CompleteProductionPayload,
+  Ingredient,
+  Order,
+  OrderCreationPayload,
+  Product,
+  ProductionAnalysis,
+  Recipe,
+  StockLot,
 } from '../models/api.model';
 
 @Injectable({ providedIn: 'root' })
 export class DomainApiService {
-    private readonly http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
-    // centraliza as chamadas dos modulos do backend Django
-    getIngredients(): Observable<Ingredient[]> {
-        return this.list<Ingredient>('/api/inventario/ingrediente/');
-    }
+  // centraliza as chamadas dos modulos do backend Django
+  getIngredients(): Observable<Ingredient[]> {
+    return this.list<Ingredient>('/api/inventario/ingrediente/');
+  }
 
-    createIngredient(payload: Partial<Ingredient>): Observable<Ingredient> {
-        return this.http.post<Ingredient>('/api/inventario/ingrediente/', payload);
-    }
+  createIngredient(payload: Partial<Ingredient>): Observable<Ingredient> {
+    return this.http.post<Ingredient>('/api/inventario/ingrediente/', payload);
+  }
 
-    updateIngredient(id: number, payload: Partial<Ingredient>): Observable<Ingredient> {
-        return this.http.patch<Ingredient>(`/api/inventario/ingrediente/${id}/`, payload);
-    }
+  updateIngredient(id: number, payload: Partial<Ingredient>): Observable<Ingredient> {
+    return this.http.patch<Ingredient>(`/api/inventario/ingrediente/${id}/`, payload);
+  }
 
-    getStock(): Observable<StockLot[]> {
-        return this.list<StockLot>('/api/estoque/');
-    }
+  moveIngredient(
+    id: number,
+    payload: {
+      tipo: 'entrada' | 'saida';
+      quantidade: string;
+      custo_unitario?: string | null;
+      data_validade?: string | null;
+    },
+  ): Observable<Ingredient> {
+    return this.http.post<Ingredient>(`/api/inventario/ingrediente/${id}/movimentar/`, payload);
+  }
 
-    updateStockLot(id: number, payload: Partial<StockLot>): Observable<StockLot> {
-        return this.http.patch<StockLot>(`/api/estoque/${id}/`, payload);
-    }
+  getProducts(): Observable<Product[]> {
+    return this.list<Product>('/api/produtos/');
+  }
 
-    checkAvailability(productId: number, quantity: string): Observable<unknown> {
-        const params = new HttpParams().set('id_produto', productId).set('quantidade', quantity);
-        return this.http.get('/api/estoque/disponibilidade/', { params });
-    }
+  createProduct(payload: Partial<Product>): Observable<Product> {
+    return this.http.post<Product>('/api/produtos/', payload);
+  }
 
-    getRecipes(): Observable<Recipe[]> {
-        return this.list<Recipe>('/api/producao/receitas/');
-    }
+  updateProduct(id: number, payload: Partial<Product>): Observable<Product> {
+    return this.http.patch<Product>(`/api/produtos/${id}/`, payload);
+  }
 
-    createRecipe(payload: Partial<Recipe>): Observable<Recipe> {
-        return this.http.post<Recipe>('/api/producao/receitas/', payload);
-    }
+  getStock(): Observable<StockLot[]> {
+    return this.list<StockLot>('/api/estoque/');
+  }
 
-    updateRecipe(id: number, payload: Partial<Recipe>): Observable<Recipe> {
-        return this.http.patch<Recipe>(`/api/producao/receitas/${id}/`, payload);
-    }
+  updateStockLot(id: number, payload: Partial<StockLot>): Observable<StockLot> {
+    return this.http.patch<StockLot>(`/api/estoque/${id}/`, payload);
+  }
 
-    getOrders(): Observable<Order[]> {
-        return this.list<Order>('/api/pedido/');
-    }
+  checkAvailability(productId: number, quantity: string): Observable<unknown> {
+    const params = new HttpParams().set('id_produto', productId).set('quantidade', quantity);
+    return this.http.get('/api/estoque/disponibilidade/', { params });
+  }
 
-    createOrder(payload: Partial<Order>): Observable<Order> {
-        return this.http.post<Order>('/api/pedido/', payload);
-    }
+  getRecipes(): Observable<Recipe[]> {
+    return this.list<Recipe>('/api/producao/receitas/');
+  }
 
-    updateOrder(id: number, payload: Partial<Order>): Observable<Order> {
-        return this.http.patch<Order>(`/api/pedido/${id}/`, payload);
-    }
+  createRecipe(payload: Partial<Recipe>): Observable<Recipe> {
+    return this.http.post<Recipe>('/api/producao/receitas/', payload);
+  }
 
-    analyzeProduction(orderId: number): Observable<ProductionAnalysis> {
-        return this.http.post<ProductionAnalysis>(`/api/producao/pedidos/${orderId}/validar/`, {});
-    }
+  updateRecipe(id: number, payload: Partial<Recipe>): Observable<Recipe> {
+    return this.http.patch<Recipe>(`/api/producao/receitas/${id}/`, payload);
+  }
 
-    startProduction(orderId: number): Observable<Order> {
-        return this.http.post<Order>(`/api/producao/pedidos/${orderId}/iniciar/`, {});
-    }
+  getOrders(): Observable<Order[]> {
+    return this.list<Order>('/api/pedido/');
+  }
 
-    completeProduction(
-        orderId: number,
-        payload: CompleteProductionPayload,
-    ): Observable<{ pedido: Order; custo_producao: string }> {
-        return this.http.post<{ pedido: Order; custo_producao: string }>(
-            `/api/producao/pedidos/${orderId}/concluir/`,
-            payload,
-        );
-    }
+  createOrder(payload: OrderCreationPayload): Observable<Order> {
+    return this.http.post<Order>('/api/pedido/', payload);
+  }
 
-    cancelOrder(orderId: number, payload: CancelOrderPayload): Observable<unknown> {
-        return this.http.post(`/api/pedido/${orderId}/cancelar/`, payload);
-    }
+  updateOrder(id: number, payload: OrderCreationPayload | Partial<Order>): Observable<Order> {
+    return this.http.patch<Order>(`/api/pedido/${id}/`, payload);
+  }
 
-    consumeStock(orderId: number): Observable<Order> {
-        return this.http.post<Order>(`/api/pedido/${orderId}/consumir-estoque/`, {});
-    }
+  analyzeProduction(orderId: number): Observable<ProductionAnalysis> {
+    return this.http.post<ProductionAnalysis>(`/api/producao/pedidos/${orderId}/validar/`, {});
+  }
 
-    finishInternalOrder(orderId: number): Observable<Order> {
-        return this.http.post<Order>(`/api/pedido/${orderId}/concluir/`, {});
-    }
+  startProduction(orderId: number): Observable<Order> {
+    return this.http.post<Order>(`/api/producao/pedidos/${orderId}/iniciar/`, {});
+  }
 
-    private list<T>(url: string): Observable<T[]> {
-        return this.http
-            .get<ApiCollection<T>>(url)
-            .pipe(map((response) => (Array.isArray(response) ? response : response.results)));
-    }
+  completeProduction(
+    orderId: number,
+    payload: CompleteProductionPayload,
+  ): Observable<{ pedido: Order; custo_producao: string }> {
+    return this.http.post<{ pedido: Order; custo_producao: string }>(
+      `/api/producao/pedidos/${orderId}/concluir/`,
+      payload,
+    );
+  }
+
+  cancelOrder(orderId: number, payload: CancelOrderPayload): Observable<unknown> {
+    return this.http.post(`/api/pedido/${orderId}/cancelar/`, payload);
+  }
+
+  consumeStock(orderId: number): Observable<Order> {
+    return this.http.post<Order>(`/api/pedido/${orderId}/consumir-estoque/`, {});
+  }
+
+  finishInternalOrder(orderId: number): Observable<Order> {
+    return this.http.post<Order>(`/api/pedido/${orderId}/concluir/`, {});
+  }
+
+  private list<T>(url: string): Observable<T[]> {
+    return this.http
+      .get<ApiCollection<T>>(url)
+      .pipe(map((response) => (Array.isArray(response) ? response : response.results)));
+  }
 }

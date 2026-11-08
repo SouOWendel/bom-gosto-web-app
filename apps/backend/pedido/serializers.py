@@ -5,8 +5,23 @@ from rest_framework import serializers
 
 from estoque.models import Estoque
 
-from .models import Cancelamento, Cliente, ItemPedido, Pedido, status_operacional
+from .models import Cancelamento, Cliente, ItemPedido, Pedido, Produto, status_operacional
 from producao.services import analisar_pedido
+
+
+# Serializador para consulta e cadastro de produtos comercializados.
+class ProdutoSerializer(serializers.ModelSerializer):
+    receita_nome = serializers.CharField(source="receita.nome", read_only=True, allow_null=True)
+
+    class Meta:
+        model = Produto
+        fields = ("id_produto", "nome", "preco_venda", "receita", "receita_nome")
+        read_only_fields = ("id_produto", "receita_nome")
+
+    def validate_preco_venda(self, valor):
+        if valor < 0:
+            raise serializers.ValidationError("O preço de venda não pode ser negativo.")
+        return valor
 
 
 # Devolve os dados do registro de cancelamento para consulta pela API.
