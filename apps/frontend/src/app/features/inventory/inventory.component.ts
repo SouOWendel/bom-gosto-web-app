@@ -1,8 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { MetricCardsComponent } from '../../shared/components/metric-cards/metric-cards.component';
 import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
 import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
+import { Ingredient } from '../../core/models/api.model';
+import { DomainApiService } from '../../core/services/domain-api.service';
 
 interface InventoryItem {
   name: string;
@@ -29,128 +31,167 @@ interface InventoryItem {
   templateUrl: './inventory.component.html',
   styleUrls: ['./inventory.component.scss'],
 })
-export class InventoryComponent {
+export class InventoryComponent implements OnInit {
+  private readonly domainApi = inject(DomainApiService);
+  private readonly ingredients = signal<Ingredient[]>([]);
+
+  readonly loadError = signal<string | null>(null);
+
   readonly greetingActions: PageAction[] = [
     { label: 'Entrada / Saída Rápida', icon: 'filter', variant: 'secondary' },
     { label: 'Novo Insumo', icon: 'plus', variant: 'primary' },
   ];
 
-  readonly summaryCards: MetricCardItem[] = [
-    {
-      label: 'Total de itens',
-      value: '64',
-      subtext: 'Ativos catalogados',
-      icon: 'package',
-      variant: 'destaque',
-    },
-    {
-      label: 'Valor em estoque',
-      value: 'R$ 4.820,00',
-      subtext: 'Custo médio ponderado',
-      icon: 'banknote',
-      variant: 'neutro',
-    },
-    {
-      label: 'Estoque baixo',
-      value: '4',
-      subtext: 'Itens em alerta',
-      icon: 'circle-alert',
-      variant: 'alerta',
-    },
-    {
-      label: 'Itens esgotados',
-      value: '1',
-      subtext: 'Item bloqueado',
-      icon: 'shopping-bag',
-      variant: 'neutro',
-    },
-  ];
+  get summaryCards(): MetricCardItem[] {
+    const ingredients = this.ingredients();
+    const belowMinimum = ingredients.filter(
+      (ingredient) => ingredient.abaixo_do_minimo === true,
+    ).length;
+    const exhausted = ingredients.filter(
+      (ingredient) =>
+        ingredient.quantidade_disponivel !== null &&
+        this.toNumber(ingredient.quantidade_disponivel) <= 0,
+    ).length;
+    const totalValue = ingredients.reduce(
+      (total, ingredient) =>
+        total +
+        this.toNumber(ingredient.quantidade_disponivel) * this.toNumber(ingredient.custo_unitario),
+      0,
+    );
 
-  readonly inventoryItems: InventoryItem[] = [
-    {
-      name: 'Leite Condensado Moça 395g',
-      code: 'INS-0012',
-      lot: 'Lote 2025-A',
-      level: '8 latas',
-      percentage: 53,
-      unit: 'Lata 395g',
-      packaging: 'Cx. c/ 24',
-      minimum: '15 latas',
-      status: 'critical',
-      statusLabel: 'Crítico',
-      expiration: 'Hoje',
-      expirationDetail: 'Crítico',
-      cost: 'R$ 7,90',
-      lastMovement: 'Hoje, 09:15',
-      author: 'Chef Rosangela',
-    },
-    {
-      name: 'Chocolate Meio Amargo 1kg',
-      code: 'INS-0048',
-      lot: 'Lote 2025-B',
-      level: '12 barras',
-      percentage: 80,
-      unit: 'Barra 1kg',
-      packaging: 'Cx. c/ 6',
-      minimum: '9 barras',
-      status: 'normal',
-      statusLabel: 'Normal',
-      expiration: 'Em 11 dias',
-      expirationDetail: 'Preventivo',
-      cost: 'R$ 42,90',
-      lastMovement: 'Ontem, 16:40',
-      author: 'Chef Marcelo',
-    },
-    {
-      name: 'Cacau em Pó 250g',
-      code: 'INS-0051',
-      lot: 'Lote 2025-C',
-      level: '3 pacotes',
-      percentage: 20,
-      unit: 'Pacote 250g',
-      packaging: 'Cx. c/ 12',
-      minimum: '6 pacotes',
-      status: 'critical',
-      statusLabel: 'Crítico',
-      expiration: 'Há 6 dias',
-      expirationDetail: 'Crítico (Vencido)',
-      cost: 'R$ 18,50',
-      lastMovement: 'Hoje, 08:10',
-      author: 'Chef Rosangela',
-    },
-    {
-      name: 'Nozes Picadas 200g',
-      code: 'INS-0067',
-      lot: 'Lote 2025-D',
-      level: '18 sacos',
-      percentage: 90,
-      unit: 'Saco 200g',
-      packaging: 'Cx. c/ 20',
-      minimum: '12 sacos',
-      status: 'normal',
-      statusLabel: 'Normal',
-      expiration: 'Em 30 dias',
-      expirationDetail: 'Adequado',
-      cost: 'R$ 24,80',
-      lastMovement: 'Ontem, 17:20',
-      author: 'Chef Marcelo',
-    },
-    {
-      name: 'Amêndoas Fatiadas 250g',
-      code: 'INS-0073',
-      lot: 'Lote 2025-E',
-      level: '5 pacotes',
-      percentage: 33,
-      unit: 'Pacote 250g',
-      packaging: 'Cx. c/ 15',
-      minimum: '10 pacotes',
-      status: 'low',
-      statusLabel: 'Baixo',
-      expiration: 'Em 4 dias',
-      expirationDetail: 'Atenção',
-      cost: 'R$ 31,20',
-      lastMovement: 'Hoje, 07:55',
-      author: 'Chef Rosangela',
-    },
-  ];
+    return [
+      {
+        label: 'Total de itens',
+        value: String(ingredients.length),
+        subtext: 'Insumos cadastrados',
+        icon: 'package',
+        variant: 'destaque',
+      },
+      {
+        label: 'Valor em estoque',
+        value: this.formatCurrency(totalValue),
+        subtext: 'Estimado por quantidade e custo unitário',
+        icon: 'banknote',
+        variant: 'neutro',
+      },
+      {
+        label: 'Estoque baixo',
+        value: String(belowMinimum),
+        subtext: 'Abaixo da quantidade mínima',
+        icon: 'circle-alert',
+        variant: 'alerta',
+      },
+      {
+        label: 'Itens esgotados',
+        value: String(exhausted),
+        subtext: 'Sem quantidade disponível',
+        icon: 'shopping-bag',
+        variant: 'neutro',
+      },
+    ];
+  }
+
+  get inventoryItems(): InventoryItem[] {
+    return this.ingredients().map((ingredient) => this.toInventoryItem(ingredient));
+  }
+
+  ngOnInit(): void {
+    this.domainApi.getIngredients().subscribe({
+      next: (ingredients) => {
+        this.ingredients.set(ingredients);
+        this.loadError.set(null);
+      },
+      error: (error: unknown) => {
+        const detail = this.errorDetail(error);
+        this.loadError.set(detail);
+        console.error('Falha ao carregar o inventário de insumos.', error);
+      },
+    });
+  }
+
+  private toInventoryItem(ingredient: Ingredient): InventoryItem {
+    const quantity = this.toNumber(ingredient.quantidade_disponivel);
+    const minimum = this.toNumber(ingredient.quantidade_minima);
+    const belowMinimum = ingredient.abaixo_do_minimo === true;
+    const status =
+      ingredient.quantidade_disponivel !== null && quantity <= 0
+        ? 'critical'
+        : belowMinimum
+          ? 'low'
+          : 'normal';
+
+    return {
+      name: ingredient.nome,
+      code: `INS-${String(ingredient.id_ingrediente).padStart(4, '0')}`,
+      lot: 'Lote não informado',
+      level: `${this.formatQuantity(ingredient.quantidade_disponivel)} un.`,
+      percentage:
+        minimum > 0
+          ? Math.min(100, Math.round((quantity / minimum) * 100))
+          : quantity > 0
+            ? 100
+            : 0,
+      unit: 'un.',
+      packaging: 'Embalagem não informada',
+      minimum:
+        ingredient.quantidade_minima === null
+          ? 'Não informado'
+          : `${this.formatQuantity(ingredient.quantidade_minima)} un.`,
+      status,
+      statusLabel: status === 'critical' ? 'Esgotado' : status === 'low' ? 'Baixo' : 'Normal',
+      expiration: this.formatDate(ingredient.data_validade),
+      expirationDetail: this.expirationDetail(ingredient.alerta_validade),
+      cost: this.formatCurrencyOrUnavailable(ingredient.custo_unitario),
+      lastMovement: 'Não informado',
+      author: 'Não informado',
+    };
+  }
+
+  private toNumber(value: string | null): number {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : 0;
+  }
+
+  private formatQuantity(value: string | null): string {
+    return value === null
+      ? 'Não informado'
+      : this.toNumber(value).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+  }
+
+  private formatCurrency(value: number): string {
+    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  private formatCurrencyOrUnavailable(value: string | null): string {
+    return value === null ? 'Não informado' : this.formatCurrency(this.toNumber(value));
+  }
+
+  private formatDate(value: string | null): string {
+    if (value === null) {
+      return 'Não informada';
+    }
+
+    const date = new Date(`${value}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('pt-BR');
+  }
+
+  private expirationDetail(alert: Ingredient['alerta_validade']): string {
+    if (alert === null) {
+      return 'Sem alerta';
+    }
+
+    if (alert.dias_para_vencer < 0) {
+      return `Vencido há ${Math.abs(alert.dias_para_vencer)} dia(s)`;
+    }
+
+    if (alert.dias_para_vencer === 0) {
+      return 'Vence hoje';
+    }
+
+    return `Vence em ${alert.dias_para_vencer} dia(s)`;
+  }
+
+  private errorDetail(error: unknown): string {
+    return error instanceof Error ? error.message : 'Erro desconhecido ao consultar a API.';
+  }
 }

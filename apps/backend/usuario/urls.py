@@ -1,8 +1,16 @@
 from django.urls import path
-from .views import CadastroTesteView, LoginView, AlterarSenhaView, LogoutView, MeView
+from .views import (
+    AlterarSenhaView,
+    CadastroTesteView,
+    CsrfTokenView,
+    LoginView,
+    LogoutView,
+    MeView,
+)
 
-# Publica autenticação, sessão e troca obrigatória da senha inicial.
+# publica autenticacao, sessao e troca obrigatoria da senha inicial
 urlpatterns = [
+    path("auth/csrf/", CsrfTokenView.as_view()),
     path("auth/cadastro-teste/", CadastroTesteView.as_view()),
     path("auth/login/", LoginView.as_view()),
     path("auth/alterar-senha/", AlterarSenhaView.as_view()),

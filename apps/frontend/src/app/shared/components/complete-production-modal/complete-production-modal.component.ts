@@ -1,20 +1,28 @@
-import { Component, HostListener, input, output } from '@angular/core';
+import { Component, HostListener, input, OnInit, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideCheck, LucideDynamicIcon, provideLucideIcons } from '@lucide/angular';
 import { InputTextComponent } from '../input-text/input-text.component';
 import { ButtonComponent } from '../button/button.component';
+import {
+  CompleteProductionPayload,
+  ProductionAnalysis,
+  ProductionConsumption,
+} from '../../../core/models/api.model';
 
 interface ProductionIngredient {
+  id: number;
   name: string;
   lot: string;
   theoreticalQuantity: string;
   quantity: string;
+  availableQuantity: string;
   unit: string;
 }
 
 interface ProductionOrder {
   id: string;
   item: string;
+  analysis: ProductionAnalysis | null;
 }
 
 @Component({
@@ -25,50 +33,35 @@ interface ProductionOrder {
   templateUrl: './complete-production-modal.component.html',
   styleUrls: ['./complete-production-modal.component.scss'],
 })
-export class CompleteProductionModalComponent {
+export class CompleteProductionModalComponent implements OnInit {
   readonly order = input.required<ProductionOrder>();
   readonly closed = output<void>();
   readonly confirmed = output<void>();
+  submittedPayload: CompleteProductionPayload | null = null;
 
-  readonly ingredients: ProductionIngredient[] = [
-    {
-      name: 'Farinha de trigo',
-      lot: 'Lote MP-1842',
-      theoreticalQuantity: '12,5 kg',
-      quantity: '12.5',
-      unit: 'kg',
-    },
-    {
-      name: 'Açúcar refinado',
-      lot: 'Lote MP-2019',
-      theoreticalQuantity: '4,2 kg',
-      quantity: '4.2',
-      unit: 'kg',
-    },
-    {
-      name: 'Manteiga sem sal',
-      lot: 'Lote MP-2271',
-      theoreticalQuantity: '2,8 kg',
-      quantity: '2.8',
-      unit: 'kg',
-    },
-    {
-      name: 'Ovos pasteurizados',
-      lot: 'Lote MP-2310',
-      theoreticalQuantity: '3,5 L',
-      quantity: '3.5',
-      unit: 'L',
-    },
-    {
-      name: 'Fermento químico',
-      lot: 'Lote MP-1760',
-      theoreticalQuantity: '0,18 kg',
-      quantity: '0.18',
-      unit: 'kg',
-    },
-  ];
+  readonly ingredients: ProductionIngredient[] = [];
 
   expirationDate = '';
+
+  ngOnInit(): void {
+    const analysis = this.order().analysis;
+    if (!analysis) {
+      console.error('Não há análise de produção disponível para concluir este pedido.');
+      return;
+    }
+
+    this.ingredients.push(
+      ...analysis.ingredientes.map((ingredient) => ({
+        id: ingredient.id_ingrediente,
+        name: ingredient.nome,
+        lot: `Disponível: ${ingredient.disponivel}`,
+        theoreticalQuantity: ingredient.necessario,
+        quantity: '',
+        availableQuantity: ingredient.disponivel,
+        unit: '',
+      })),
+    );
+  }
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
@@ -80,10 +73,32 @@ export class CompleteProductionModalComponent {
   }
 
   confirm(): void {
-    if (!this.expirationDate) {
+    if (!this.expirationDate || this.ingredients.length === 0) {
+      console.error('Informe a validade e os consumos reais antes de concluir a produção.');
       return;
     }
 
+    const consumos: ProductionConsumption[] = [];
+    for (const ingredient of this.ingredients) {
+      if (!ingredient.quantity.trim()) {
+        console.error(`Informe o consumo real de ${ingredient.name}; use zero se não houve consumo.`);
+        return;
+      }
+      const quantity = Number(ingredient.quantity);
+      if (!Number.isFinite(quantity) || quantity < 0) {
+        console.error(`Quantidade inválida para o ingrediente ${ingredient.name}.`);
+        return;
+      }
+      consumos.push({
+        ingrediente_id: ingredient.id,
+        quantidade: String(quantity),
+      });
+    }
+
+    this.submittedPayload = {
+      data_validade: this.expirationDate,
+      consumos,
+    };
     this.confirmed.emit();
   }
 }

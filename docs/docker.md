@@ -28,11 +28,13 @@ docker compose ps
 O serviço `postgres` possui healthcheck. O `backend` só inicia depois que o banco estiver saudável e executa automaticamente:
 
 ```text
-python manage.py migrate
+python manage.py migrate --noinput
 python manage.py runserver 0.0.0.0:8000
 ```
 
 Abra `http://localhost:4200` para usar o frontend ou `http://localhost:8000` para acessar a API diretamente.
+
+As migrations Django criam e controlam as 11 tabelas ativas de aplicação. O Compose não executa `database/create_schema.sql`.
 
 ## Migrations
 
@@ -43,7 +45,7 @@ docker compose exec backend python manage.py makemigrations
 docker compose exec backend python manage.py migrate
 ```
 
-O `migrate` é automático ao iniciar o backend. O `makemigrations` não é automático: os arquivos gerados devem ser revisados e versionados.
+O `migrate --noinput` é automático ao iniciar o backend. O `makemigrations` não é automático: os arquivos gerados devem ser revisados e versionados.
 
 ## Banco de dados
 
@@ -60,14 +62,7 @@ Verificar a conexão usando as configurações do Django:
 docker compose exec -T backend python manage.py shell -c "from django.db import connection; connection.ensure_connection(); print('Conexao Django OK')"
 ```
 
-Os scripts de `/docker-entrypoint-initdb.d/` só são executados quando o volume é criado. Para reconstruir o banco local do zero:
-
-```powershell
-docker compose down -v
-docker compose up -d --build
-```
-
-Esse procedimento apaga os dados do volume `postgres_data`.
+O banco ativo é preparado e atualizado pelas migrations Django. O script `database/create_schema.sql` não é executado pelo Compose. `create_schema.sql` permanece somente como referência legada. Não remova o volume para atualizar o schema: isso apaga os dados persistidos.
 
 ## Diagnóstico
 
@@ -79,7 +74,7 @@ docker compose logs -f postgres backend frontend
 Erros comuns:
 
 - `connection refused` em `localhost`: confira se o Django está sendo executado dentro do container e se `POSTGRES_HOST=postgres` está configurado.
-- `relation "usuario" does not exist`: o schema não foi aplicado ao volume atual. Recrie o volume apenas se puder apagar os dados, ou aplique `database/create_schema.sql` manualmente.
+- `relation "usuario" does not exist`: confira os logs do backend e o estado das migrations. Não execute `database/create_schema.sql` nem remova o volume como procedimento de recuperação do banco ativo.
 - `ECONNREFUSED 127.0.0.1:8000` no frontend: o proxy deve usar `http://backend:8000`, pois `127.0.0.1` dentro do frontend aponta para o próprio container.
 - `DisallowedHost`: confirme que `backend` está em `ALLOWED_HOSTS` no Django.
 

@@ -1,28 +1,34 @@
 import secrets
 
 from django.conf import settings
-from django.db import IntegrityError
-from rest_framework.authentication import SessionAuthentication
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout, update_session_auth_hash
+from django.db import IntegrityError
+from django.middleware.csrf import get_token
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .models import Usuario
 
-class CsrfExemptSessionAuthentication(SessionAuthentication):
-    def enforce_csrf(self, request):
-        return
 
-# endpoint temporario para criar usuarios locais com senha inicial descartavel
-# Cria usuários descartáveis somente em ambiente de desenvolvimento.
-class CadastroTesteView(APIView):
-    authentication_classes = [CsrfExemptSessionAuthentication]
+class CsrfTokenView(APIView):
     permission_classes = [AllowAny]
 
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request):
+        return Response({"csrf_token": get_token(request)})
+
+# endpoint temporario para criar usuarios locais com senha inicial descartavel
+# cria usuarios descartáveis somente em ambiente de desenvolvimento
+class CadastroTesteView(APIView):
+    permission_classes = [AllowAny]
+
+    @method_decorator(csrf_protect)
     # define o metodo POST para criar um usuario com login e senha temporaria, retornando a senha temporaria para o usuario
     def post(self, request):
-        if not settings.DEBUG:
+        if not settings.TEST_USER_REGISTRATION_ENABLED:
             return Response({"detail": "endpoint disponível apenas em desenvolvimento."}, status=404)
 
         # valida se o login foi fornecido e nao esta vazio, retornando erro 400 caso contrario
@@ -46,8 +52,9 @@ class CadastroTesteView(APIView):
 # define a view de login, que recebe login e senha, autentica o usuario e cria uma sessao
 # Autentica login e senha e inicia a sessão do usuário.
 class LoginView(APIView):
-    authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [AllowAny]
+
+    @method_decorator(csrf_protect)
     def post(self, request):
         if request.user.is_authenticated:
             return Response({"detail": "usuário já está logado."}, status=status.HTTP_409_CONFLICT)
@@ -71,7 +78,6 @@ class LoginView(APIView):
 # - nova senha com menos de 8 caracteres
 # Troca a senha provisória e libera o acesso normal às rotas protegidas.
 class AlterarSenhaView(APIView):
-    authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [IsAuthenticated]
     def post(self, request):
         senha_atual = request.data.get("senha_atual")
@@ -97,7 +103,6 @@ class AlterarSenhaView(APIView):
 # define a view de logout, que encerra a sessao do usuario logado
 # Encerra a sessão autenticada no navegador.
 class LogoutView(APIView):
-    authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [IsAuthenticated]
     def post(self, request):
         auth_logout(request)
@@ -106,8 +111,6 @@ class LogoutView(APIView):
 # define a view de informacoes do usuario logado, lendo diretamente do banco de dados
 # Retorna os dados básicos do usuário associado à sessão atual.
 class MeView(APIView):
-    authentication_classes = [CsrfExemptSessionAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         return Response({"login": request.user.login, "primeiro_acesso": request.user.primeiro_acesso})
-
