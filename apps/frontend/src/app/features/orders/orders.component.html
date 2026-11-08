@@ -1,7 +1,7 @@
 <div class="orders-page">
   <app-page-greeting
     title="Gestão de Pedidos & Encomendas"
-    subtitle="42 pedidos ativos no mês de Setembro • 8 aguardando produção hoje"
+    [subtitle]="orders().length + ' pedidos ativos • ' + activeCount() + ' aguardando produção'"
     [actions]="greetingActions"
     (actionClick)="handleGreetingAction($event)"
   />
@@ -42,6 +42,31 @@
       />
     }
 
+    @if (isCreateModalOpen()) {
+      <app-order-create-modal
+        [recipes]="recipes()"
+        [productsList]="products()"
+        [apiError]="createError()"
+        (closed)="closeCreateModal()"
+        (submitted)="createOrder($event)"
+      />
+    }
+
+    @if (isEditModalOpen() && selectedOrder(); as editTarget) {
+      <app-order-create-modal
+        [recipes]="recipes()"
+        [productsList]="products()"
+        [orderToEdit]="editTarget.apiOrder"
+        [apiError]="createError()"
+        (closed)="closeEditModal()"
+        (submitted)="handleOrderEdit($event)"
+      />
+    }
+
+    @if (createError()) {
+      <div class="orders-page__create-error" role="alert">{{ createError() }}</div>
+    }
+
     <div class="orders-page__category-tabs">
       <button
         type="button"
@@ -80,7 +105,7 @@
         [class.is-active]="selectedStatus() === 'todos'"
         (click)="setStatus('todos')"
       >
-        Todos <b>42</b>
+        Todos <b>{{ orders().length }}</b>
       </button>
       <button
         type="button"
@@ -88,7 +113,7 @@
         [class.is-active]="selectedStatus() === 'pendente'"
         (click)="setStatus('pendente')"
       >
-        Pendentes <b>4</b>
+        Pendentes <b>{{ pendingCount() }}</b>
       </button>
       <button
         type="button"
@@ -96,7 +121,7 @@
         [class.is-active]="selectedStatus() === 'confirmado'"
         (click)="setStatus('confirmado')"
       >
-        Confirmados <b>8</b>
+        Confirmados <b>{{ confirmedCount() }}</b>
       </button>
       <button
         type="button"
@@ -104,7 +129,7 @@
         [class.is-active]="selectedStatus() === 'producao'"
         (click)="setStatus('producao')"
       >
-        Em Produção <b>7</b>
+        Em Produção <b>{{ productionCount() }}</b>
       </button>
       <button
         type="button"
@@ -112,7 +137,7 @@
         [class.is-active]="selectedStatus() === 'retirada'"
         (click)="setStatus('retirada')"
       >
-        Prontos para Entrega <b>5</b>
+        Prontos para Entrega <b>{{ readyCount() }}</b>
       </button>
       <button
         type="button"
@@ -159,13 +184,12 @@
         </div>
         <div class="order-row__actions">
           <div class="order-row__icons">
-            <button type="button" aria-label="Mensagem">
-              <svg [lucideIcon]="'message-square'" [size]="14"></svg>
-            </button>
-            <button type="button" aria-label="Imprimir">
-              <svg [lucideIcon]="'printer'" [size]="14"></svg>
-            </button>
-            <button type="button" aria-label="Editar">
+            <button
+              type="button"
+              aria-label="Editar pedido"
+              title="Editar pedido"
+              (click)="editOrder(order)"
+            >
               <svg [lucideIcon]="'pencil'" [size]="14"></svg>
             </button>
             <button
@@ -187,15 +211,7 @@
     }
 
     <footer class="orders-table__footer">
-      <span
-        >Mostrando {{ filteredOrders().length }} de 42 encomendas • Total em produção:
-        <strong>R$ 640,00</strong> hoje</span
-      >
-      <div>
-        <button type="button">‹</button><button type="button" class="is-current">1</button
-        ><button type="button">2</button><button type="button">3</button><span>...</span
-        ><button type="button">11</button><button type="button">›</button>
-      </div>
+      <span>Mostrando {{ filteredOrders().length }} de {{ orders().length }} encomendas</span>
     </footer>
   </section>
 </div>

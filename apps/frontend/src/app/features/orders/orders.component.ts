@@ -17,11 +17,15 @@ import { PageGreetingComponent } from '../../shared/components/page-greeting/pag
 import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
 import { CancelProductionModalComponent } from '../../shared/components/cancel-production-modal/cancel-production-modal.component';
 import { CompleteProductionModalComponent } from '../../shared/components/complete-production-modal/complete-production-modal.component';
+import { OrderCreateModalComponent } from '../../shared/components/order-create-modal/order-create-modal.component';
 import {
   CancelOrderPayload,
   CompleteProductionPayload,
   Order as ApiOrder,
+  OrderCreationPayload,
+  Product,
   ProductionAnalysis,
+  Recipe,
 } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
 
@@ -57,6 +61,7 @@ interface OrderRow {
     MetricCardsComponent,
     CancelProductionModalComponent,
     CompleteProductionModalComponent,
+    OrderCreateModalComponent,
   ],
   providers: [
     provideLucideIcons(
@@ -77,10 +82,16 @@ export class OrdersComponent implements OnInit {
 
   readonly isCancelModalOpen = signal(false);
   readonly isCompleteModalOpen = signal(false);
+  readonly isCreateModalOpen = signal(false);
   readonly selectedOrder = signal<OrderRow | null>(null);
   readonly loadError = signal<string | null>(null);
   readonly actionError = signal<string | null>(null);
+  readonly createError = signal<string | null>(null);
+  readonly recipes = signal<Recipe[]>([]);
+  readonly isEditModalOpen = signal(false);
+  readonly creationInProgress = signal(false);
   readonly operationInProgress = signal(false);
+  readonly products = signal<Product[]>([]);
   @ViewChild(CancelProductionModalComponent)
   private cancelProductionModal?: CancelProductionModalComponent;
   @ViewChild(CompleteProductionModalComponent)
@@ -99,8 +110,7 @@ export class OrdersComponent implements OnInit {
     const inProduction = orders.filter((order) => order.status === 'producao');
     const ready = orders.filter(
       (order) =>
-        order.apiOrder.status === 'producao_concluida' &&
-        order.apiOrder.tipo === 'externo',
+        order.apiOrder.status === 'producao_concluida' && order.apiOrder.tipo === 'externo',
     ).length;
     const pendingBalance = orders
       .filter((order) => order.status !== 'cancelado' && order.status !== 'retirada')
@@ -109,8 +119,7 @@ export class OrdersComponent implements OnInit {
           total +
           Math.max(
             0,
-            this.toNumber(order.apiOrder.valor_total) -
-              this.toNumber(order.apiOrder.valor_sinal),
+            this.toNumber(order.apiOrder.valor_total) - this.toNumber(order.apiOrder.valor_sinal),
           ),
         0,
       );
@@ -143,7 +152,10 @@ export class OrdersComponent implements OnInit {
       },
       {
         label: 'Pedidos ativos',
-        value: String(orders.filter((order) => order.status !== 'cancelado' && order.status !== 'retirada').length),
+        value: String(
+          orders.filter((order) => order.status !== 'cancelado' && order.status !== 'retirada')
+            .length,
+        ),
         subtext: 'Dados carregados da API',
         icon: 'trending-up',
         variant: 'neutro',
@@ -154,6 +166,24 @@ export class OrdersComponent implements OnInit {
   readonly searchTerm = signal('');
   readonly selectedCategory = signal<'todos' | OrderCategory>('todos');
   readonly selectedStatus = signal<'todos' | OrderStatus>('todos');
+  readonly pendingCount = computed(
+    () => this.orders().filter((o) => o.status === 'pendente').length,
+  );
+  readonly confirmedCount = computed(
+    () => this.orders().filter((o) => o.status === 'confirmado').length,
+  );
+  readonly productionCount = computed(
+    () => this.orders().filter((o) => o.status === 'producao').length,
+  );
+  readonly readyCount = computed(() => this.orders().filter((o) => o.status === 'retirada').length);
+  readonly cancelledCount = computed(
+    () => this.orders().filter((o) => o.status === 'cancelado').length,
+  );
+  readonly activeCount = computed(
+    () =>
+      this.orders().filter((o) => ['pedido_feito', 'em_producao'].includes(o.apiOrder.status))
+        .length,
+  );
 
   readonly filteredOrders = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
@@ -174,6 +204,21 @@ export class OrdersComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadOrders();
+    this.domainApi.getProducts().subscribe({
+      next: (products) => this.products.set(products),
+      error: (error: unknown) => {
+        console.error('Falha ao carregar produtos.', error);
+      },
+    });
+    this.domainApi.getRecipes().subscribe({
+      next: (recipes) => this.recipes.set(recipes),
+      error: (error: unknown) => {
+        this.createError.set(
+          `Não foi possível carregar as receitas para o cadastro. ${this.errorDetail(error)}`,
+        );
+        console.error('Falha ao carregar as receitas para o cadastro de pedido.', error);
+      },
+    });
   }
 
   setCategory(category: 'todos' | OrderCategory): void {
@@ -299,6 +344,12 @@ export class OrdersComponent implements OnInit {
   }
 
   handleGreetingAction(action: PageAction): void {
+    if (action.label === '+ Novo Pedido') {
+      this.createError.set(null);
+      this.isCreateModalOpen.set(true);
+      return;
+    }
+
     if (action.label === 'Cancelar em produção') {
       const productionOrder = this.orders().find(
         (order) => order.apiOrder.status === 'em_producao',
@@ -314,6 +365,68 @@ export class OrdersComponent implements OnInit {
   closeCancelModal(): void {
     this.isCancelModalOpen.set(false);
     this.selectedOrder.set(null);
+  }
+
+  closeCreateModal(): void {
+    if (this.creationInProgress()) {
+      return;
+    }
+    this.isCreateModalOpen.set(false);
+    this.createError.set(null);
+  }
+
+  createOrder(payload: OrderCreationPayload): void {
+    if (this.creationInProgress()) {
+      return;
+    }
+
+    this.creationInProgress.set(true);
+    this.createError.set(null);
+    this.domainApi.createOrder(payload).subscribe({
+      next: () => {
+        this.creationInProgress.set(false);
+        this.isCreateModalOpen.set(false);
+        this.loadOrders();
+      },
+      error: (error: unknown) => {
+        this.creationInProgress.set(false);
+        this.createError.set(`Não foi possível cadastrar o pedido. ${this.errorDetail(error)}`);
+        console.error('Falha ao cadastrar pedido.', error);
+      },
+    });
+  }
+
+  editOrder(order: OrderRow): void {
+    this.createError.set(null);
+    this.selectedOrder.set(order);
+    this.isEditModalOpen.set(true);
+  }
+
+  closeEditModal(): void {
+    this.isEditModalOpen.set(false);
+    this.selectedOrder.set(null);
+    this.createError.set(null);
+  }
+
+  handleOrderEdit(payload: OrderCreationPayload): void {
+    const order = this.selectedOrder();
+    if (!order || this.creationInProgress()) {
+      return;
+    }
+    this.creationInProgress.set(true);
+    this.createError.set(null);
+    this.domainApi.updateOrder(order.apiOrder.id_pedido, payload).subscribe({
+      next: () => {
+        this.creationInProgress.set(false);
+        this.closeEditModal();
+        this.loadOrders();
+      },
+      error: (error: unknown) => {
+        this.creationInProgress.set(false);
+        this.createError.set(`Não foi possível atualizar o pedido. ${this.errorDetail(error)}`);
+        console.error('Falha ao editar pedido.', error);
+      },
+    });
   }
 
   private loadOrders(): void {
@@ -348,10 +461,7 @@ export class OrdersComponent implements OnInit {
           this.handleActionError(`Estoque insuficiente para iniciar a produção: ${names}.`);
           return;
         }
-        if (
-          order.apiOrder.tipo === 'externo' &&
-          !analysis.encaminhar_para_producao
-        ) {
+        if (order.apiOrder.tipo === 'externo' && !analysis.encaminhar_para_producao) {
           this.domainApi.consumeStock(order.apiOrder.id_pedido).subscribe({
             next: (updatedOrder) => this.finishActionWithOrder(updatedOrder),
             error: (error: unknown) =>
@@ -470,7 +580,7 @@ export class OrdersComponent implements OnInit {
       payment:
         order.valor_sinal !== '0.00' && order.valor_sinal !== '0'
           ? `Sinal: ${this.formatCurrency(this.toNumber(order.valor_sinal))}`
-          : order.forma_pagamento ?? 'Pagamento não informado',
+          : (order.forma_pagamento ?? 'Pagamento não informado'),
       status,
       statusLabel: this.statusLabel(status),
       schedule: this.formatSchedule(order.data_entrega, order.horario_entrega),
@@ -526,7 +636,11 @@ export class OrdersComponent implements OnInit {
 
   private toCategory(value: string): OrderCategory | null {
     const normalized = value.toLocaleLowerCase('pt-BR');
-    if (normalized.includes('brigadeiro') || normalized.includes('doce') || normalized.includes('docinho')) {
+    if (
+      normalized.includes('brigadeiro') ||
+      normalized.includes('doce') ||
+      normalized.includes('docinho')
+    ) {
       return 'doces';
     }
     if (normalized.includes('kit') || normalized.includes('festa')) {

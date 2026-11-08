@@ -45,8 +45,9 @@ export const routes: Routes = [
       },
       {
         path: 'produtos',
-        redirectTo: 'receitas',
-        pathMatch: 'full',
+        title: 'Produtos - Bom Gosto',
+        loadComponent: () =>
+          import('./features/products/products.component').then((m) => m.ProductsComponent),
       },
       {
         path: 'estoque',

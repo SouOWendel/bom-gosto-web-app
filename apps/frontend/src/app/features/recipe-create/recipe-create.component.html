@@ -1,12 +1,9 @@
 <div class="recipe-page">
-  <header class="recipe-page__intro">
-    <span class="recipe-page__eyebrow">PRODUTOS / RECEITAS · NOVA FICHA TÉCNICA</span>
-    <h1>Cadastrar Receita</h1>
-    <p>
-      O cuidado de cada criação começa na ficha técnica. Defina proporções, rendimento e modo de
-      preparo.
-    </p>
-  </header>
+  <app-page-greeting
+    title="Cadastrar receita"
+    subtitle="Defina proporções, rendimento e modo de preparo para padronizar sua produção."
+    [actions]="greetingActions"
+  />
 
   <form (ngSubmit)="saveRecipe()">
     <section class="recipe-card" aria-labelledby="identification-title">
@@ -37,10 +34,12 @@
       </div>
       <div class="recipe-grid recipe-grid--three">
         <label
-          >Produto associado *
-          <select [(ngModel)]="product" name="product">
-            <option>Brownie de cacau 60 g · DOC-0032</option>
-            <option>Brigadeiro tradicional · DOC-0018</option>
+          >Produto associado
+          <select [(ngModel)]="productId" name="productId">
+            <option [ngValue]="null">Sem produto associado</option>
+            @for (p of availableProducts; track p.id_produto) {
+              <option [ngValue]="p.id_produto">{{ p.nome }} (#{{ p.id_produto }})</option>
+            }
           </select>
         </label>
         <label
@@ -81,13 +80,17 @@
         @for (ingredient of ingredients; track ingredient.code + $index) {
           <div class="ingredient-table__row">
             <select
-              [(ngModel)]="ingredient.name"
+              [(ngModel)]="ingredient.id"
               [name]="'ingredient-' + $index"
               aria-label="Ingrediente"
+              (ngModelChange)="onIngredientSelected($index, $event)"
             >
-              <option>{{ ingredient.name }} · {{ ingredient.code }}</option>
-              <option>Leite condensado · INS-047</option>
-              <option>Creme de leite · INS-048</option>
+              <option [ngValue]="null">Selecione um ingrediente</option>
+              @for (available of availableIngredients; track available.id_ingrediente) {
+                <option [ngValue]="available.id_ingrediente">
+                  {{ available.nome }} · INS-{{ available.id_ingrediente }}
+                </option>
+              }
             </select>
             <app-input-text
               [(ngModel)]="ingredient.quantity"
@@ -152,7 +155,7 @@
         [(ngModel)]="preparation"
         name="preparation"
         rows="6"
-        required
+        placeholder="Descreva o passo a passo e instruções de preparo..."
       ></textarea>
     </section>
 
