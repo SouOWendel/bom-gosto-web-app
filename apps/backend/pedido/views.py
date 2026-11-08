@@ -6,8 +6,8 @@ from rest_framework import status
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from django.db import transaction
 
-from .models import Cancelamento, Pedido, status_operacional
-from .serializers import CancelamentoRegistroSerializer, PedidoSerializer
+from .models import Cancelamento, Pedido, Produto, status_operacional
+from .serializers import CancelamentoRegistroSerializer, PedidoSerializer, ProdutoSerializer
 from estoque.services import baixar_lotes
 from producao.serializers import CancelamentoSerializer
 
@@ -95,4 +95,11 @@ class PedidoViewSet(ModelViewSet):
 class CancelamentoViewSet(ReadOnlyModelViewSet):
     queryset = Cancelamento.objects.select_related("pedido").all().order_by("-id_cancelamento")
     serializer_class = CancelamentoRegistroSerializer
+    permission_classes = [IsAuthenticated, SenhaInicialAlterada]
+
+
+# Permite o gerenciamento de produtos comercializados pela confeitaria.
+class ProdutoViewSet(ModelViewSet):
+    queryset = Produto.objects.select_related("receita").all().order_by("nome")
+    serializer_class = ProdutoSerializer
     permission_classes = [IsAuthenticated, SenhaInicialAlterada]

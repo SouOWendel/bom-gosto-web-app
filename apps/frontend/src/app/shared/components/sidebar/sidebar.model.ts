@@ -32,6 +32,12 @@ export const DEFAULT_SIDEBAR_PAGES: NavItem[] = [
     icon: 'receipt',
   },
   {
+    id: 'produtos',
+    label: 'Produtos',
+    route: '/produtos',
+    icon: 'shopping-bag',
+  },
+  {
     id: 'receitas',
     label: 'Receitas',
     route: '/receitas',

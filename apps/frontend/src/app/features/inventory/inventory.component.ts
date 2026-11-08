@@ -5,8 +5,17 @@ import { PageGreetingComponent } from '../../shared/components/page-greeting/pag
 import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
 import { Ingredient } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
+import {
+  IngredientCreateModalComponent,
+  IngredientCreationPayload,
+} from '../../shared/components/ingredient-create-modal/ingredient-create-modal.component';
+import {
+  IngredientMovementModalComponent,
+  IngredientMovementPayload,
+} from '../../shared/components/ingredient-movement-modal/ingredient-movement-modal.component';
 
 interface InventoryItem {
+  raw: Ingredient;
   name: string;
   code: string;
   lot: string;
@@ -27,24 +36,34 @@ interface InventoryItem {
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [PageGreetingComponent, MetricCardsComponent],
+  imports: [
+    PageGreetingComponent,
+    MetricCardsComponent,
+    IngredientCreateModalComponent,
+    IngredientMovementModalComponent,
+  ],
   templateUrl: './inventory.component.html',
   styleUrls: ['./inventory.component.scss'],
 })
 export class InventoryComponent implements OnInit {
   private readonly domainApi = inject(DomainApiService);
-  private readonly ingredients = signal<Ingredient[]>([]);
+  readonly ingredients = signal<Ingredient[]>([]);
 
   readonly loadError = signal<string | null>(null);
+  readonly isCreateModalOpen = signal(false);
+  readonly createError = signal<string | null>(null);
+  readonly ingredientToEdit = signal<Ingredient | null>(null);
+  readonly ingredientToMove = signal<Ingredient | null>(null);
+  readonly movementType = signal<'entrada' | 'saida'>('entrada');
+  readonly movementError = signal<string | null>(null);
+  readonly searchTerm = signal('');
+  readonly alertOnly = signal(false);
   readonly currentPage = signal(1);
   readonly pageSize = 5;
-  readonly totalItems = computed(() => this.ingredients().length);
-  readonly belowMinimumCount = computed(
-    () => this.ingredients().filter((ingredient) => ingredient.abaixo_do_minimo === true).length,
-  );
+  readonly totalItems = computed(() => this.filteredInventoryItems().length);
   readonly paginatedInventoryItems = computed(() => {
     const start = (this.currentPage() - 1) * this.pageSize;
-    return this.inventoryItems.slice(start, start + this.pageSize);
+    return this.filteredInventoryItems().slice(start, start + this.pageSize);
   });
   readonly totalPages = computed(() => Math.ceil(this.totalItems() / this.pageSize));
   readonly pageNumbers = computed(() =>
@@ -62,7 +81,6 @@ export class InventoryComponent implements OnInit {
   });
 
   readonly greetingActions: PageAction[] = [
-    { label: 'Entrada / Saída Rápida', icon: 'filter', variant: 'secondary' },
     { label: 'Novo Insumo', icon: 'plus', variant: 'primary' },
   ];
 
@@ -115,8 +133,29 @@ export class InventoryComponent implements OnInit {
     ];
   }
 
-  get inventoryItems(): InventoryItem[] {
-    return this.ingredients().map((ingredient) => this.toInventoryItem(ingredient));
+  get totalAlertsCount(): number {
+    return this.ingredients().filter(
+      (item) => item.abaixo_do_minimo || item.alerta_validade !== null,
+    ).length;
+  }
+
+  readonly filteredInventoryItems = computed(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    const alertFilter = this.alertOnly();
+
+    return this.ingredients()
+      .filter((item) => {
+        if (alertFilter && !item.abaixo_do_minimo && !item.alerta_validade) {
+          return false;
+        }
+        if (!term) return true;
+        return item.nome.toLowerCase().includes(term) || String(item.id_ingrediente).includes(term);
+      })
+      .map((item) => this.toInventoryItem(item));
+  });
+
+  toggleAlertFilter(): void {
+    this.alertOnly.update((v) => !v);
   }
 
   ngOnInit(): void {
@@ -132,6 +171,102 @@ export class InventoryComponent implements OnInit {
         console.error('Falha ao carregar o inventário de insumos.', error);
       },
     });
+  }
+
+  onSearch(value: string): void {
+    this.searchTerm.set(value);
+    this.currentPage.set(1);
+  }
+
+  setAlertFilter(value: boolean): void {
+    this.alertOnly.set(value);
+    this.currentPage.set(1);
+  }
+
+  handleGreetingAction(action: PageAction): void {
+    if (action.label === 'Novo Insumo') {
+      this.openCreateModal();
+    }
+  }
+
+  openCreateModal(): void {
+    this.ingredientToEdit.set(null);
+    this.createError.set(null);
+    this.isCreateModalOpen.set(true);
+  }
+
+  openEditModal(item: InventoryItem): void {
+    this.ingredientToEdit.set(item.raw);
+    this.createError.set(null);
+    this.isCreateModalOpen.set(true);
+  }
+
+  openMovementModal(item: InventoryItem, type: 'entrada' | 'saida'): void {
+    this.ingredientToMove.set(item.raw);
+    this.movementType.set(type);
+    this.movementError.set(null);
+  }
+
+  closeMovementModal(): void {
+    this.ingredientToMove.set(null);
+    this.movementError.set(null);
+  }
+
+  moveIngredient(payload: IngredientMovementPayload): void {
+    const ingredient = this.ingredientToMove();
+    if (!ingredient) {
+      return;
+    }
+
+    this.domainApi.moveIngredient(ingredient.id_ingrediente, payload).subscribe({
+      next: (updated) => {
+        this.ingredients.update((items) =>
+          items.map((item) => (item.id_ingrediente === updated.id_ingrediente ? updated : item)),
+        );
+        this.closeMovementModal();
+      },
+      error: (error: unknown) => {
+        this.movementError.set(
+          `Não foi possível registrar a movimentação. ${this.errorDetail(error)}`,
+        );
+        console.error('Falha ao movimentar ingrediente.', error);
+      },
+    });
+  }
+
+  closeCreateModal(): void {
+    this.isCreateModalOpen.set(false);
+    this.ingredientToEdit.set(null);
+    this.createError.set(null);
+  }
+
+  saveIngredient(payload: IngredientCreationPayload): void {
+    const toEdit = this.ingredientToEdit();
+    if (toEdit) {
+      this.domainApi.updateIngredient(toEdit.id_ingrediente, payload).subscribe({
+        next: (updated) => {
+          this.ingredients.update((items) =>
+            items.map((it) => (it.id_ingrediente === updated.id_ingrediente ? updated : it)),
+          );
+          this.closeCreateModal();
+        },
+        error: (error: unknown) => {
+          this.createError.set(`Não foi possível atualizar o insumo. ${this.errorDetail(error)}`);
+          console.error('Falha ao atualizar insumo.', error);
+        },
+      });
+    } else {
+      this.domainApi.createIngredient(payload).subscribe({
+        next: (ingredient) => {
+          this.ingredients.update((items) => [...items, ingredient]);
+          this.closeCreateModal();
+        },
+        error: (error: unknown) => {
+          this.createError.set(`Não foi possível cadastrar o insumo. ${this.errorDetail(error)}`);
+          console.error('Falha ao cadastrar insumo.', error);
+        },
+      });
+    }
   }
 
   goToPage(page: number): void {
@@ -152,6 +287,7 @@ export class InventoryComponent implements OnInit {
           : 'normal';
 
     return {
+      raw: ingredient,
       name: ingredient.nome,
       code: `INS-${String(ingredient.id_ingrediente).padStart(4, '0')}`,
       lot: 'Lote não informado',

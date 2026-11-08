@@ -3,10 +3,17 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { Ingredient, Recipe as ApiRecipe, RecipeIngredient } from '../../core/models/api.model';
+import {
+  Ingredient,
+  Product,
+  Recipe as ApiRecipe,
+  RecipeIngredient,
+} from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { InputTextComponent } from '../../shared/components/input-text/input-text.component';
+import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
+import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
 
 interface RecipeIngredientRow {
   id: number | null;
@@ -20,7 +27,7 @@ interface RecipeIngredientRow {
 @Component({
   selector: 'app-recipe-create',
   standalone: true,
-  imports: [FormsModule, InputTextComponent, ButtonComponent],
+  imports: [FormsModule, InputTextComponent, ButtonComponent, PageGreetingComponent],
   templateUrl: './recipe-create.component.html',
   styleUrls: ['./recipe-create.component.scss'],
 })
@@ -30,17 +37,25 @@ export class RecipeCreateComponent implements OnInit {
   private readonly router = inject(Router);
 
   recipeName = '';
-  category = '';
-  product = '';
+  category = 'Doces & Sobremesas';
+  productId: number | null = null;
   yield = 0;
   yieldUnit = 'Unidade (un)';
-  preparation =
-    '1. Derreta o chocolate e a manteiga em banho-maria; deixe amornar.\n2. Misture os ovos com o açúcar. Incorpore o chocolate derretido.\n3. Peneire a farinha e o cacau; misture até a massa ficar homogênea.\n4. Distribua em forma de 20 × 30 cm forrada com papel-manteiga.\n5. Asse a 180 °C por 25 minutos. Espere esfriar completamente.\n6. Corte em 20 unidades de aproximadamente 60 g cada.';
+  preparation = '';
   ingredients: RecipeIngredientRow[] = [];
   errorMessage = '';
   isSaving = false;
   private recipeId: number | null = null;
-  private availableIngredients: Ingredient[] = [];
+  availableIngredients: Ingredient[] = [];
+  availableProducts: Product[] = [];
+
+  readonly greetingActions: PageAction[] = [
+    {
+      label: 'Voltar para receitas',
+      route: '/receitas',
+      variant: 'outline-primary',
+    },
+  ];
 
   get totalCost(): number {
     return this.ingredients.reduce((total, item) => {
@@ -59,6 +74,11 @@ export class RecipeCreateComponent implements OnInit {
       }
       this.recipeId = id;
     }
+
+    this.api.getProducts().subscribe({
+      next: (products) => (this.availableProducts = products),
+      error: (err) => console.error('Erro ao carregar produtos', err),
+    });
 
     if (this.recipeId === null) {
       this.api.getIngredients().subscribe({
@@ -115,6 +135,23 @@ export class RecipeCreateComponent implements OnInit {
     this.ingredients = this.ingredients.filter((_, itemIndex) => itemIndex !== index);
   }
 
+  onIngredientSelected(index: number, ingredientId: number | null): void {
+    const ingredient = this.availableIngredients.find(
+      (candidate) => candidate.id_ingrediente === ingredientId,
+    );
+    this.ingredients = this.ingredients.map((item, itemIndex) =>
+      itemIndex === index
+        ? {
+            ...item,
+            id: ingredientId,
+            name: ingredient?.nome ?? '',
+            code: ingredient ? String(ingredient.id_ingrediente) : '',
+            unitCost: Number(ingredient?.custo_unitario) || 0,
+          }
+        : item,
+    );
+  }
+
   saveRecipe(): void {
     const validationError = this.validateRecipe();
     if (validationError) {
@@ -122,9 +159,6 @@ export class RecipeCreateComponent implements OnInit {
       return;
     }
 
-    globalThis.alert(
-      'A API atual armazena nome, rendimento e ingredientes. Categoria, produto associado e modo de preparo não serão persistidos.',
-    );
     const payload: Partial<ApiRecipe> & { ingredientes: RecipeIngredient[] } = {
       nome: this.recipeName.trim(),
       rendimento_quantidade: String(this.yield),
@@ -141,9 +175,22 @@ export class RecipeCreateComponent implements OnInit {
         ? this.api.createRecipe(payload)
         : this.api.updateRecipe(this.recipeId, payload);
     request.subscribe({
-      next: () => {
-        this.isSaving = false;
-        void this.router.navigate(['/receitas']);
+      next: (savedRecipe) => {
+        if (this.productId) {
+          this.api.updateProduct(this.productId, { receita: savedRecipe.id_receita }).subscribe({
+            next: () => {
+              this.isSaving = false;
+              void this.router.navigate(['/receitas']);
+            },
+            error: () => {
+              this.isSaving = false;
+              void this.router.navigate(['/receitas']);
+            },
+          });
+        } else {
+          this.isSaving = false;
+          void this.router.navigate(['/receitas']);
+        }
       },
       error: (error: unknown) => {
         this.isSaving = false;
@@ -191,11 +238,7 @@ export class RecipeCreateComponent implements OnInit {
   }
 
   private resolveIngredientId(item: RecipeIngredientRow): number | null {
-    const selectedName = item.name.split(' · ')[0].trim();
-    return (
-      this.availableIngredients.find((ingredient) => ingredient.nome === selectedName)
-        ?.id_ingrediente ?? null
-    );
+    return item.id;
   }
 
   private setError(detail: string): void {

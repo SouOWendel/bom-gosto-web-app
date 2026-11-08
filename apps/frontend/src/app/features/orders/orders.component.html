@@ -1,7 +1,11 @@
 <div class="orders-page">
   <app-page-greeting
     title="Gestão de Pedidos & Encomendas"
+<<<<<<< HEAD
+    [subtitle]="orders().length + ' pedidos ativos • ' + activeCount() + ' aguardando produção'"
+=======
     [subtitle]="ordersSubtitle()"
+>>>>>>> origin/dev
     [actions]="greetingActions"
     (actionClick)="handleGreetingAction($event)"
   />
@@ -42,6 +46,31 @@
       />
     }
 
+    @if (isCreateModalOpen()) {
+      <app-order-create-modal
+        [recipes]="recipes()"
+        [productsList]="products()"
+        [apiError]="createError()"
+        (closed)="closeCreateModal()"
+        (submitted)="createOrder($event)"
+      />
+    }
+
+    @if (isEditModalOpen() && selectedOrder(); as editTarget) {
+      <app-order-create-modal
+        [recipes]="recipes()"
+        [productsList]="products()"
+        [orderToEdit]="editTarget.apiOrder"
+        [apiError]="createError()"
+        (closed)="closeEditModal()"
+        (submitted)="handleOrderEdit($event)"
+      />
+    }
+
+    @if (createError()) {
+      <div class="orders-page__create-error" role="alert">{{ createError() }}</div>
+    }
+
     <div class="orders-page__category-tabs">
       <button
         type="button"
@@ -80,7 +109,11 @@
         [class.is-active]="selectedStatus() === 'todos'"
         (click)="setStatus('todos')"
       >
+<<<<<<< HEAD
+        Todos <b>{{ orders().length }}</b>
+=======
         Todos <b>{{ statusCounts().todos }}</b>
+>>>>>>> origin/dev
       </button>
       <button
         type="button"
@@ -88,7 +121,11 @@
         [class.is-active]="selectedStatus() === 'pendente'"
         (click)="setStatus('pendente')"
       >
+<<<<<<< HEAD
+        Pendentes <b>{{ pendingCount() }}</b>
+=======
         Pendentes <b>{{ statusCounts().pendente }}</b>
+>>>>>>> origin/dev
       </button>
       <button
         type="button"
@@ -96,7 +133,11 @@
         [class.is-active]="selectedStatus() === 'confirmado'"
         (click)="setStatus('confirmado')"
       >
+<<<<<<< HEAD
+        Confirmados <b>{{ confirmedCount() }}</b>
+=======
         Confirmados <b>{{ statusCounts().confirmado }}</b>
+>>>>>>> origin/dev
       </button>
       <button
         type="button"
@@ -104,7 +145,11 @@
         [class.is-active]="selectedStatus() === 'producao'"
         (click)="setStatus('producao')"
       >
+<<<<<<< HEAD
+        Em Produção <b>{{ productionCount() }}</b>
+=======
         Em Produção <b>{{ statusCounts().producao }}</b>
+>>>>>>> origin/dev
       </button>
       <button
         type="button"
@@ -112,7 +157,11 @@
         [class.is-active]="selectedStatus() === 'retirada'"
         (click)="setStatus('retirada')"
       >
+<<<<<<< HEAD
+        Prontos para Entrega <b>{{ readyCount() }}</b>
+=======
         Prontos para Entrega <b>{{ statusCounts().retirada }}</b>
+>>>>>>> origin/dev
       </button>
       <button
         type="button"
@@ -159,13 +208,12 @@
         </div>
         <div class="order-row__actions">
           <div class="order-row__icons">
-            <button type="button" aria-label="Mensagem">
-              <svg [lucideIcon]="'message-square'" [size]="14"></svg>
-            </button>
-            <button type="button" aria-label="Imprimir">
-              <svg [lucideIcon]="'printer'" [size]="14"></svg>
-            </button>
-            <button type="button" aria-label="Editar">
+            <button
+              type="button"
+              aria-label="Editar pedido"
+              title="Editar pedido"
+              (click)="editOrder(order)"
+            >
               <svg [lucideIcon]="'pencil'" [size]="14"></svg>
             </button>
             <button
@@ -187,6 +235,9 @@
     }
 
     <footer class="orders-table__footer">
+<<<<<<< HEAD
+      <span>Mostrando {{ filteredOrders().length }} de {{ orders().length }} encomendas</span>
+=======
       <span
         >Mostrando {{ visibleRange().start }}–{{ visibleRange().end }} de
         {{ filteredOrders().length }} encomendas</span
@@ -219,6 +270,7 @@
           ›
         </button>
       </div>
+>>>>>>> origin/dev
     </footer>
   </section>
 </div>

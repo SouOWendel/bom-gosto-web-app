@@ -16,6 +16,7 @@ import {
   LucideChartColumn,
   LucideSettings,
   LucideCircle,
+  LucideShoppingBag,
 } from '@lucide/angular';
 import { DEFAULT_SIDEBAR_PAGES, NavItem, UserProfile } from './sidebar.model';
 
@@ -46,6 +47,7 @@ import { DEFAULT_SIDEBAR_PAGES, NavItem, UserProfile } from './sidebar.model';
       LucideUser,
       LucideLogOut,
       LucideCircle,
+      LucideShoppingBag,
     ),
   ],
   templateUrl: './sidebar.component.html',
@@ -84,7 +86,8 @@ export class SidebarComponent {
       dashboard: 'layout-grid',
       inicio: 'layout-grid',
       pedidos: 'receipt',
-      produtos: 'cake-slice',
+      produtos: 'shopping-bag',
+      receitas: 'cake-slice',
       estoque: 'archive',
       inventario: 'chart-column',
     };

@@ -1,0 +1,96 @@
+<div class="products-page">
+  <app-page-greeting
+    title="Produtos Comercializados"
+    subtitle="Gestão do catálogo de itens e doces vendidos na confeitaria."
+    [actions]="greetingActions"
+    (actionClick)="handleGreetingAction($event)"
+  />
+
+  <app-metric-cards [items]="summaryCards" />
+
+  <section class="products-panel">
+    <div class="products-panel__header">
+      <div class="products-panel__search-box">
+        <label class="products-panel__search">
+          <svg [lucideIcon]="'search'" [size]="15"></svg>
+          <input
+            type="search"
+            placeholder="Buscar por nome, código ou receita..."
+            [value]="searchTerm()"
+            (input)="searchTerm.set($any($event.target).value)"
+          />
+        </label>
+      </div>
+      <span class="products-panel__count">
+        {{ filteredProducts().length }}
+        {{ filteredProducts().length === 1 ? 'produto encontrado' : 'produtos encontrados' }}
+      </span>
+    </div>
+
+    <div class="products-table-wrap">
+      <table class="products-table">
+        <thead>
+          <tr>
+            <th>CÓDIGO</th>
+            <th>NOME DO PRODUTO</th>
+            <th>PREÇO DE VENDA</th>
+            <th>RECEITA VINCULADA</th>
+            <th>AÇÕES</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (prod of filteredProducts(); track prod.id_produto) {
+            <tr>
+              <td>
+                <span class="product-code">#{{ prod.id_produto }}</span>
+              </td>
+              <td>
+                <strong class="product-name">{{ prod.nome }}</strong>
+              </td>
+              <td>
+                <span class="product-price">{{ formatPrice(prod.preco_venda) }}</span>
+              </td>
+              <td>
+                @if (prod.receita_nome) {
+                  <span class="recipe-badge">{{ prod.receita_nome }}</span>
+                } @else {
+                  <span class="recipe-none">Sem receita direta</span>
+                }
+              </td>
+              <td>
+                <div class="product-actions">
+                  <button
+                    type="button"
+                    class="btn-action"
+                    aria-label="Editar produto"
+                    title="Editar produto"
+                    (click)="openEditModal(prod)"
+                  >
+                    <svg [lucideIcon]="'pencil'" [size]="14"></svg>
+                    <span>Editar</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="products-table__empty">
+                Nenhum produto encontrado. Clique em "+ Novo Produto" para cadastrar.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  @if (isModalOpen()) {
+    <app-product-create-modal
+      [recipes]="recipes()"
+      [productToEdit]="productToEdit()"
+      [apiError]="apiError()"
+      (closed)="closeModal()"
+      (submitted)="handleProductSubmit($event)"
+    />
+  }
+</div>

@@ -221,8 +221,45 @@ try {
 }
 ```
 
+<<<<<<< HEAD
+O registro não é removido pelo teste. Confirme o estado final com `GET` ou com a consulta SQL da etapa 2. A limpeza de registros de teste deve ser feita de acordo com o procedimento de manutenção do banco do projeto.
+
+## 10. Movimentação simples do MVP
+
+Para ajustar o saldo sem alterar o cadastro inteiro, use `POST /api/inventario/ingrediente/{id}/movimentar/`.
+O campo `tipo` aceita `entrada` ou `saida`, e `quantidade` deve ser maior que zero. Entradas podem
+informar opcionalmente `custo_unitario` e `data_validade`; esses campos passam a representar os dados
+mais recentes do insumo. Saídas maiores que o saldo disponível retornam `400 Bad Request`.
+
+```powershell
+$entradaBody = @{
+  tipo = "entrada"
+  quantidade = "2.50"
+  custo_unitario = "3.50"
+  data_validade = "2027-03-31"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method Post `
+  -Uri "$base/api/inventario/ingrediente/$idIngrediente/movimentar/" `
+  -WebSession $session -Headers $headers `
+  -ContentType "application/json" -Body $entradaBody
+
+$saidaBody = @{
+  tipo = "saida"
+  quantidade = "1.00"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method Post `
+  -Uri "$base/api/inventario/ingrediente/$idIngrediente/movimentar/" `
+  -WebSession $session -Headers $headers `
+  -ContentType "application/json" -Body $saidaBody
+```
+
+O MVP não mantém histórico de movimentações.
+=======
 O registro não é removido pelo teste. Confirme o estado final com `GET` ou consulte diretamente o PostgreSQL pelo Docker, substituindo `1` pelo ID do ingrediente testado:
 
 ```powershell
 docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT * FROM ingrediente WHERE id_ingrediente = 1;"
 ```
+>>>>>>> origin/dev

@@ -6,14 +6,14 @@ from unittest.mock import patch
 from django.http import Http404
 from django.test import SimpleTestCase
 from rest_framework import status
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, APITestCase
 
 from .models import Ingrediente
 from .serializers import IngredienteSerializer
 from .views import IngredienteViewSet
 
 # classe que testaa a API do modulo Inventario, garantindo que as operacoes de CRUD funcionem corretamente e que as validacoes sejam aplicadas conforme esperado
-class IngredienteApiTests(SimpleTestCase):
+class IngredienteApiTests(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.client.force_authenticate(
@@ -118,6 +118,48 @@ class IngredienteApiTests(SimpleTestCase):
 
         self.assertFalse(serializer.is_valid())
         self.assertIn("quantidade_disponivel", serializer.errors)
+
+    def test_movimenta_entrada_e_saida_sem_permitir_saldo_negativo(self):
+        ingrediente = Ingrediente(
+            id_ingrediente=1,
+            nome="Farinha",
+            quantidade_disponivel=Decimal("4.00"),
+        )
+
+        with patch.object(IngredienteViewSet, "get_object", return_value=ingrediente):
+            with patch.object(ingrediente, "save") as salvar:
+                entrada = self.client.post(
+                    "/api/inventario/ingrediente/1/movimentar/",
+                    {
+                        "tipo": "entrada",
+                        "quantidade": "2.50",
+                        "custo_unitario": "3.25",
+                        "data_validade": "2027-01-31",
+                    },
+                    format="json",
+                )
+                self.assertEqual(entrada.status_code, status.HTTP_200_OK)
+                self.assertEqual(ingrediente.quantidade_disponivel, Decimal("6.50"))
+                self.assertEqual(ingrediente.custo_unitario, Decimal("3.25"))
+                self.assertEqual(ingrediente.data_validade, date(2027, 1, 31))
+
+                saida = self.client.post(
+                    "/api/inventario/ingrediente/1/movimentar/",
+                    {"tipo": "saida", "quantidade": "1.50"},
+                    format="json",
+                )
+                self.assertEqual(saida.status_code, status.HTTP_200_OK)
+                self.assertEqual(ingrediente.quantidade_disponivel, Decimal("5.00"))
+                self.assertGreaterEqual(salvar.call_count, 2)
+
+                negativa = self.client.post(
+                    "/api/inventario/ingrediente/1/movimentar/",
+                    {"tipo": "saida", "quantidade": "6.00"},
+                    format="json",
+                )
+
+        self.assertEqual(negativa.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("quantidade", negativa.data)
 
     def test_classifica_alertas_de_validade(self):
         serializer = IngredienteSerializer()

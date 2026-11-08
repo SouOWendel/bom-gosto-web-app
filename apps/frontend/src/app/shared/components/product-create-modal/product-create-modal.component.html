@@ -1,0 +1,70 @@
+<div class="modal-backdrop" role="presentation" (click)="close()">
+  <section
+    class="product-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="product-modal-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="product-modal__header">
+      <div>
+        <p>GESTÃO DE PRODUTOS</p>
+        <h2 id="product-modal-title">{{ productToEdit() ? 'Editar produto' : 'Novo produto' }}</h2>
+        <span>{{
+          productToEdit()
+            ? 'Atualize as informações do item comercializado.'
+            : 'Cadastre um item final comercializado pela confeitaria.'
+        }}</span>
+      </div>
+      <button type="button" aria-label="Fechar" (click)="close()">×</button>
+    </header>
+
+    <form class="product-modal__content" (ngSubmit)="submit()">
+      <app-input-text
+        label="Nome do produto *"
+        inputId="product-name"
+        icon="package"
+        [(ngModel)]="name"
+        name="name"
+      />
+
+      <div class="product-modal__grid">
+        <app-input-text
+          label="Preço de venda (R$) *"
+          inputId="product-price"
+          icon="hash"
+          [(ngModel)]="salePrice"
+          name="salePrice"
+        />
+
+        <div class="product-modal__select-wrap">
+          <label for="product-recipe" class="product-modal__label"
+            >Receita vinculada (opcional)</label
+          >
+          <select
+            id="product-recipe"
+            [(ngModel)]="recipeId"
+            name="recipeId"
+            class="product-modal__select"
+          >
+            <option [ngValue]="null">Sem receita direta</option>
+            @for (rec of recipes(); track rec.id_receita) {
+              <option [ngValue]="rec.id_receita">{{ rec.nome }} (#{{ rec.id_receita }})</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (apiError() || errorMessage) {
+        <p class="product-modal__error" role="alert">{{ apiError() || errorMessage }}</p>
+      }
+
+      <footer class="product-modal__footer">
+        <app-button type="button" variant="outline" (click)="close()">Cancelar</app-button>
+        <app-button type="submit" variant="primary">
+          {{ productToEdit() ? 'Salvar alterações' : 'Cadastrar produto' }}
+        </app-button>
+      </footer>
+    </form>
+  </section>
+</div>

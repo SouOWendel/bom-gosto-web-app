@@ -1,4 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import {
   LucideChevronDown,
@@ -42,7 +43,8 @@ interface StockItem extends StockProductCardItem {
 })
 export class StockComponent implements OnInit {
   private readonly domainApi = inject(DomainApiService);
-  private readonly stockLots = signal<StockLot[]>([]);
+  private readonly router = inject(Router);
+  readonly stockLots = signal<StockLot[]>([]);
 
   readonly loadError = signal<string | null>(null);
 
@@ -157,22 +159,33 @@ export class StockComponent implements OnInit {
     });
   }
 
+  onTechnicalSheet(): void {
+    void this.router.navigate(['/receitas']);
+  }
+
+  onViewProduct(): void {
+    void this.router.navigate(['/produtos']);
+  }
+
   private toStockItem(lot: StockLot): StockItem {
     const alertLevel = lot.alerta_validade?.nivel;
     const isCritical = lot.vencido || alertLevel === 'critico';
     const status = isCritical ? 'critico' : alertLevel === 'atencao' ? 'atencao' : 'preventivo';
+    const productName = lot.produto_nome || `Produto #${lot.id_produto}`;
 
     return {
       id: String(lot.id_estoque),
-      name: `Produto #${lot.id_produto}`,
+      name: productName,
       category: 'outros',
-      categoryLabel: 'Categoria não informada',
-      description: `Lote #${lot.id_estoque} • Produto #${lot.id_produto}`,
+      categoryLabel: lot.produto_nome ? 'Produto em Estoque' : 'Categoria não informada',
+      description: `Lote #${lot.id_estoque} • ${productName}`,
       quantity: this.toNumber(lot.quantidade_disponivel),
       unit: 'un.',
-      basePrice: this.formatCurrencyOrUnavailable(lot.custo),
-      priceUnit: 'lote',
-      margin: 'Não informada',
+      basePrice: lot.produto_preco_venda
+        ? this.formatCurrency(Number(lot.produto_preco_venda))
+        : this.formatCurrencyOrUnavailable(lot.custo),
+      priceUnit: 'un.',
+      margin: 'Produção',
       sizes: [],
       expiry: this.formatDate(lot.data_validade),
       expiryDetail: this.expiryDetail(lot),

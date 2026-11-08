@@ -316,6 +316,26 @@ app-metric-cards {
   gap: 0.4rem;
 }
 
+.inventory-page__movement-action {
+  display: inline-grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  border-radius: 0.3rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.inventory-page__movement-action--add {
+  background: #e4f4e5;
+  color: #267037;
+}
+
+.inventory-page__movement-action--remove {
+  background: #ffe5e5;
+  color: #a82d38;
+}
+
 .inventory-page__row-action {
   display: inline-flex;
   align-items: center;
