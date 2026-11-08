@@ -1,0 +1,76 @@
+<div class="modal-backdrop" role="presentation" (click)="close()">
+  <section
+    class="ingredient-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="ingredient-modal-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="ingredient-modal__header">
+      <div>
+        <p>CONTROLE DE ESTOQUE</p>
+        <h2 id="ingredient-modal-title">
+          {{ ingredientToEdit() ? 'Editar insumo' : 'Novo insumo' }}
+        </h2>
+        <span>{{
+          ingredientToEdit()
+            ? 'Atualize as quantidades e custos da matéria-prima.'
+            : 'Cadastre a matéria-prima para usá-la no inventário e nas receitas.'
+        }}</span>
+      </div>
+      <button type="button" aria-label="Fechar" (click)="close()">×</button>
+    </header>
+
+    <form class="ingredient-modal__content" (ngSubmit)="submit()">
+      <app-input-text
+        label="Nome do insumo *"
+        inputId="ingredient-name"
+        icon="package"
+        [(ngModel)]="name"
+        name="name"
+      />
+      <div class="ingredient-modal__grid">
+        <app-input-text
+          label="Quantidade disponível"
+          inputId="ingredient-quantity"
+          type="number"
+          icon="hash"
+          [(ngModel)]="availableQuantity"
+          name="availableQuantity"
+        />
+        <app-input-text
+          label="Quantidade mínima"
+          inputId="ingredient-minimum"
+          type="number"
+          icon="hash"
+          [(ngModel)]="minimumQuantity"
+          name="minimumQuantity"
+        />
+        <app-input-text
+          label="Custo unitário"
+          inputId="ingredient-cost"
+          icon="hash"
+          [(ngModel)]="unitCost"
+          name="unitCost"
+        />
+        <app-input-text
+          label="Data de validade"
+          inputId="ingredient-expiration"
+          type="date"
+          icon="calendar"
+          [(ngModel)]="expirationDate"
+          name="expirationDate"
+        />
+      </div>
+      @if (apiError() || errorMessage) {
+        <p class="ingredient-modal__error" role="alert">{{ apiError() || errorMessage }}</p>
+      }
+      <footer class="ingredient-modal__footer">
+        <app-button type="button" variant="outline" (click)="close()">Cancelar</app-button>
+        <app-button type="submit" variant="primary">
+          {{ ingredientToEdit() ? 'Salvar alterações' : 'Cadastrar insumo' }}
+        </app-button>
+      </footer>
+    </form>
+  </section>
+</div>

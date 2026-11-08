@@ -3,31 +3,64 @@
     title="Controle de Estoque &amp; Matérias-Primas"
     subtitle="Gestão técnica de ingredientes, embalagens e insumos com alertas automáticos de reposição para produção artesanal contínua."
     [actions]="greetingActions"
+    (actionClick)="handleGreetingAction($event)"
   />
+
+  @if (isCreateModalOpen()) {
+    <app-ingredient-create-modal
+      [ingredientToEdit]="ingredientToEdit()"
+      [apiError]="createError()"
+      (closed)="closeCreateModal()"
+      (submitted)="saveIngredient($event)"
+    />
+  }
+  @if (ingredientToMove(); as ingredient) {
+    <app-ingredient-movement-modal
+      [ingredient]="ingredient"
+      [type]="movementType()"
+      [apiError]="movementError()"
+      (closed)="closeMovementModal()"
+      (submitted)="moveIngredient($event)"
+    />
+  }
+  @if (createError()) {
+    <p class="inventory-page__create-error" role="alert">{{ createError() }}</p>
+  }
 
   <app-metric-cards [items]="summaryCards" />
 
   <section class="inventory-page__panel" aria-label="Lista de matérias-primas">
     <div class="inventory-page__filters">
       <div class="inventory-page__tabs" role="tablist" aria-label="Categorias do inventário">
-        <button type="button" class="inventory-page__tab inventory-page__tab--active">
-          Todos (64)
+        <button
+          type="button"
+          class="inventory-page__tab"
+          [class.inventory-page__tab--active]="!alertOnly()"
+          (click)="alertOnly.set(false)"
+        >
+          Todos os Insumos ({{ ingredients().length }})
         </button>
-        <button type="button" class="inventory-page__tab">Ingredientes Base (38)</button>
-        <button type="button" class="inventory-page__tab">Embalagens &amp; Caixas (18)</button>
-        <button type="button" class="inventory-page__tab">Descartáveis &amp; Utensílios (8)</button>
+        <button
+          type="button"
+          class="inventory-page__tab"
+          [class.inventory-page__tab--active]="alertOnly()"
+          (click)="alertOnly.set(true)"
+        >
+          Em Alerta ({{ totalAlertsCount }})
+        </button>
       </div>
       <div class="inventory-page__filter-row">
-        <button type="button" class="inventory-page__alert-filter">
-          Em Alerta de Reposição (4)
-          <span class="inventory-page__alert-count">4</span>
-        </button>
         <label class="inventory-page__search">
           <svg class="inventory-page__icon" viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="11" cy="11" r="6" />
             <path d="m16 16 4 4" />
           </svg>
-          <input type="search" placeholder="Filtrar por nome, código, lote..." />
+          <input
+            type="search"
+            placeholder="Filtrar por nome ou código..."
+            [value]="searchTerm()"
+            (input)="searchTerm.set($any($event.target).value)"
+          />
         </label>
       </div>
     </div>
@@ -63,7 +96,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (item of inventoryItems; track item.code) {
+          @for (item of filteredInventoryItems(); track item.code) {
             <tr>
               <td>
                 <strong class="inventory-page__item-name">{{ item.name }}</strong>
@@ -105,9 +138,30 @@
                   >{{ item.lastMovement }}<br />{{ item.author }}</span
                 >
                 <div class="inventory-page__actions-cell">
-                  <button type="button" class="inventory-page__row-action">Entrada</button>
-                  <button type="button" class="inventory-page__row-menu" aria-label="Mais ações">
-                    ⋮
+                  <button
+                    type="button"
+                    class="inventory-page__movement-action inventory-page__movement-action--add"
+                    (click)="openMovementModal(item, 'entrada')"
+                    [attr.aria-label]="'Adicionar estoque de ' + item.name"
+                    title="Adicionar entrada"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    class="inventory-page__movement-action inventory-page__movement-action--remove"
+                    (click)="openMovementModal(item, 'saida')"
+                    [attr.aria-label]="'Registrar saída de ' + item.name"
+                    title="Registrar saída"
+                  >
+                    −
+                  </button>
+                  <button
+                    type="button"
+                    class="inventory-page__row-action"
+                    (click)="openEditModal(item)"
+                  >
+                    Editar Insumo
                   </button>
                 </div>
               </td>
@@ -118,14 +172,10 @@
     </div>
 
     <footer class="inventory-page__footer">
-      <span>5 de 64 insumos</span>
-      <div class="inventory-page__pagination" aria-label="Paginação">
-        <button type="button" aria-label="Página anterior">‹</button>
-        <button type="button" class="is-current">1</button>
-        <button type="button">2</button>
-        <button type="button">3</button>
-        <button type="button" aria-label="Próxima página">›</button>
-      </div>
+      <span
+        >Exibindo <strong>{{ filteredInventoryItems().length }}</strong> de
+        {{ ingredients().length }} insumos</span
+      >
     </footer>
   </section>
 </div>
