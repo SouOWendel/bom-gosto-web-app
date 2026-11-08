@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { MetricCardsComponent } from '../../shared/components/metric-cards/metric-cards.component';
 import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
@@ -36,6 +36,30 @@ export class InventoryComponent implements OnInit {
   private readonly ingredients = signal<Ingredient[]>([]);
 
   readonly loadError = signal<string | null>(null);
+  readonly currentPage = signal(1);
+  readonly pageSize = 5;
+  readonly totalItems = computed(() => this.ingredients().length);
+  readonly belowMinimumCount = computed(
+    () => this.ingredients().filter((ingredient) => ingredient.abaixo_do_minimo === true).length,
+  );
+  readonly paginatedInventoryItems = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.inventoryItems.slice(start, start + this.pageSize);
+  });
+  readonly totalPages = computed(() => Math.ceil(this.totalItems() / this.pageSize));
+  readonly pageNumbers = computed(() =>
+    Array.from({ length: this.totalPages() }, (_, index) => index + 1),
+  );
+  readonly visibleRange = computed(() => {
+    const total = this.totalItems();
+    if (total === 0) {
+      return { start: 0, end: 0 };
+    }
+    return {
+      start: (this.currentPage() - 1) * this.pageSize + 1,
+      end: Math.min(this.currentPage() * this.pageSize, total),
+    };
+  });
 
   readonly greetingActions: PageAction[] = [
     { label: 'Entrada / Saída Rápida', icon: 'filter', variant: 'secondary' },
@@ -100,6 +124,7 @@ export class InventoryComponent implements OnInit {
       next: (ingredients) => {
         this.ingredients.set(ingredients);
         this.loadError.set(null);
+        this.currentPage.set(1);
       },
       error: (error: unknown) => {
         const detail = this.errorDetail(error);
@@ -107,6 +132,12 @@ export class InventoryComponent implements OnInit {
         console.error('Falha ao carregar o inventário de insumos.', error);
       },
     });
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
   }
 
   private toInventoryItem(ingredient: Ingredient): InventoryItem {

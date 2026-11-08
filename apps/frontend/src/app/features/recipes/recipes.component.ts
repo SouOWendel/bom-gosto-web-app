@@ -36,6 +36,8 @@ export class RecipesComponent implements OnInit {
   readonly selectedUnit = signal('Todas as unidades');
   readonly recipes = signal<RecipeRow[]>([]);
   readonly errorMessage = signal('');
+  readonly currentPage = signal(1);
+  readonly pageSize = 6;
 
   readonly greetingActions: PageAction[] = [
     {
@@ -70,12 +72,31 @@ export class RecipesComponent implements OnInit {
   });
 
   readonly totalRecipes = computed(() => this.filteredRecipes().length);
+  readonly paginatedRecipes = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredRecipes().slice(start, start + this.pageSize);
+  });
+  readonly totalPages = computed(() => Math.ceil(this.totalRecipes() / this.pageSize));
+  readonly pageNumbers = computed(() =>
+    Array.from({ length: this.totalPages() }, (_, index) => index + 1),
+  );
+  readonly visibleRange = computed(() => {
+    const total = this.totalRecipes();
+    if (total === 0) {
+      return { start: 0, end: 0 };
+    }
+    return {
+      start: (this.currentPage() - 1) * this.pageSize + 1,
+      end: Math.min(this.currentPage() * this.pageSize, total),
+    };
+  });
 
   ngOnInit(): void {
     this.api.getRecipes().subscribe({
       next: (recipes) => {
         this.recipes.set(recipes.map((recipe) => this.toRecipeRow(recipe)));
         this.errorMessage.set('');
+        this.currentPage.set(1);
       },
       error: (error: unknown) => this.handleError(error),
     });
@@ -83,10 +104,23 @@ export class RecipesComponent implements OnInit {
 
   onSearch(value: string): void {
     this.searchTerm.set(value);
+    this.currentPage.set(1);
   }
 
   onCategoryChange(category: string): void {
     this.selectedCategory.set(category);
+    this.currentPage.set(1);
+  }
+
+  onUnitChange(unit: string): void {
+    this.selectedUnit.set(unit);
+    this.currentPage.set(1);
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
   }
 
   formatCurrency(value: number): string {
