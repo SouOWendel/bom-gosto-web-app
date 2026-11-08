@@ -51,19 +51,10 @@
         (click)="technicalSheet.emit(product())"
       >
         <svg [lucideIcon]="'file-text'" [size]="13"></svg>
-        Ficha Técnica
+        Ver Receitas
       </app-button>
-      <app-button type="button" variant="primary" size="small" (click)="pricing.emit(product())"
-        >Precificar Venda</app-button
-      >
-      <app-button
-        type="button"
-        variant="ghost"
-        size="small"
-        aria-label="Editar produto"
-        (click)="edit.emit(product())"
-      >
-        <svg [lucideIcon]="'pencil'" [size]="14"></svg>
+      <app-button type="button" variant="primary" size="small" (click)="pricing.emit(product())">
+        Ver no Catálogo
       </app-button>
     </div>
   </div>

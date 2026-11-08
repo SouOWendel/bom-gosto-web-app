@@ -9,6 +9,7 @@ import {
   LucideLock,
   LucideMail,
   LucidePackage,
+  LucidePhone,
   LucideSearch,
   provideLucideIcons,
 } from '@lucide/angular';
@@ -26,6 +27,7 @@ import {
       LucideLock,
       LucideMail,
       LucidePackage,
+      LucidePhone,
       LucideSearch,
     ),
     {
