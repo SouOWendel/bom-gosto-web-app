@@ -1,6 +1,5 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import {
   LucideDynamicIcon,
   provideLucideIcons,
@@ -13,11 +12,12 @@ import {
   LucideRefreshCw,
 } from '@lucide/angular';
 import { PageAction } from './page-greeting.model';
+import { ButtonComponent } from '../button/button.component';
 
 @Component({
   selector: 'app-page-greeting',
   standalone: true,
-  imports: [CommonModule, RouterLink, LucideDynamicIcon],
+  imports: [CommonModule, LucideDynamicIcon, ButtonComponent],
   providers: [
     provideLucideIcons(
       LucideCalendar,
