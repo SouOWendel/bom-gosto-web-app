@@ -7,7 +7,6 @@ import {
   LucidePlus,
   LucideSearch,
   LucidePackage,
-  LucideRefreshCw,
   provideLucideIcons,
 } from '@lucide/angular';
 import { MetricCardsComponent } from '../../shared/components/metric-cards/metric-cards.component';
@@ -35,9 +34,7 @@ interface StockItem extends StockProductCardItem {
     MetricCardsComponent,
     StockProductCardComponent,
   ],
-  providers: [
-    provideLucideIcons(LucideChevronDown, LucidePackage, LucidePlus, LucideRefreshCw, LucideSearch),
-  ],
+  providers: [provideLucideIcons(LucideChevronDown, LucidePackage, LucidePlus, LucideSearch)],
   templateUrl: './stock.component.html',
   styleUrls: ['./stock.component.scss'],
 })
@@ -49,7 +46,6 @@ export class StockComponent implements OnInit {
   readonly loadError = signal<string | null>(null);
 
   readonly greetingActions: PageAction[] = [
-    { label: 'Atualizar Estoque', icon: 'refresh-cw', variant: 'secondary' },
     { label: 'Nova Produção (Pedidos)', route: '/pedidos', icon: 'plus', variant: 'primary' },
   ];
 
