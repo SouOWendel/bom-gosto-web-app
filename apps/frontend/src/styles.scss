@@ -55,6 +55,27 @@ select {
   font-family: inherit;
 }
 
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-white);
+}
+
+thead {
+  background: #fff4f1;
+}
+
+th,
+td {
+  border-bottom: 1px solid #f1e4e0;
+  text-align: left;
+  vertical-align: middle;
+}
+
+tbody tr:hover {
+  background: #fffaf8;
+}
+
 .login-page {
   display: flex;
   flex-direction: column;

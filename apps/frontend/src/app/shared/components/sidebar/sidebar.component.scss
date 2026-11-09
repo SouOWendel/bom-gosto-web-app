@@ -109,6 +109,12 @@
       .sidebar__nav-icon {
         color: #fff !important;
       }
+
+      &:hover,
+      &:focus-visible {
+        background: #761426;
+        color: #fff !important;
+      }
     }
   }
 
