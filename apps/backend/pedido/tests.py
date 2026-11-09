@@ -84,6 +84,52 @@ class PedidoApiTests(APITestCase):
 		self.assertEqual(atualizacao.status_code, status.HTTP_200_OK)
 		self.assertEqual(atualizacao.data["forma_pagamento"], "pix")
 
+	# pedidos com o mesmo telefone reaproveitam o cliente existente
+	def test_contato_com_mesmo_telefone_reaproveita_cliente(self):
+		payload = {
+			"tipo": "externo",
+			"subtipo": "personalizado",
+			"contato_nome": "Maria",
+			"contato_telefone": self.cliente.telefone,
+			"valor_total": "12.50",
+			"valor_sinal": "0.00",
+			"itens": [{"produto": self.produto.id_produto, "quantidade": 1, "preco_unitario": "12.50"}],
+		}
+		resposta = self.client.post("/api/pedido/", payload, format="json")
+		self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+		self.assertEqual(resposta.data["cliente"], self.cliente.id_cliente)
+
+		atualizacao = self.client.patch(
+			f"/api/pedido/{resposta.data['id_pedido']}/",
+			{"contato_nome": "Maria", "contato_telefone": self.cliente.telefone},
+			format="json",
+		)
+		self.assertEqual(atualizacao.status_code, status.HTTP_200_OK)
+		self.assertEqual(Cliente.objects.count(), 1)
+
+	# acoes em pedido inexistente devolvem 404 em vez de erro interno
+	def test_acao_em_pedido_inexistente_retorna_404(self):
+		for acao in ("consumir-estoque", "concluir", "cancelar"):
+			resposta = self.client.post(f"/api/pedido/999999/{acao}/", {}, format="json")
+			self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND, acao)
+
+	# produto com pedido vinculado nao pode ser excluido e recebe 400
+	def test_excluir_produto_vinculado_retorna_400(self):
+		self.client.post(
+			"/api/pedido/",
+			{
+				"tipo": "externo",
+				"subtipo": "personalizado",
+				"cliente": self.cliente.id_cliente,
+				"valor_total": "12.50",
+				"valor_sinal": "0.00",
+				"itens": [{"produto": self.produto.id_produto, "quantidade": 1, "preco_unitario": "12.50"}],
+			},
+			format="json",
+		)
+		resposta = self.client.delete(f"/api/produtos/{self.produto.id_produto}/")
+		self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
 	# usuario que ainda precisa trocar a senha recebe HTTP 403
 	def test_usuario_no_primeiro_acesso_nao_acessa_pedidos(self):
 		self.usuario.primeiro_acesso = True
