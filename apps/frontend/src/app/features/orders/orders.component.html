@@ -39,6 +39,58 @@
       />
     }
 
+    @if (pendingStart(); as pending) {
+      <app-confirm-dialog
+        [title]="
+          pending.mode === 'producao'
+            ? 'Iniciar produção do pedido ' + pending.order.id + '?'
+            : 'Atender o pedido ' + pending.order.id + ' pelo estoque?'
+        "
+        [message]="
+          pending.mode === 'producao'
+            ? 'Não há produto pronto suficiente no estoque. O pedido passará para Em produção; os ingredientes só serão baixados ao concluir a produção.'
+            : 'Há produto pronto suficiente no estoque. Os lotes serão baixados agora e o pedido será concluído.'
+        "
+        [confirmLabel]="
+          pending.mode === 'producao' ? 'Iniciar produção' : 'Baixar estoque e concluir'
+        "
+        [busy]="operationInProgress()"
+        [error]="actionError()"
+        (closed)="closeStartDialog()"
+        (confirmed)="confirmStart()"
+      >
+        <div class="start-summary">
+          <h3>Disponibilidade no estoque</h3>
+          <ul>
+            @for (item of pending.analysis.estoque; track item.id_item_pedido) {
+              <li>
+                <span>{{ productName(item.produto_id) }}</span>
+                <b [class.is-ok]="item.disponivel" [class.is-missing]="!item.disponivel">
+                  {{ item.quantidade_disponivel }} / {{ item.quantidade_solicitada }}
+                </b>
+              </li>
+            }
+          </ul>
+          @if (pending.mode === 'producao' && pending.analysis.ingredientes.length > 0) {
+            <h3>Ingredientes previstos pela receita</h3>
+            <ul>
+              @for (ingredient of pending.analysis.ingredientes; track ingredient.id_ingrediente) {
+                <li>
+                  <span>{{ ingredient.nome }}</span>
+                  <b
+                    [class.is-ok]="ingredient.suficiente"
+                    [class.is-missing]="!ingredient.suficiente"
+                  >
+                    {{ ingredient.necessario }} de {{ ingredient.disponivel }}
+                  </b>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </app-confirm-dialog>
+    }
+
     @if (isCreateModalOpen()) {
       <app-order-create-modal
         [recipes]="recipes()"
@@ -63,7 +115,7 @@
     @if (createError()) {
       <div class="orders-page__create-error" role="alert">{{ createError() }}</div>
     }
-    @if (actionError()) {
+    @if (actionError() && !pendingStart()) {
       <div class="orders-page__create-error" role="alert">{{ actionError() }}</div>
     }
 
@@ -83,14 +135,6 @@
         (click)="setStatus('pendente')"
       >
         Pendentes <b>{{ statusCounts().pendente }}</b>
-      </button>
-      <button
-        type="button"
-        class="status-tab status-tab--rose"
-        [class.is-active]="selectedStatus() === 'confirmado'"
-        (click)="setStatus('confirmado')"
-      >
-        Confirmados <b>{{ statusCounts().confirmado }}</b>
       </button>
       <button
         type="button"
@@ -162,15 +206,15 @@
               >
                 <svg [lucideIcon]="'pencil'" [size]="14"></svg>
               </button>
+              <button
+                type="button"
+                aria-label="Cancelar pedido"
+                title="Cancelar pedido"
+                (click)="cancelOrder(order)"
+              >
+                <svg [lucideIcon]="'ban'" [size]="14"></svg>
+              </button>
             }
-            <button
-              type="button"
-              aria-label="Cancelar pedido"
-              title="Cancelar pedido"
-              (click)="cancelOrder(order)"
-            >
-              <svg [lucideIcon]="'ban'" [size]="14"></svg>
-            </button>
           </div>
           <button type="button" class="order-row__action" (click)="completeOrder(order)">
             {{ order.action }}

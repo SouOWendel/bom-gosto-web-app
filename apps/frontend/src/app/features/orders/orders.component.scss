@@ -303,3 +303,39 @@
     justify-content: space-between;
   }
 }
+
+// Resumo da análise exibido no diálogo de confirmação do "Validar pedido".
+.start-summary {
+  h3 {
+    margin: 0 0 0.4rem;
+    color: #35423b;
+    font-size: 0.74rem;
+  }
+
+  ul {
+    margin: 0 0 0.9rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid #eef2ef;
+    font-size: 0.72rem;
+  }
+
+  b {
+    white-space: nowrap;
+  }
+
+  .is-ok {
+    color: #19804f;
+  }
+
+  .is-missing {
+    color: #c64040;
+  }
+}

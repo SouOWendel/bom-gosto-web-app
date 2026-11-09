@@ -16,6 +16,7 @@ import { PageAction } from '../../shared/components/page-greeting/page-greeting.
 import { CancelProductionModalComponent } from '../../shared/components/cancel-production-modal/cancel-production-modal.component';
 import { CompleteProductionModalComponent } from '../../shared/components/complete-production-modal/complete-production-modal.component';
 import { OrderCreateModalComponent } from '../../shared/components/order-create-modal/order-create-modal.component';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import {
   CancelOrderPayload,
   CompleteProductionPayload,
@@ -28,8 +29,15 @@ import {
 import { DomainApiService } from '../../core/services/domain-api.service';
 import { TablePaginationComponent } from '../../shared/components/table-pagination/table-pagination.component';
 
-type OrderStatus = 'retirada' | 'producao' | 'confirmado' | 'pendente' | 'cancelado';
+type OrderStatus = 'retirada' | 'producao' | 'pendente' | 'cancelado';
 type OrderCategory = 'bolos' | 'doces' | 'kits';
+
+// Ação confirmada pela confeiteira após validar o pedido: produzir ou atender pelo estoque pronto.
+interface PendingStart {
+  order: OrderRow;
+  analysis: ProductionAnalysis;
+  mode: 'producao' | 'estoque';
+}
 
 interface OrderRow {
   id: string;
@@ -62,6 +70,7 @@ interface OrderRow {
     CancelProductionModalComponent,
     CompleteProductionModalComponent,
     OrderCreateModalComponent,
+    ConfirmDialogComponent,
   ],
   providers: [
     provideLucideIcons(LucideBan, LucideMessageSquare, LucidePencil, LucidePrinter, LucideSearch),
@@ -84,6 +93,7 @@ export class OrdersComponent implements OnInit {
   readonly creationInProgress = signal(false);
   readonly operationInProgress = signal(false);
   readonly products = signal<Product[]>([]);
+  readonly pendingStart = signal<PendingStart | null>(null);
   readonly currentPage = signal(1);
   readonly pageSize = 6;
   @ViewChild(CancelProductionModalComponent)
@@ -101,7 +111,6 @@ export class OrdersComponent implements OnInit {
     return {
       todos: orders.length,
       pendente: orders.filter((order) => order.status === 'pendente').length,
-      confirmado: orders.filter((order) => order.status === 'confirmado').length,
       producao: orders.filter((order) => order.status === 'producao').length,
       retirada: orders.filter((order) => order.status === 'retirada').length,
       cancelado: orders.filter((order) => order.status === 'cancelado').length,
@@ -178,9 +187,6 @@ export class OrdersComponent implements OnInit {
   readonly selectedStatus = signal<'todos' | OrderStatus>('todos');
   readonly pendingCount = computed(
     () => this.orders().filter((o) => o.status === 'pendente').length,
-  );
-  readonly confirmedCount = computed(
-    () => this.orders().filter((o) => o.status === 'confirmado').length,
   );
   readonly productionCount = computed(
     () => this.orders().filter((o) => o.status === 'producao').length,
@@ -466,39 +472,71 @@ export class OrdersComponent implements OnInit {
     this.loadOrders();
   }
 
+  // Valida o pedido e pede confirmação antes de iniciar a produção ou baixar o estoque (RNF04).
   private validateAndStartOrder(order: OrderRow): void {
-    this.operationInProgress.set(true);
-    this.domainApi.analyzeProduction(order.apiOrder.id_pedido).subscribe({
-      next: (analysis) => {
-        if (analysis.ausencias.length > 0) {
-          this.handleActionError(
-            `Não é possível iniciar a produção: ${analysis.ausencias.map((item) => item.motivo).join(' ')}`,
-          );
-          return;
-        }
-        if (analysis.ingredientes_insuficientes.length > 0) {
-          const names = analysis.ingredientes_insuficientes.map((item) => item.nome).join(', ');
-          this.handleActionError(`Estoque insuficiente para iniciar a produção: ${names}.`);
-          return;
-        }
-        if (order.apiOrder.tipo === 'externo' && !analysis.encaminhar_para_producao) {
-          this.domainApi.consumeStock(order.apiOrder.id_pedido).subscribe({
-            next: (updatedOrder) => this.finishActionWithOrder(updatedOrder),
-            error: (error: unknown) =>
-              this.handleActionError('Não foi possível consumir o estoque do pedido.', error),
-          });
-          return;
-        }
-        this.domainApi.startProduction(order.apiOrder.id_pedido).subscribe({
-          next: (updatedOrder) => this.finishActionWithOrder(updatedOrder),
-          error: (error: unknown) =>
-            this.handleActionError('Não foi possível iniciar a produção.', error),
-        });
-      },
-      error: (error: unknown) => {
-        this.handleActionError('Não foi possível validar a produção.', error);
-      },
+    this.analyzeOrder(order, (analysis) => {
+      if (analysis.ausencias.length > 0) {
+        this.handleActionError(
+          `Não é possível iniciar a produção: ${analysis.ausencias.map((item) => item.motivo).join(' ')}`,
+        );
+        return;
+      }
+      const mode =
+        order.apiOrder.tipo === 'externo' && !analysis.encaminhar_para_producao
+          ? 'estoque'
+          : 'producao';
+      if (mode === 'producao' && analysis.ingredientes_insuficientes.length > 0) {
+        const names = analysis.ingredientes_insuficientes.map((item) => item.nome).join(', ');
+        this.handleActionError(`Estoque insuficiente para iniciar a produção: ${names}.`);
+        return;
+      }
+      this.pendingStart.set({ order, analysis, mode });
     });
+  }
+
+  confirmStart(): void {
+    const pending = this.pendingStart();
+    if (!pending || this.operationInProgress()) {
+      return;
+    }
+    const orderId = pending.order.apiOrder.id_pedido;
+    const request =
+      pending.mode === 'estoque'
+        ? this.domainApi.consumeStock(orderId)
+        : this.domainApi.startProduction(orderId);
+    this.actionError.set(null);
+    this.operationInProgress.set(true);
+    request.subscribe({
+      next: (updatedOrder) => {
+        this.pendingStart.set(null);
+        this.finishActionWithOrder(updatedOrder);
+      },
+      error: (error: unknown) =>
+        this.handleActionError(
+          pending.mode === 'estoque'
+            ? 'Não foi possível consumir o estoque do pedido.'
+            : 'Não foi possível iniciar a produção.',
+          error,
+        ),
+    });
+  }
+
+  closeStartDialog(): void {
+    if (this.operationInProgress()) {
+      return;
+    }
+    this.pendingStart.set(null);
+    this.actionError.set(null);
+  }
+
+  productName(productId: number | null): string {
+    if (productId === null) {
+      return 'Item sem produto vinculado';
+    }
+    return (
+      this.products().find((product) => product.id_produto === productId)?.nome ??
+      `Produto #${productId}`
+    );
   }
 
   private analyzeOrder(order: OrderRow, onSuccess: (analysis: ProductionAnalysis) => void): void {
@@ -633,7 +671,6 @@ export class OrdersComponent implements OnInit {
     const labels: Record<OrderStatus, string> = {
       retirada: 'Pronto / concluído',
       producao: 'Em produção',
-      confirmado: 'Confirmado',
       pendente: 'Pendente',
       cancelado: 'Cancelado',
     };

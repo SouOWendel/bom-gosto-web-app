@@ -1,0 +1,36 @@
+<div class="modal-backdrop" role="presentation" (click)="close()">
+  <section
+    class="confirm-dialog"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="confirm-dialog-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="confirm-dialog__header">
+      <h2 id="confirm-dialog-title">{{ title() }}</h2>
+      @if (message()) {
+        <p>{{ message() }}</p>
+      }
+    </header>
+
+    <div class="confirm-dialog__content">
+      <ng-content />
+    </div>
+
+    <footer class="confirm-dialog__footer">
+      @if (error()) {
+        <p class="confirm-dialog__error" role="alert">{{ error() }}</p>
+      } @else {
+        <span></span>
+      }
+      <div class="confirm-dialog__actions">
+        <app-button type="button" variant="outline" [disabled]="busy()" (click)="close()">
+          {{ cancelLabel() }}
+        </app-button>
+        <app-button type="button" [variant]="variant()" [disabled]="busy()" (click)="confirm()">
+          {{ confirmLabel() }}
+        </app-button>
+      </div>
+    </footer>
+  </section>
+</div>
