@@ -1,23 +1,15 @@
 <header class="topbar">
-  <div class="topbar__left">
-    <svg
-      [lucideIcon]="'calendar'"
-      [size]="18"
-      [strokeWidth]="2"
-      class="topbar__calendar-icon"
-    ></svg>
-    <span class="topbar__date">{{ dataAtual() }}</span>
-  </div>
-
-  <div class="topbar__right">
-    <div class="topbar__search">
-      <svg [lucideIcon]="'search'" [size]="16" [strokeWidth]="2" class="topbar__search-icon"></svg>
-      <input
-        type="text"
-        class="topbar__search-input"
-        placeholder="Buscar pedidos, receitas ou clientes..."
-        aria-label="Buscar pedidos, receitas ou clientes"
-      />
-    </div>
+  <button
+    type="button"
+    class="btn-icon topbar__menu"
+    [attr.aria-label]="menuOpen() ? 'Fechar menu' : 'Abrir menu'"
+    [attr.aria-expanded]="menuOpen()"
+    (click)="menuToggle.emit()"
+  >
+    <svg [lucideIcon]="menuOpen() ? 'x' : 'menu'" [size]="18"></svg>
+  </button>
+  <div class="topbar__date">
+    <svg [lucideIcon]="'calendar'" [size]="18" [strokeWidth]="2" class="topbar__icon"></svg>
+    <span>{{ dataAtual() }}</span>
   </div>
 </header>

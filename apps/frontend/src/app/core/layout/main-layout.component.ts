@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
@@ -21,6 +21,17 @@ export class MainLayoutComponent {
   private readonly router = inject(Router);
 
   readonly sidebarItems: NavItem[] = DEFAULT_SIDEBAR_PAGES;
+
+  // Menu lateral em telas pequenas (até 1024px).
+  readonly menuOpen = signal(false);
+
+  toggleMenu(): void {
+    this.menuOpen.update((open) => !open);
+  }
+
+  closeMenu(): void {
+    this.menuOpen.set(false);
+  }
 
   readonly userProfile = computed<UserProfile>(() => {
     const user = this.authService.user();

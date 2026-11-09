@@ -14,8 +14,8 @@
   position: fixed;
   top: 0;
   left: 0;
-  background: #fff;
-  border-right: 1px solid #f1e4e4;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
   padding: 1.5rem 1.125rem 1.25rem;
   z-index: 100;
 
@@ -30,12 +30,12 @@
     width: 2.75rem;
     height: 2.75rem;
     border-radius: 50%;
-    border: 2px solid var(--color-primary, #7b1a2e);
+    border: 2px solid var(--color-primary);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: var(--color-primary, #7b1a2e);
+    color: var(--color-primary);
 
     svg {
       width: 1.5rem;
@@ -48,26 +48,27 @@
     flex-direction: column;
   }
 
+  // Mesma fonte de marca usada na tela de login.
   &__brand-title {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--color-primary, #7b1a2e);
-    line-height: 1.15;
+    color: var(--color-primary);
+    font-family: var(--font-cursive);
+    font-size: 1.75rem;
+    font-weight: 400;
+    line-height: 1;
   }
 
   &__brand-subtitle {
-    font-size: 0.65rem;
+    font-size: var(--text-2xs);
     font-weight: 600;
-    color: #9c6c75;
+    color: var(--color-text-muted);
     letter-spacing: 0.16em;
     text-transform: uppercase;
   }
 
   &__divider {
     height: 1px;
-    background: #f1e4e4;
-    margin: 1.25rem 0;
+    background: var(--color-border);
+    margin: var(--space-5) 0;
   }
 
   &__nav {
@@ -87,24 +88,24 @@
     align-items: center;
     gap: 0.875rem;
     padding: 0.75rem 0.875rem;
-    border-radius: 0.625rem;
+    border-radius: var(--radius-md);
     text-decoration: none;
-    color: #554447;
-    font-size: 0.925rem;
+    color: var(--color-text);
+    font-size: var(--text-md);
     font-weight: 500;
     transition: all 0.2s ease;
     cursor: pointer;
 
     &:hover {
-      background: #faf2f2;
-      color: var(--color-primary, #7b1a2e);
+      background: var(--color-primary-soft);
+      color: var(--color-primary);
     }
 
     &--active {
-      background: #761426;
+      background: var(--color-primary);
       color: #fff !important;
       font-weight: 600;
-      box-shadow: 0 4px 14px rgba(118, 20, 38, 0.25);
+      box-shadow: 0 4px 14px rgba(123, 26, 46, 0.22);
 
       .sidebar__nav-icon {
         color: #fff !important;
@@ -112,7 +113,7 @@
 
       &:hover,
       &:focus-visible {
-        background: #761426;
+        background: var(--color-primary);
         color: #fff !important;
       }
     }
@@ -124,7 +125,7 @@
     justify-content: center;
     width: 1.35rem;
     height: 1.35rem;
-    color: #6b585b;
+    color: var(--color-text-muted);
     flex-shrink: 0;
 
     svg {
@@ -141,12 +142,12 @@
   }
 
   &__nav-badge {
-    font-size: 0.7rem;
-    font-weight: 600;
+    font-size: var(--text-2xs);
+    font-weight: 700;
     padding: 0.15rem 0.45rem;
-    border-radius: 999px;
-    background: rgba(123, 26, 46, 0.12);
-    color: var(--color-primary, #7b1a2e);
+    border-radius: var(--radius-pill);
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
   }
 
   &__footer {
@@ -159,9 +160,10 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background: #fdf2f0;
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-border);
     padding: 0.65rem 0.75rem;
-    border-radius: 0.875rem;
+    border-radius: var(--radius-lg);
   }
 
   &__profile-avatar {
@@ -170,7 +172,7 @@
     border-radius: 50%;
     overflow: hidden;
     flex-shrink: 0;
-    background: #f4d8d8;
+    background: var(--color-primary-soft);
 
     img,
     svg {
@@ -187,17 +189,17 @@
   }
 
   &__profile-name {
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     font-weight: 700;
-    color: #2e1d21;
+    color: var(--color-text-strong);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   &__profile-role {
-    font-size: 0.72rem;
-    color: #826c70;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -214,10 +216,10 @@
     justify-content: center;
     width: 1.875rem;
     height: 1.875rem;
-    border-radius: 0.375rem;
+    border-radius: var(--radius-sm);
     border: none;
     background: transparent;
-    color: #6b585b;
+    color: var(--color-text-muted);
     cursor: pointer;
 
     svg {
@@ -226,8 +228,8 @@
     }
 
     &:hover {
-      background: rgba(123, 26, 46, 0.1);
-      color: var(--color-primary, #7b1a2e);
+      background: var(--color-primary-soft);
+      color: var(--color-primary);
     }
   }
 
@@ -236,11 +238,11 @@
     bottom: calc(100% + 0.5rem);
     right: 0;
     width: 10.5rem;
-    background: #fff;
-    border: 1px solid #f1e4e4;
-    border-radius: 0.75rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
     padding: 0.35rem;
-    box-shadow: 0 8px 20px rgba(123, 26, 46, 0.12);
+    box-shadow: var(--shadow-pop);
     z-index: 110;
     display: flex;
     flex-direction: column;
@@ -255,40 +257,50 @@
     padding: 0.5rem 0.65rem;
     border: none;
     background: transparent;
-    border-radius: 0.5rem;
-    font-size: 0.825rem;
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
     font-weight: 500;
-    color: #4a3a3d;
+    color: var(--color-text);
     cursor: pointer;
 
     svg {
       width: 1rem;
       height: 1rem;
-      color: #796669;
+      color: var(--color-text-muted);
     }
 
     &:hover {
-      background: #faf2f2;
-      color: var(--color-primary, #7b1a2e);
+      background: var(--color-primary-soft);
+      color: var(--color-primary);
     }
 
     &--danger {
-      color: #b91c1c;
+      color: var(--color-danger);
 
       svg {
-        color: #b91c1c;
+        color: var(--color-danger);
       }
 
       &:hover {
-        background: #fef2f2;
+        background: var(--color-danger-bg);
+        color: var(--color-danger);
       }
     }
   }
+}
 
-  &__dropdown-divider {
-    height: 1px;
-    background: #f4e8e8;
-    margin: 0.2rem 0;
+// Até 1024px a sidebar fica fora da tela e desliza quando o menu é aberto na topbar.
+@media (max-width: 1024px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    visibility: hidden;
+
+    &--open {
+      transform: none;
+      box-shadow: var(--shadow-modal);
+      visibility: visible;
+    }
   }
 }
 
