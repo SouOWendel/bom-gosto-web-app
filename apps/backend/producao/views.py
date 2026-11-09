@@ -2,22 +2,16 @@ from django.db import transaction
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.permissions import BasePermission, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
+from core.permissions import SenhaInicialAlterada
 from pedido.models import Pedido, Receita, status_operacional
 from pedido.serializers import PedidoSerializer
 from .serializers import ConcluirProducaoSerializer, ReceitaSerializer
 
-
-# Restringe a Produção a usuários que já trocaram a senha provisória.
-class SenhaInicialAlterada(BasePermission):
-    message = "Altere a senha inicial antes de acessar a produção."
-
-    def has_permission(self, request, view):
-        return not getattr(request.user, "primeiro_acesso", True)
 
 
 # Disponibiliza o CRUD de receitas e suas relações com ingredientes e produtos.
