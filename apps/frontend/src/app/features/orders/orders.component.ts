@@ -3,8 +3,6 @@ import { CommonModule } from '@angular/common';
 import {
   LucideDynamicIcon,
   LucideBan,
-  LucideCalendar,
-  LucideChevronDown,
   LucideMessageSquare,
   LucidePencil,
   LucidePrinter,
@@ -64,15 +62,7 @@ interface OrderRow {
     OrderCreateModalComponent,
   ],
   providers: [
-    provideLucideIcons(
-      LucideBan,
-      LucideCalendar,
-      LucideChevronDown,
-      LucideMessageSquare,
-      LucidePencil,
-      LucidePrinter,
-      LucideSearch,
-    ),
+    provideLucideIcons(LucideBan, LucideMessageSquare, LucidePencil, LucidePrinter, LucideSearch),
   ],
   templateUrl: './orders.component.html',
   styleUrls: ['./orders.component.scss'],
@@ -100,9 +90,7 @@ export class OrdersComponent implements OnInit {
   private completeProductionModal?: CompleteProductionModalComponent;
 
   readonly greetingActions: PageAction[] = [
-    { label: 'Filtro Avançado', icon: 'filter', variant: 'secondary' },
     { label: '+ Novo Pedido', icon: 'plus', variant: 'primary' },
-    { label: 'Cancelar em produção', variant: 'secondary' },
   ];
 
   readonly orders = signal<OrderRow[]>([]);
@@ -207,7 +195,6 @@ export class OrdersComponent implements OnInit {
 
   readonly filteredOrders = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
-    const category = this.selectedCategory();
     const status = this.selectedStatus();
 
     return this.orders().filter((order) => {
@@ -216,9 +203,8 @@ export class OrdersComponent implements OnInit {
         order.id.toLowerCase().includes(term) ||
         order.customer.toLowerCase().includes(term) ||
         order.item.toLowerCase().includes(term);
-      const matchesCategory = category === 'todos' || order.category === category;
       const matchesStatus = status === 'todos' || order.status === status;
-      return matchesTerm && matchesCategory && matchesStatus;
+      return matchesTerm && matchesStatus;
     });
   });
   readonly paginatedOrders = computed(() => {
@@ -400,17 +386,6 @@ export class OrdersComponent implements OnInit {
       this.isCreateModalOpen.set(true);
       return;
     }
-
-    if (action.label === 'Cancelar em produção') {
-      const productionOrder = this.orders().find(
-        (order) => order.apiOrder.status === 'em_producao',
-      );
-      if (productionOrder) {
-        this.cancelOrder(productionOrder);
-      } else {
-        this.actionError.set('Não há pedidos em produção para cancelar.');
-      }
-    }
   }
 
   closeCancelModal(): void {
@@ -448,6 +423,10 @@ export class OrdersComponent implements OnInit {
   }
 
   editOrder(order: OrderRow): void {
+    if (['concluido', 'cancelado'].includes(order.apiOrder.status)) {
+      this.actionError.set('Pedidos concluídos ou cancelados não podem ser editados.');
+      return;
+    }
     this.createError.set(null);
     this.selectedOrder.set(order);
     this.isEditModalOpen.set(true);

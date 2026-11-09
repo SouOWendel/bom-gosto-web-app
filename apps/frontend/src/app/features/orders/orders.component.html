@@ -19,11 +19,6 @@
           (input)="onSearch($any($event.target).value)"
         />
       </label>
-      <button type="button" class="orders-page__date">
-        <svg [lucideIcon]="'calendar'" [size]="15"></svg>
-        Setembro 2025 (15/09/2025)
-        <svg [lucideIcon]="'chevron-down'" [size]="14"></svg>
-      </button>
     </div>
 
     @if (isCancelModalOpen()) {
@@ -66,37 +61,9 @@
     @if (createError()) {
       <div class="orders-page__create-error" role="alert">{{ createError() }}</div>
     }
-
-    <div class="orders-page__category-tabs">
-      <button
-        type="button"
-        [class.is-active]="selectedCategory() === 'todos'"
-        (click)="setCategory('todos')"
-      >
-        Todos
-      </button>
-      <button
-        type="button"
-        [class.is-active]="selectedCategory() === 'bolos'"
-        (click)="setCategory('bolos')"
-      >
-        Bolos
-      </button>
-      <button
-        type="button"
-        [class.is-active]="selectedCategory() === 'doces'"
-        (click)="setCategory('doces')"
-      >
-        Doces &amp; Brigadeiros
-      </button>
-      <button
-        type="button"
-        [class.is-active]="selectedCategory() === 'kits'"
-        (click)="setCategory('kits')"
-      >
-        Kits Festa
-      </button>
-    </div>
+    @if (actionError()) {
+      <div class="orders-page__create-error" role="alert">{{ actionError() }}</div>
+    }
 
     <div class="orders-page__status-tabs">
       <button
@@ -184,14 +151,16 @@
         </div>
         <div class="order-row__actions">
           <div class="order-row__icons">
-            <button
-              type="button"
-              aria-label="Editar pedido"
-              title="Editar pedido"
-              (click)="editOrder(order)"
-            >
-              <svg [lucideIcon]="'pencil'" [size]="14"></svg>
-            </button>
+            @if (order.apiOrder.status !== 'concluido' && order.apiOrder.status !== 'cancelado') {
+              <button
+                type="button"
+                aria-label="Editar pedido"
+                title="Editar pedido"
+                (click)="editOrder(order)"
+              >
+                <svg [lucideIcon]="'pencil'" [size]="14"></svg>
+              </button>
+            }
             <button
               type="button"
               aria-label="Cancelar pedido"
