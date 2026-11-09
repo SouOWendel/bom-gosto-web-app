@@ -1,7 +1,7 @@
-<div class="inventory-page">
+<div class="page">
   <app-page-greeting
-    title="Controle de Estoque &amp; Matérias-Primas"
-    subtitle="Gestão técnica de ingredientes, embalagens e insumos com alertas automáticos de reposição para produção artesanal contínua."
+    title="Inventário de matérias-primas"
+    subtitle="Ingredientes e insumos da cozinha, com alertas de validade e de estoque mínimo."
     [actions]="greetingActions"
     (actionClick)="handleGreetingAction($event)"
   />
@@ -15,75 +15,75 @@
     />
   }
   @if (createError()) {
-    <p class="inventory-page__create-error" role="alert">{{ createError() }}</p>
+    <div class="alert alert--danger" role="alert">{{ createError() }}</div>
   }
 
   <app-metric-cards [items]="summaryCards" />
 
-  <section class="inventory-page__panel" aria-label="Lista de matérias-primas">
-    <div class="inventory-page__filters">
-      <div class="inventory-page__tabs" role="tablist" aria-label="Categorias do inventário">
+  <section class="panel" aria-label="Lista de matérias-primas">
+    <div class="panel__toolbar">
+      <div class="filter-tabs" role="tablist" aria-label="Filtrar insumos">
         <button
           type="button"
-          class="inventory-page__tab"
-          [class.inventory-page__tab--active]="!alertOnly()"
-          (click)="alertOnly.set(false)"
+          role="tab"
+          class="filter-tab"
+          [class.is-active]="!alertOnly()"
+          [attr.aria-selected]="!alertOnly()"
+          (click)="setAlertFilter(false)"
         >
-          Todos os Insumos ({{ ingredients().length }})
+          Todos os insumos
+          <span class="filter-tab__count">{{ ingredients().length }}</span>
         </button>
         <button
           type="button"
-          class="inventory-page__tab"
-          [class.inventory-page__tab--active]="alertOnly()"
-          (click)="alertOnly.set(true)"
+          role="tab"
+          class="filter-tab"
+          [class.is-active]="alertOnly()"
+          [attr.aria-selected]="alertOnly()"
+          (click)="setAlertFilter(true)"
         >
-          Em Alerta ({{ totalAlertsCount }})
+          Em alerta
+          <span class="filter-tab__count">{{ totalAlertsCount }}</span>
         </button>
       </div>
-      <div class="inventory-page__filter-row">
-        <label class="inventory-page__search">
-          <svg class="inventory-page__icon" viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="11" cy="11" r="6" />
-            <path d="m16 16 4 4" />
-          </svg>
-          <input
-            type="search"
-            placeholder="Filtrar por nome ou código..."
-            [value]="searchTerm()"
-            (input)="searchTerm.set($any($event.target).value)"
-          />
-        </label>
-      </div>
+      <label class="search-field inventory-page__search">
+        <svg [lucideIcon]="'search'" [size]="16"></svg>
+        <input
+          type="search"
+          placeholder="Buscar por nome ou código..."
+          aria-label="Buscar insumos"
+          [value]="searchTerm()"
+          (input)="onSearch($any($event.target).value)"
+        />
+      </label>
     </div>
 
-    <div class="inventory-page__legend" aria-label="Legenda do status de validade">
-      <strong>Status de validade</strong>
-      <span class="inventory-page__legend-item"
-        ><i class="inventory-page__dot inventory-page__dot--critical"></i>Crítico (Vencido /
-        Hoje)</span
-      >
-      <span class="inventory-page__legend-item"
-        ><i class="inventory-page__dot inventory-page__dot--attention"></i>Atenção (até 7
-        dias)</span
-      >
-      <span class="inventory-page__legend-item"
-        ><i class="inventory-page__dot inventory-page__dot--preventive"></i>Preventivo (até 15
-        dias)</span
-      >
+    <div class="panel__toolbar inventory-page__legend-row">
+      <div class="legend" aria-label="Legenda do semáforo de validade">
+        <span class="legend__title">Validade</span>
+        <span class="legend__item"
+          ><i class="status-dot status-dot--critico"></i>Crítico: vencido ou vence hoje</span
+        >
+        <span class="legend__item"
+          ><i class="status-dot status-dot--atencao"></i>Atenção: até 7 dias</span
+        >
+        <span class="legend__item"
+          ><i class="status-dot status-dot--preventivo"></i>Preventivo: até 15 dias</span
+        >
+      </div>
     </div>
 
     <div class="data-table-wrap">
-      <table class="inventory-page__table data-table">
+      <table class="data-table inventory-page__table">
         <thead>
           <tr>
-            <th>Insumo / Código</th>
-            <th>Nível</th>
-            <th>Unidade</th>
-            <th>Mínimo</th>
-            <th>Status</th>
+            <th>Insumo</th>
+            <th>Saldo</th>
+            <th class="is-numeric">Mínimo</th>
+            <th>Estoque</th>
             <th>Validade</th>
-            <th>Custo</th>
-            <th>Ações</th>
+            <th class="is-numeric">Custo unitário</th>
+            <th class="is-actions">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -94,56 +94,49 @@
                 <small class="data-table__secondary">{{ item.code }}</small>
               </td>
               <td>
-                <span class="inventory-page__level"
-                  >{{ item.level }} <small>{{ item.percentage }}%</small></span
-                >
+                <span class="data-table__primary">{{ item.level }}</span>
                 <span
-                  class="inventory-page__level-bar inventory-page__level-bar--{{ item.percentage }}"
+                  class="level-bar"
+                  [class.level-bar--low]="item.status !== 'normal'"
                   role="progressbar"
-                  [attr.aria-label]="'Nível de estoque: ' + item.percentage + '%'"
+                  [attr.aria-label]="'Saldo em relação ao mínimo: ' + item.percentage + '%'"
                   aria-valuemin="0"
                   aria-valuemax="100"
                   [attr.aria-valuenow]="item.percentage"
-                ></span>
-              </td>
-              <td>
-                {{ item.unit }}
-              </td>
-              <td>{{ item.minimum }}</td>
-              <td>
-                <span class="inventory-page__pill inventory-page__pill--{{ item.status }}"
-                  >• {{ item.statusLabel }}</span
                 >
+                  <span class="level-bar__fill" [style.width.%]="item.percentage"></span>
+                </span>
+              </td>
+              <td class="is-numeric">{{ item.minimum }}</td>
+              <td>
+                <span class="badge badge--dot" [class]="stockBadge[item.status]">{{
+                  item.statusLabel
+                }}</span>
               </td>
               <td>
                 @if (item.expirationLevel) {
-                  <span
-                    class="inventory-page__expiry-badge inventory-page__expiry-badge--{{
-                      item.expirationLevel
-                    }}"
-                    >• {{ item.expirationLabel }}</span
-                  ><br />
+                  <span class="badge badge--dot" [class]="expiryBadge[item.expirationLevel]">{{
+                    item.expirationLabel
+                  }}</span>
                 }
-                <span class="inventory-page__muted"
-                  >{{ item.expiration }}<br />{{ item.expirationDetail }}</span
+                <small class="data-table__secondary"
+                  >{{ item.expiration }} · {{ item.expirationDetail }}</small
                 >
               </td>
-              <td>
-                <strong>{{ item.cost }}</strong
-                ><br /><span class="inventory-page__muted">/ {{ item.unit }}</span>
+              <td class="is-numeric">
+                <strong class="data-table__primary">{{ item.cost }}</strong>
+                <small class="data-table__secondary">por {{ item.unit }}</small>
               </td>
-              <td>
-                <div class="inventory-page__actions-cell">
-                  <button type="button" class="data-table__action" (click)="openEditModal(item)">
-                    <svg [lucideIcon]="'pencil'" [size]="14"></svg>
-                    <span>Editar</span>
-                  </button>
-                </div>
+              <td class="is-actions">
+                <app-button size="small" variant="outline" (click)="openEditModal(item)">
+                  <svg [lucideIcon]="'pencil'" [size]="14"></svg>
+                  Editar
+                </app-button>
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="8" class="data-table__empty">
+              <td colspan="7" class="data-table__empty">
                 Nenhum insumo encontrado com os filtros selecionados.
               </td>
             </tr>

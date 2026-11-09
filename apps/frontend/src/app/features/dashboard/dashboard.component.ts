@@ -1,6 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import {
   LucideDynamicIcon,
   provideLucideIcons,
@@ -12,6 +12,7 @@ import { PageGreetingComponent } from '../../shared/components/page-greeting/pag
 import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
 import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
 import { DashboardAgendaComponent } from './components/dashboard-agenda/dashboard-agenda.component';
+import { ButtonComponent } from '../../shared/components/button/button.component';
 import { Order } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
 
@@ -58,10 +59,10 @@ export interface DiaCalendario {
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
     LucideDynamicIcon,
     PageGreetingComponent,
     DashboardAgendaComponent,
+    ButtonComponent,
   ],
   providers: [provideLucideIcons(LucideChevronLeft, LucideChevronRight, LucidePlus)],
   templateUrl: './dashboard.component.html',
@@ -74,6 +75,12 @@ export class DashboardComponent implements OnInit {
 
   // Informações do Cabeçalho
   readonly nomeChef = 'Rosangela';
+
+  // Saudação conforme o horário: "Bom dia", "Boa tarde" ou "Boa noite".
+  get saudacao(): string {
+    const hora = new Date().getHours();
+    return hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
+  }
   get mesAno(): string {
     return this.monthLabel(this.dataSelecionada());
   }
@@ -300,10 +307,12 @@ export class DashboardComponent implements OnInit {
     if (!dateKey) {
       return '';
     }
-    return new Date(`${dateKey}T00:00:00`).toLocaleDateString('pt-BR', {
-      month: 'short',
+    // Ex.: "Novembro de 2026".
+    const label = new Date(`${dateKey}T00:00:00`).toLocaleDateString('pt-BR', {
+      month: 'long',
       year: 'numeric',
     });
+    return label.charAt(0).toUpperCase() + label.slice(1);
   }
 
   private toDateKey(date: Date): string {

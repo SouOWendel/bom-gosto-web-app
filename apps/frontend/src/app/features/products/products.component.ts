@@ -16,6 +16,7 @@ import { PageAction } from '../../shared/components/page-greeting/page-greeting.
 import { MetricCardsComponent } from '../../shared/components/metric-cards/metric-cards.component';
 import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
 import { ProductCreateModalComponent } from '../../shared/components/product-create-modal/product-create-modal.component';
+import { ButtonComponent } from '../../shared/components/button/button.component';
 
 @Component({
   selector: 'app-products',
@@ -27,6 +28,7 @@ import { ProductCreateModalComponent } from '../../shared/components/product-cre
     PageGreetingComponent,
     MetricCardsComponent,
     ProductCreateModalComponent,
+    ButtonComponent,
   ],
   providers: [provideLucideIcons(LucidePackage, LucidePlus, LucidePencil, LucideSearch)],
   templateUrl: './products.component.html',
@@ -43,7 +45,7 @@ export class ProductsComponent implements OnInit {
   readonly searchTerm = signal('');
 
   readonly greetingActions: PageAction[] = [
-    { label: '+ Novo Produto', icon: 'plus', variant: 'primary' },
+    { label: 'Novo produto', icon: 'plus', variant: 'primary' },
   ];
 
   get summaryCards(): MetricCardItem[] {
@@ -99,7 +101,7 @@ export class ProductsComponent implements OnInit {
   }
 
   handleGreetingAction(action: PageAction): void {
-    if (action.label === '+ Novo Produto') {
+    if (action.label === 'Novo produto') {
       this.openCreateModal();
     }
   }

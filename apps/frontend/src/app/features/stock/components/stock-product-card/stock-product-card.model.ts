@@ -1,15 +1,9 @@
 export type StockProductStatus = 'critico' | 'atencao' | 'preventivo' | 'normal';
 
-export interface StockProductSize {
-  label: string;
-  value: string;
-}
-
+// Dados de um lote de produto pronto exibidos no cartão do estoque (RF10).
 export interface StockProductCardItem {
   id: string;
   name: string;
-  categoryLabel: string;
-  description: string;
   image: string;
   status: StockProductStatus;
   statusLabel: string;
@@ -17,8 +11,6 @@ export interface StockProductCardItem {
   unit: string;
   expiry: string;
   expiryDetail: string;
-  basePrice: string;
-  priceUnit: string;
-  margin: string;
-  sizes: StockProductSize[];
+  salePrice: string;
+  lotCost: string;
 }

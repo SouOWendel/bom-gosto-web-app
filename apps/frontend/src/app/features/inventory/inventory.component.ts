@@ -1,5 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { LucideDynamicIcon, LucidePencil, provideLucideIcons } from '@lucide/angular';
+import { LucideDynamicIcon, LucidePencil, LucideSearch, provideLucideIcons } from '@lucide/angular';
+import { ButtonComponent } from '../../shared/components/button/button.component';
 import { MetricCardsComponent } from '../../shared/components/metric-cards/metric-cards.component';
 import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
@@ -38,9 +39,10 @@ interface InventoryItem {
     PageGreetingComponent,
     MetricCardsComponent,
     IngredientCreateModalComponent,
+    ButtonComponent,
     LucideDynamicIcon,
   ],
-  providers: [provideLucideIcons(LucidePencil)],
+  providers: [provideLucideIcons(LucidePencil, LucideSearch)],
   templateUrl: './inventory.component.html',
   styleUrls: ['./inventory.component.scss'],
 })
@@ -64,8 +66,20 @@ export class InventoryComponent implements OnInit {
   readonly totalPages = computed(() => Math.ceil(this.totalItems() / this.pageSize));
 
   readonly greetingActions: PageAction[] = [
-    { label: 'Novo Insumo', icon: 'plus', variant: 'primary' },
+    { label: 'Novo insumo', icon: 'plus', variant: 'primary' },
   ];
+
+  // Cores únicas para estoque e validade (ver .badge em styles.scss).
+  readonly stockBadge: Record<InventoryItem['status'], string> = {
+    normal: 'badge--success',
+    low: 'badge--warning',
+    critical: 'badge--danger',
+  };
+  readonly expiryBadge: Record<'critico' | 'atencao' | 'preventivo', string> = {
+    critico: 'badge--danger',
+    atencao: 'badge--warning',
+    preventivo: 'badge--info',
+  };
 
   get summaryCards(): MetricCardItem[] {
     const ingredients = this.ingredients();
@@ -167,7 +181,7 @@ export class InventoryComponent implements OnInit {
   }
 
   handleGreetingAction(action: PageAction): void {
-    if (action.label === 'Novo Insumo') {
+    if (action.label === 'Novo insumo') {
       this.openCreateModal();
     }
   }
@@ -243,9 +257,10 @@ export class InventoryComponent implements OnInit {
       code: `INS-${String(ingredient.id_ingrediente).padStart(4, '0')}`,
       lot: '',
       level: `${this.formatQuantity(ingredient.quantidade_disponivel)} ${unit}`,
+      // A barra vai até o dobro do mínimo: metade da barra = exatamente o mínimo.
       percentage:
         minimum > 0
-          ? Math.min(100, Math.round((quantity / minimum) * 100))
+          ? Math.min(100, Math.round((quantity / (minimum * 2)) * 100))
           : quantity > 0
             ? 100
             : 0,

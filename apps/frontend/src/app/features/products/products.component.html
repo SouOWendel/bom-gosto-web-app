@@ -1,81 +1,69 @@
-<div class="products-page">
+<div class="page">
   <app-page-greeting
-    title="Produtos Comercializados"
-    subtitle="Gestão do catálogo de itens e doces vendidos na confeitaria."
+    title="Produtos comercializados"
+    subtitle="Catálogo de itens vendidos pela confeitaria e a receita de cada um."
     [actions]="greetingActions"
     (actionClick)="handleGreetingAction($event)"
   />
 
   <app-metric-cards [items]="summaryCards" />
 
-  <section class="products-panel">
-    <div class="products-panel__header">
-      <div class="products-panel__search-box">
-        <label class="products-panel__search">
-          <svg [lucideIcon]="'search'" [size]="15"></svg>
-          <input
-            type="search"
-            placeholder="Buscar por nome, código ou receita..."
-            [value]="searchTerm()"
-            (input)="searchTerm.set($any($event.target).value)"
-          />
-        </label>
-      </div>
-      <span class="products-panel__count">
+  <section class="panel" aria-label="Lista de produtos">
+    <div class="panel__toolbar">
+      <label class="search-field products-page__search">
+        <svg [lucideIcon]="'search'" [size]="16"></svg>
+        <input
+          type="search"
+          placeholder="Buscar por nome, código ou receita..."
+          aria-label="Buscar produtos"
+          [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)"
+        />
+      </label>
+      <span class="products-page__count">
         {{ filteredProducts().length }}
         {{ filteredProducts().length === 1 ? 'produto encontrado' : 'produtos encontrados' }}
       </span>
     </div>
 
-    <div class="products-table-wrap data-table-wrap">
+    <div class="data-table-wrap">
       <table class="data-table">
         <thead>
           <tr>
-            <th>Código</th>
-            <th>Nome do produto</th>
-            <th>Preço de venda</th>
+            <th>Produto</th>
             <th>Receita vinculada</th>
-            <th>Ações</th>
+            <th class="is-numeric">Preço de venda</th>
+            <th class="is-actions">Ações</th>
           </tr>
         </thead>
         <tbody>
           @for (prod of filteredProducts(); track prod.id_produto) {
             <tr>
               <td>
-                <span class="product-code">#{{ prod.id_produto }}</span>
-              </td>
-              <td>
-                <strong class="product-name">{{ prod.nome }}</strong>
-              </td>
-              <td>
-                <span class="product-price">{{ formatPrice(prod.preco_venda) }}</span>
+                <strong class="data-table__primary">{{ prod.nome }}</strong>
+                <small class="data-table__secondary">#{{ prod.id_produto }}</small>
               </td>
               <td>
                 @if (prod.receita_nome) {
-                  <span class="recipe-badge">{{ prod.receita_nome }}</span>
+                  <span class="badge badge--brand">{{ prod.receita_nome }}</span>
                 } @else {
-                  <span class="recipe-none">Sem receita direta</span>
+                  <span class="data-table__secondary">Sem receita (revenda ou reaproveitado)</span>
                 }
               </td>
-              <td>
-                <div class="product-actions">
-                  <button
-                    type="button"
-                    class="data-table__action"
-                    aria-label="Editar produto"
-                    title="Editar produto"
-                    (click)="openEditModal(prod)"
-                  >
-                    <svg [lucideIcon]="'pencil'" [size]="14"></svg>
-                    <span>Editar</span>
-                  </button>
-                </div>
+              <td class="is-numeric">
+                <strong class="data-table__primary">{{ formatPrice(prod.preco_venda) }}</strong>
+              </td>
+              <td class="is-actions">
+                <app-button size="small" variant="outline" (click)="openEditModal(prod)">
+                  <svg [lucideIcon]="'pencil'" [size]="14"></svg>
+                  Editar
+                </app-button>
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="5" class="data-table__empty">
-                Nenhum produto encontrado. Clique em "+ Novo Produto" para cadastrar.
+              <td colspan="4" class="data-table__empty">
+                Nenhum produto encontrado. Use "Novo produto" para cadastrar.
               </td>
             </tr>
           }

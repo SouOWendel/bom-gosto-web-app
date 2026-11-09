@@ -17,6 +17,7 @@ import { CancelProductionModalComponent } from '../../shared/components/cancel-p
 import { CompleteProductionModalComponent } from '../../shared/components/complete-production-modal/complete-production-modal.component';
 import { OrderCreateModalComponent } from '../../shared/components/order-create-modal/order-create-modal.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { ButtonComponent } from '../../shared/components/button/button.component';
 import {
   CancelOrderPayload,
   CompleteProductionPayload,
@@ -52,9 +53,9 @@ interface OrderRow {
   status: OrderStatus;
   statusLabel: string;
   schedule: string;
+  modality: string;
   detail: string;
   action: string;
-  image: string;
   apiOrder: ApiOrder;
   analysis: ProductionAnalysis | null;
 }
@@ -72,6 +73,7 @@ interface OrderRow {
     CompleteProductionModalComponent,
     OrderCreateModalComponent,
     ConfirmDialogComponent,
+    ButtonComponent,
   ],
   providers: [
     provideLucideIcons(LucideBan, LucideMessageSquare, LucidePencil, LucidePrinter, LucideSearch),
@@ -103,8 +105,24 @@ export class OrdersComponent implements OnInit {
   private completeProductionModal?: CompleteProductionModalComponent;
 
   readonly greetingActions: PageAction[] = [
-    { label: '+ Novo Pedido', icon: 'plus', variant: 'primary' },
+    { label: 'Novo pedido', icon: 'plus', variant: 'primary' },
   ];
+
+  readonly statusTabs: Array<{ value: 'todos' | OrderStatus; label: string }> = [
+    { value: 'todos', label: 'Todos' },
+    { value: 'pendente', label: 'Pendentes' },
+    { value: 'producao', label: 'Em produção' },
+    { value: 'retirada', label: 'Prontos / concluídos' },
+    { value: 'cancelado', label: 'Cancelados' },
+  ];
+
+  // Mesma cor de status em toda a aplicação (ver .badge em styles.scss).
+  readonly statusBadge: Record<OrderStatus, string> = {
+    pendente: 'badge--warning',
+    producao: 'badge--info',
+    retirada: 'badge--success',
+    cancelado: 'badge--neutral',
+  };
 
   readonly orders = signal<OrderRow[]>([]);
   readonly statusCounts = computed(() => {
@@ -377,7 +395,7 @@ export class OrdersComponent implements OnInit {
   }
 
   handleGreetingAction(action: PageAction): void {
-    if (action.label === '+ Novo Pedido') {
+    if (action.label === 'Novo pedido') {
       this.createError.set(null);
       this.isCreateModalOpen.set(true);
       return;
@@ -638,19 +656,16 @@ export class OrdersComponent implements OnInit {
       reuseName: baseNames.length > 0 ? `${baseNames[0]} reaproveitado` : '',
       category: this.toCategory(itemNames.join(' ')),
       total: this.formatCurrency(total),
-      payment:
-        order.valor_sinal !== '0.00' && order.valor_sinal !== '0'
-          ? `Sinal: ${this.formatCurrency(this.toNumber(order.valor_sinal))}`
-          : (order.forma_pagamento ?? 'Pagamento não informado'),
+      payment: this.paymentLabel(order),
       status,
       statusLabel: this.statusLabel(status),
       schedule: this.formatSchedule(order.data_entrega, order.horario_entrega),
+      modality: order.endereco_entrega ? 'Entrega' : 'Retirada',
       detail:
         balance > 0 && order.status !== 'cancelado'
           ? `${statusDetail[order.status]} · Saldo ${this.formatCurrency(balance)}`
           : statusDetail[order.status],
       action: this.actionLabel(order),
-      image: '/images/auth-cake.jpg',
       apiOrder: order,
       analysis: order.analise ?? null,
     };
@@ -667,6 +682,29 @@ export class OrdersComponent implements OnInit {
       return this.productName(item.produto);
     }
     return item.receita !== null ? `Receita #${item.receita}` : 'Item sem produto vinculado';
+  }
+
+  formatQuantity(value: string | number | null | undefined): string {
+    const number = Number(value ?? 0);
+    return Number.isFinite(number)
+      ? number.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
+      : String(value);
+  }
+
+  private paymentLabel(order: ApiOrder): string {
+    const method = this.paymentMethodLabel(order.forma_pagamento);
+    const deposit = this.toNumber(order.valor_sinal);
+    return deposit > 0 ? `Sinal ${this.formatCurrency(deposit)} · ${method}` : method;
+  }
+
+  private paymentMethodLabel(method: string | null): string {
+    const labels: Record<string, string> = {
+      pix: 'Pix',
+      cartao: 'Cartão',
+      dinheiro: 'Dinheiro',
+      pendente: 'Pagamento a definir',
+    };
+    return method ? (labels[method] ?? method) : 'Pagamento não informado';
   }
 
   private toViewStatus(status: ApiOrder['status']): OrderStatus {
@@ -696,14 +734,14 @@ export class OrdersComponent implements OnInit {
   private actionLabel(order: ApiOrder): string {
     switch (order.status) {
       case 'pedido_feito':
-        return 'Iniciar Produção';
+        return 'Iniciar produção';
       case 'em_producao':
-        return 'Concluir Produção';
+        return 'Concluir produção';
       case 'producao_concluida':
         return order.tipo === 'externo' ? 'Consumir estoque' : 'Concluir pedido';
       case 'concluido':
       case 'cancelado':
-        return 'Ver Detalhes';
+        return '';
     }
   }
 

@@ -1,61 +1,35 @@
-<article class="stock-product-card">
-  <div class="stock-product-card__image">
+<article class="stock-card">
+  <div class="stock-card__image">
     <img [src]="product().image" [alt]="product().name" />
-    <span class="stock-product-card__status stock-product-card__status--{{ product().status }}">
-      <i></i>{{ product().statusLabel }}
-    </span>
-    <span class="stock-product-card__code">#{{ product().id }}</span>
+    <span class="badge badge--dot stock-card__status" [class]="statusBadge[product().status]">{{
+      product().statusLabel
+    }}</span>
   </div>
 
-  <div class="stock-product-card__body">
-    <span class="stock-product-card__category">{{ product().categoryLabel }}</span>
-    <h2>{{ product().name }}</h2>
-    <p>{{ product().description }}</p>
+  <div class="stock-card__body">
+    <span class="stock-card__lot">Lote #{{ product().id }}</span>
+    <h2 class="stock-card__title">{{ product().name }}</h2>
 
-    <section class="stock-product-card__sizes" aria-label="Tamanhos disponíveis">
-      <span>TAMANHOS DISPONÍVEIS</span>
+    <dl class="stock-card__facts">
       <div>
-        @for (size of product().sizes; track size.label) {
-          <b
-            >{{ size.label }} <small>{{ size.value }}</small></b
-          >
-        }
-      </div>
-    </section>
-
-    <div class="stock-product-card__pricing">
-      <div>
-        <small>Preço Base</small>
-        <strong
-          >{{ product().basePrice }} <em>/ {{ product().priceUnit }}</em></strong
-        >
+        <dt>Preço de venda</dt>
+        <dd class="stock-card__price">{{ product().salePrice }}</dd>
       </div>
       <div>
-        <small>Margem</small>
-        <strong>{{ product().margin }}</strong>
+        <dt>Custo do lote</dt>
+        <dd>{{ product().lotCost }}</dd>
       </div>
-    </div>
+    </dl>
 
-    <div class="stock-product-card__metadata">
-      <span><b>✿</b> {{ product().quantity }} {{ product().unit }}</span>
-      <span
-        ><svg [lucideIcon]="'calendar'" [size]="12"></svg> Validade: {{ product().expiry }}</span
-      >
-    </div>
-
-    <div class="stock-product-card__actions">
-      <app-button
-        type="button"
-        variant="outline"
-        size="small"
-        (click)="technicalSheet.emit(product())"
-      >
-        <svg [lucideIcon]="'file-text'" [size]="13"></svg>
-        Ver Receitas
-      </app-button>
-      <app-button type="button" variant="primary" size="small" (click)="pricing.emit(product())">
-        Ver no Catálogo
-      </app-button>
+    <div class="stock-card__meta">
+      <span>
+        <svg [lucideIcon]="'package'" [size]="14"></svg>
+        {{ product().quantity }} {{ product().unit }}
+      </span>
+      <span>
+        <svg [lucideIcon]="'calendar'" [size]="14"></svg>
+        {{ product().expiry }} · {{ product().expiryDetail }}
+      </span>
     </div>
   </div>
 </article>

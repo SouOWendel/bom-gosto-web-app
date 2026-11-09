@@ -1,345 +1,48 @@
-.inventory-page {
-  padding: 1.5rem 1.75rem 2rem;
-  color: #3d292d;
-  font-size: 0.78rem;
-}
-
-app-page-greeting {
-  display: block;
-  margin-bottom: 1rem;
-}
-
-app-metric-cards {
-  display: block;
-  margin-bottom: 1rem;
-}
-
-.inventory-page button:not(.data-table__action) {
-  border: 0;
-  font: inherit;
-  cursor: pointer;
-}
-
-.inventory-page__icon {
-  width: 0.9rem;
-  height: 0.9rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.7;
-}
-
-.inventory-page__panel {
-  overflow: hidden;
-  border: 1px solid #f1e4e4;
-  border-radius: 0.7rem;
-  background: #fff;
-  box-shadow: 0 5px 18px rgba(104, 35, 44, 0.035);
-}
-
-.inventory-page__filters {
-  padding: 0.85rem 1rem 0.75rem;
-}
-
-.inventory-page__tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.25rem;
-  border-bottom: 1px solid #f1e7e5;
-}
-
-.inventory-page__tab {
-  padding: 0 0 0.7rem;
-  background: transparent;
-  color: #725d60;
-  font-size: 0.68rem;
-  font-weight: 600;
-}
-
-.inventory-page__tab--active {
-  color: #771526;
-  border-bottom: 2px solid #771526 !important;
-}
-
-.inventory-page__filter-row {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  margin-top: 0.7rem;
-}
-
-.inventory-page__alert-filter,
+// Layout, tabela, abas, busca, badges e legenda vêm dos estilos globais (styles.scss).
 .inventory-page__search {
-  display: flex;
-  align-items: center;
-  min-height: 2rem;
-  border-radius: 0.5rem;
+  max-width: 22rem;
+  margin-left: auto;
 }
 
-.inventory-page__alert-filter {
-  gap: 0.35rem;
-  padding: 0 0.7rem;
-  background: #fff2ca;
-  color: #845b06;
-  font-size: 0.65rem;
-  font-weight: 700;
-}
-
-.inventory-page__alert-count {
-  display: grid;
-  width: 1.15rem;
-  height: 1.15rem;
-  place-items: center;
-  border-radius: 50%;
-  background: #ffdc72;
-  color: #805406;
-  font-size: 0.58rem;
-}
-
-.inventory-page__search {
-  flex: 1;
-  gap: 0.4rem;
-  padding: 0 0.7rem;
-  background: #fff0ee;
-  color: #997e80;
-}
-
-.inventory-page__search input {
-  width: 100%;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: #4a383b;
-  font: inherit;
-  font-size: 0.68rem;
-}
-
-.inventory-page__legend {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.65rem 1rem;
-  border-top: 1px solid #f8eeee;
-  border-bottom: 1px solid #f1e7e5;
-  background: #fffbed;
-  color: #806f70;
-  font-size: 0.58rem;
-}
-
-.inventory-page__legend strong {
-  color: #604d50;
-  font-size: 0.56rem;
-  text-transform: uppercase;
-}
-
-.inventory-page__legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.inventory-page__dot {
-  width: 0.45rem;
-  height: 0.45rem;
-  border-radius: 50%;
-}
-
-.inventory-page__dot--critical {
-  background: #e85d69;
-}
-.inventory-page__dot--attention {
-  background: #e8ad2f;
-}
-.inventory-page__dot--preventive {
-  background: #5da0df;
+.inventory-page__legend-row {
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+  background: var(--color-surface-muted);
 }
 
 .inventory-page__table {
-  min-width: 52rem;
-  table-layout: fixed;
+  min-width: 56rem;
 }
 
-.inventory-page__table th:nth-child(1) {
-  width: 22%;
-}
-.inventory-page__table th:nth-child(2) {
-  width: 12%;
-}
-.inventory-page__table th:nth-child(3) {
-  width: 10%;
-}
-.inventory-page__table th:nth-child(4) {
-  width: 8%;
-}
-.inventory-page__table th:nth-child(5) {
-  width: 11%;
-}
-.inventory-page__table th:nth-child(6) {
-  width: 12%;
-}
-.inventory-page__table th:nth-child(7) {
-  width: 10%;
-}
-.inventory-page__table th:nth-child(8) {
-  width: 15%;
+.inventory-page__table .badge + .data-table__secondary {
+  margin-top: var(--space-1);
 }
 
-.inventory-page__muted {
-  margin-top: 0.18rem;
-  color: var(--table-muted-color);
-  font-size: 0.68rem;
-}
-
-.inventory-page__level {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  color: #62534a;
-  font-size: 0.72rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.inventory-page__level small {
-  color: var(--table-muted-color);
-  font-size: 0.62rem;
-  font-weight: 600;
-}
-
-.inventory-page__level-bar {
+// Barra de saldo em relação ao mínimo (metade = exatamente o mínimo).
+.level-bar {
   display: block;
-  width: 2.5rem;
-  height: 0.25rem;
+  width: 4.5rem;
+  height: 0.3rem;
+  margin-top: var(--space-1);
   overflow: hidden;
-  border-radius: 99px;
-  background: #f5e1dc;
-}
+  border-radius: var(--radius-pill);
+  background: var(--color-border);
 
-.inventory-page__level-bar::before {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: #686027;
-  content: '';
-}
+  &__fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-dot-normal);
+  }
 
-.inventory-page__level-bar--53::before {
-  width: 53%;
-}
-
-.inventory-page__level-bar--80::before {
-  width: 80%;
-}
-
-.inventory-page__level-bar--20::before {
-  width: 20%;
-  background: #d97742;
-}
-
-.inventory-page__level-bar--90::before {
-  width: 90%;
-}
-
-.inventory-page__level-bar--33::before {
-  width: 33%;
-  background: #aa7b27;
-}
-
-.inventory-page__pill {
-  display: inline-block;
-  padding: 0.25rem 0.48rem;
-  border-radius: 999px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.inventory-page__pill--low {
-  background: #ffefa9;
-  color: #775508;
-}
-.inventory-page__pill--normal {
-  background: #e4f1ff;
-  color: #21669a;
-}
-.inventory-page__pill--critical {
-  background: #ffe2e2;
-  color: #a82d38;
-}
-
-.inventory-page__actions-cell {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.inventory-page__movement-action {
-  display: inline-grid;
-  width: 1.35rem;
-  height: 1.35rem;
-  place-items: center;
-  border-radius: 0.3rem;
-  font-size: 0.9rem;
-  font-weight: 800;
-}
-
-.inventory-page__movement-action--add {
-  background: #e4f4e5;
-  color: #267037;
-}
-
-.inventory-page__movement-action--remove {
-  background: #ffe5e5;
-  color: #a82d38;
-}
-
-.inventory-page__row-menu {
-  width: 1.45rem;
-  height: 1.45rem;
-  border-radius: 0.3rem;
-  background: #fff0ee;
-  color: #7b1a2e;
+  &--low &__fill {
+    background: var(--color-dot-atencao);
+  }
 }
 
 @media (max-width: 900px) {
-  .inventory-page {
-    padding: 1rem;
-  }
-}
-
-@media (max-width: 600px) {
-  .inventory-page__filter-row {
-    align-items: stretch;
-    flex-direction: column;
-  }
   .inventory-page__search {
-    min-height: 2.2rem;
+    max-width: none;
+    margin-left: 0;
   }
-  .inventory-page__legend {
-    flex-wrap: wrap;
-  }
-}
-
-// Badge do semáforo de validade; cores iguais às da legenda.
-.inventory-page__expiry-badge {
-  display: inline-block;
-  margin-bottom: 0.2rem;
-  padding: 0.2rem 0.45rem;
-  border-radius: 999px;
-  font-size: 0.62rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.inventory-page__expiry-badge--critico {
-  background: #ffe2e2;
-  color: #a82d38;
-}
-.inventory-page__expiry-badge--atencao {
-  background: #ffefa9;
-  color: #775508;
-}
-.inventory-page__expiry-badge--preventivo {
-  background: #e4f1ff;
-  color: #21669a;
 }

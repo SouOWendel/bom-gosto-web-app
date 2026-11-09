@@ -26,8 +26,10 @@
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="login-card__form" novalidate>
           <app-input-text
             inputId="login"
-            label="E-mail profissional"
-            placeholder="ex: rosangela@bomgostoconfeitaria.com.br"
+            label="Usuário"
+            icon="user"
+            autocomplete="username"
+            placeholder="Seu usuário de acesso"
             formControlName="login"
           />
 
@@ -44,12 +46,6 @@
               formControlName="senha"
             />
           </div>
-
-          <!-- Checkbox lembrar -->
-          <label class="login-card__remember">
-            <input type="checkbox" class="login-card__checkbox" />
-            <span>Lembrar de mim neste dispositivo</span>
-          </label>
 
           <!-- Botão submit -->
           <button
