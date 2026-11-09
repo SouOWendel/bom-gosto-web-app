@@ -216,3 +216,32 @@ class PedidoEstoqueIntegrationTests(SimpleTestCase):
                     "itens": [{"produto": None, "receita": object()}],
                 }
             )
+
+
+# garante que o seed prepara os dados do roteiro de demonstracao e pode ser repetido
+class SeedDemonstracaoTests(APITestCase):
+	def test_seed_prepara_roteiro_e_reset_restaura_os_pedidos(self):
+		from io import StringIO
+
+		from django.core.management import call_command
+
+		from producao.services import analisar_pedido
+
+		call_command("seed_desenvolvimento", stdout=StringIO())
+		call_command("seed_desenvolvimento", stdout=StringIO())
+
+		licilene = Pedido.objects.get(cliente__nome="Licilene Alves", status=Pedido.Status.PEDIDO_FEITO)
+		analise = analisar_pedido(licilene)
+		self.assertTrue(analise["encaminhar_para_producao"])
+		self.assertEqual(analise["ausencias"], [])
+		self.assertEqual(analise["ingredientes_insuficientes"], [])
+
+		carlos = Pedido.objects.get(cliente__nome="Carlos Menezes", status=Pedido.Status.EM_PRODUCAO)
+		self.assertTrue(analisar_pedido(carlos)["ingredientes"])
+
+		licilene.status = Pedido.Status.CONCLUIDO
+		licilene.save(update_fields=["status"])
+		call_command("seed_desenvolvimento", "--resetar-demo", stdout=StringIO())
+		licilene.refresh_from_db()
+		self.assertEqual(licilene.status, Pedido.Status.PEDIDO_FEITO)
+		self.assertEqual(Pedido.objects.filter(cliente__nome="Licilene Alves", status=Pedido.Status.PEDIDO_FEITO).count(), 1)
