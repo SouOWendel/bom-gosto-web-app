@@ -2,6 +2,8 @@ import secrets
 
 from django.conf import settings
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout, update_session_auth_hash
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError
 from django.middleware.csrf import get_token
 from django.utils.decorators import method_decorator
@@ -75,7 +77,7 @@ class LoginView(APIView):
 # - senha atual ou nova senha nao fornecida
 # - senha atual invalida
 # - nova senha igual a senha atual
-# - nova senha com menos de 8 caracteres
+# - nova senha recusada pelos AUTH_PASSWORD_VALIDATORS
 # Troca a senha provisória e libera o acesso normal às rotas protegidas.
 class AlterarSenhaView(APIView):
     permission_classes = [IsAuthenticated]
@@ -91,9 +93,11 @@ class AlterarSenhaView(APIView):
         if senha_atual == nova_senha:
             return Response({"detail": "a nova senha deve ser diferente da senha atual."}, status=status.HTTP_400_BAD_REQUEST)
         
-        if len(nova_senha) < 8:
-            return Response({"detail": "a nova senha deve ter pelo menos 8 caracteres."}, status=status.HTTP_400_BAD_REQUEST)
-        
+        try:
+            validate_password(nova_senha, user=request.user)
+        except DjangoValidationError as erro:
+            return Response({"detail": " ".join(erro.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
         request.user.set_password(nova_senha)
         request.user.primeiro_acesso = False
         request.user.save()
