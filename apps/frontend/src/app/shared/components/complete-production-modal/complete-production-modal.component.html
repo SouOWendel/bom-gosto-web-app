@@ -42,9 +42,9 @@
                 <strong>{{ ingredient.name }}</strong>
                 <small>{{ ingredient.lot }}</small>
               </span>
-              <span class="ingredients-table__theoretical">{{
-                ingredient.theoreticalQuantity
-              }}</span>
+              <span class="ingredients-table__theoretical"
+                >{{ ingredient.theoreticalQuantity }} {{ ingredient.unit }}</span
+              >
               <app-input-text
                 label=""
                 [inputId]="'consumption-' + ingredient.name"

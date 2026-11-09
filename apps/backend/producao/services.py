@@ -102,7 +102,7 @@ def analisar_pedido(pedido):
             if nivel:
                 alerta_validade = {"nivel": nivel, "dias_para_vencer": dias}
         minimo = ingrediente.quantidade_minima
-        ingredientes.append({"id_ingrediente": ingrediente.pk, "nome": ingrediente.nome, "necessario": linha["necessario"], "disponivel": disponivel, "suficiente": disponivel >= linha["necessario"], "abaixo_do_minimo": (minimo is not None and disponivel < minimo), "data_validade": validade, "alerta_validade": alerta_validade})
+        ingredientes.append({"id_ingrediente": ingrediente.pk, "nome": ingrediente.nome, "unidade_medida": ingrediente.unidade_medida, "necessario": linha["necessario"], "disponivel": disponivel, "suficiente": disponivel >= linha["necessario"], "abaixo_do_minimo": (minimo is not None and disponivel < minimo), "data_validade": validade, "alerta_validade": alerta_validade})
     return {"estoque": itens, "receitas_sugeridas": sugestoes, "ausencias": ausencias, "ingredientes_insuficientes": [i for i in ingredientes if not i["suficiente"]], "ingredientes": ingredientes, "encaminhar_para_producao": any(not i["disponivel"] for i in itens)}
 
 

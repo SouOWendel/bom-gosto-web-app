@@ -93,3 +93,24 @@
     grid-template-columns: 1fr;
   }
 }
+
+.ingredient-modal__unit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.75rem;
+  color: #405047;
+  font-size: 0.72rem;
+  font-weight: 700;
+
+  select {
+    height: 2.2rem;
+    border: 1px solid #d5dfd9;
+    border-radius: 0.5rem;
+    padding: 0 0.65rem;
+    background: #fff;
+    color: #405047;
+    font: inherit;
+    font-weight: 400;
+  }
+}

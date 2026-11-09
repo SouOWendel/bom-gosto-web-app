@@ -60,7 +60,7 @@ export class CompleteProductionModalComponent implements OnInit {
         theoreticalQuantity: ingredient.necessario,
         quantity: '',
         availableQuantity: ingredient.disponivel,
-        unit: '',
+        unit: ingredient.unidade_medida ?? '',
       })),
     );
   }

@@ -17,6 +17,7 @@ class IngredienteSerializer(serializers.ModelSerializer):
         fields = (
             "id_ingrediente",
             "nome",
+            "unidade_medida",
             "quantidade_disponivel",
             "quantidade_minima",
             "data_validade",

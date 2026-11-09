@@ -29,6 +29,17 @@
         [(ngModel)]="name"
         name="name"
       />
+      <label class="ingredient-modal__unit">
+        <span>Unidade de medida *</span>
+        <select [(ngModel)]="unit" name="unit">
+          @for (option of unitOptions; track option) {
+            <option [value]="option">{{ option }}</option>
+          }
+          @if (!unitOptions.includes(unit)) {
+            <option [value]="unit">{{ unit }}</option>
+          }
+        </select>
+      </label>
       <div class="ingredient-modal__grid">
         <app-input-text
           label="Quantidade disponível"

@@ -320,3 +320,26 @@ app-metric-cards {
     flex-wrap: wrap;
   }
 }
+
+// Badge do semáforo de validade; cores iguais às da legenda.
+.inventory-page__expiry-badge {
+  display: inline-block;
+  margin-bottom: 0.2rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.inventory-page__expiry-badge--critico {
+  background: #ffe2e2;
+  color: #a82d38;
+}
+.inventory-page__expiry-badge--atencao {
+  background: #ffefa9;
+  color: #775508;
+}
+.inventory-page__expiry-badge--preventivo {
+  background: #e4f1ff;
+  color: #21669a;
+}

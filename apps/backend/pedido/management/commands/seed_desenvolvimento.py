@@ -25,7 +25,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--resetar-demo",
             action="store_true",
-            help="Apaga lotes de estoque e cancelamentos gerados ao ensaiar o roteiro antes de recriá-los.",
+            help="Restaura insumos, lotes e pedidos do roteiro; remove cancelamentos e produtos reaproveitados (sem receita e sem pedidos).",
         )
 
     @transaction.atomic
@@ -152,23 +152,24 @@ class Command(BaseCommand):
     # cria os insumos com validades que cobrem os tres niveis do semaforo (RN17)
     # sem --resetar-demo, saldos ja consumidos em ensaios anteriores sao preservados
     def _carregar_ingredientes(self, hoje, resetar):
-        # nome, quantidade, custo unitario, dias para vencer, quantidade minima
+        # nome, unidade, quantidade, custo unitario, dias para vencer, quantidade minima
         dados = [
-            ("Farinha de trigo (kg)", "5.00", "4.50", 60, "2.00"),
-            ("Açúcar refinado (kg)", "3.00", "5.00", 14, "1.00"),
-            ("Manteiga (kg)", "1.50", "40.00", 6, "0.50"),
-            ("Chocolate em pó (kg)", "1.00", "30.00", 5, "0.50"),
-            ("Ovos (un)", "30.00", "0.80", 12, "12.00"),
-            ("Leite condensado (lata)", "8.00", "7.50", 90, "4.00"),
-            ("Creme de leite (caixa)", "4.00", "4.20", -1, "2.00"),
-            ("Leite integral (L)", "2.00", "5.50", 0, "2.00"),
-            ("Banana prata (kg)", "2.00", "6.00", 3, "1.00"),
-            ("Queijo meia cura (kg)", "0.30", "45.00", 20, "1.00"),
-            ("Coco ralado (kg)", "0.50", "28.00", 40, "0.20"),
+            ("Farinha de trigo", "kg", "5.00", "4.50", 60, "2.00"),
+            ("Açúcar refinado", "kg", "3.00", "5.00", 14, "1.00"),
+            ("Manteiga", "kg", "1.50", "40.00", 6, "0.50"),
+            ("Chocolate em pó", "kg", "1.00", "30.00", 5, "0.50"),
+            ("Ovos", "un", "30.00", "0.80", 12, "12.00"),
+            ("Leite condensado", "lata", "8.00", "7.50", 90, "4.00"),
+            ("Creme de leite", "caixa", "4.00", "4.20", -1, "2.00"),
+            ("Leite integral", "L", "2.00", "5.50", 0, "2.00"),
+            ("Banana prata", "kg", "2.00", "6.00", 3, "1.00"),
+            ("Queijo meia cura", "kg", "0.30", "45.00", 20, "1.00"),
+            ("Coco ralado", "kg", "0.50", "28.00", 40, "0.20"),
         ]
         ingredientes = {}
-        for nome, quantidade, custo, dias, minimo in dados:
+        for nome, unidade, quantidade, custo, dias, minimo in dados:
             valores = {
+                "unidade_medida": unidade,
                 "quantidade_disponivel": Decimal(quantidade),
                 "custo_unitario": Decimal(custo),
                 "data_validade": hoje + timedelta(days=dias),
@@ -181,19 +182,23 @@ class Command(BaseCommand):
                 for campo, valor in valores.items():
                     setattr(ingrediente, campo, valor)
                 ingrediente.save()
+            elif ingrediente.unidade_medida != unidade:
+                # a unidade nao depende do ensaio; corrige registros antigos sem resetar saldos
+                ingrediente.unidade_medida = unidade
+                ingrediente.save(update_fields=["unidade_medida"])
             ingredientes[nome] = ingrediente
         return ingredientes
 
     # define a ficha tecnica de cada receita e o custo de referencia
     def _carregar_composicoes(self, receitas, ingredientes):
         composicoes = {
-            "Massa branca": [("Farinha de trigo (kg)", "1.00"), ("Açúcar refinado (kg)", "0.50"), ("Manteiga (kg)", "0.20"), ("Ovos (un)", "4.00")],
-            "Recheio de beijinho": [("Leite condensado (lata)", "2.00"), ("Coco ralado (kg)", "0.10"), ("Manteiga (kg)", "0.03")],
-            "Recheio delícia de limão": [("Leite condensado (lata)", "2.00"), ("Creme de leite (caixa)", "1.00")],
-            "Brigadeiro tradicional": [("Leite condensado (lata)", "2.00"), ("Chocolate em pó (kg)", "0.10"), ("Manteiga (kg)", "0.05")],
-            "Bolinha de queijo": [("Farinha de trigo (kg)", "0.50"), ("Queijo meia cura (kg)", "0.40"), ("Leite integral (L)", "1.00"), ("Ovos (un)", "2.00")],
-            "Caseirinho vulcão": [("Farinha de trigo (kg)", "0.60"), ("Chocolate em pó (kg)", "0.30"), ("Açúcar refinado (kg)", "0.40"), ("Ovos (un)", "6.00"), ("Leite condensado (lata)", "2.00")],
-            "Banoffee de pote": [("Banana prata (kg)", "1.50"), ("Leite condensado (lata)", "2.00"), ("Creme de leite (caixa)", "2.00"), ("Açúcar refinado (kg)", "0.20")],
+            "Massa branca": [("Farinha de trigo", "1.00"), ("Açúcar refinado", "0.50"), ("Manteiga", "0.20"), ("Ovos", "4.00")],
+            "Recheio de beijinho": [("Leite condensado", "2.00"), ("Coco ralado", "0.10"), ("Manteiga", "0.03")],
+            "Recheio delícia de limão": [("Leite condensado", "2.00"), ("Creme de leite", "1.00")],
+            "Brigadeiro tradicional": [("Leite condensado", "2.00"), ("Chocolate em pó", "0.10"), ("Manteiga", "0.05")],
+            "Bolinha de queijo": [("Farinha de trigo", "0.50"), ("Queijo meia cura", "0.40"), ("Leite integral", "1.00"), ("Ovos", "2.00")],
+            "Caseirinho vulcão": [("Farinha de trigo", "0.60"), ("Chocolate em pó", "0.30"), ("Açúcar refinado", "0.40"), ("Ovos", "6.00"), ("Leite condensado", "2.00")],
+            "Banoffee de pote": [("Banana prata", "1.50"), ("Leite condensado", "2.00"), ("Creme de leite", "2.00"), ("Açúcar refinado", "0.20")],
         }
         for receita_nome, linhas in composicoes.items():
             receita = receitas[receita_nome]
@@ -217,6 +222,13 @@ class Command(BaseCommand):
     def _carregar_lotes(self, produtos, hoje, resetar):
         if resetar:
             Estoque.objects.filter(produto__in=produtos.values()).delete()
+            # produtos criados por cancelamentos com reaproveitamento (RN12) nao tem receita
+            # nem pedidos; sao removidos para que cada ensaio comece do mesmo estado
+            reaproveitados = Produto.objects.filter(receita__isnull=True, itens_pedido__isnull=True).exclude(
+                pk__in=[produto.pk for produto in produtos.values()]
+            )
+            Estoque.objects.filter(produto__in=reaproveitados).delete()
+            reaproveitados.delete()
         # produto, quantidade, dias para vencer, custo do lote
         lotes = [
             ("Doce", "40.00", 2, "18.00"),

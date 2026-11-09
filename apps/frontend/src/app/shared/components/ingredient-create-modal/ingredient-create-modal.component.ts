@@ -6,6 +6,7 @@ import { Ingredient } from '../../../core/models/api.model';
 
 export interface IngredientCreationPayload {
   nome: string;
+  unidade_medida: string;
   quantidade_disponivel: string | null;
   quantidade_minima: string | null;
   data_validade: string | null;
@@ -26,6 +27,8 @@ export class IngredientCreateModalComponent implements OnInit {
   readonly ingredientToEdit = input<Ingredient | null>(null);
 
   name = '';
+  unit = 'kg';
+  readonly unitOptions = ['kg', 'g', 'L', 'ml', 'un', 'lata', 'caixa', 'pacote'];
   availableQuantity = '';
   minimumQuantity = '';
   expirationDate = '';
@@ -50,6 +53,7 @@ export class IngredientCreateModalComponent implements OnInit {
 
   private populate(ing: Ingredient): void {
     this.name = ing.nome ?? '';
+    this.unit = ing.unidade_medida || 'un';
     this.availableQuantity =
       ing.quantidade_disponivel !== null ? String(ing.quantidade_disponivel) : '';
     this.minimumQuantity = ing.quantidade_minima !== null ? String(ing.quantidade_minima) : '';
@@ -76,6 +80,7 @@ export class IngredientCreateModalComponent implements OnInit {
 
     this.submitted.emit({
       nome: name,
+      unidade_medida: this.unit,
       quantidade_disponivel: this.toDecimalOrNull(this.availableQuantity),
       quantidade_minima: this.toDecimalOrNull(this.minimumQuantity),
       data_validade: this.expirationDate || null,

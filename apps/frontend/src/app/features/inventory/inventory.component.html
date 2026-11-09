@@ -116,13 +116,21 @@
                 >
               </td>
               <td>
+                @if (item.expirationLevel) {
+                  <span
+                    class="inventory-page__expiry-badge inventory-page__expiry-badge--{{
+                      item.expirationLevel
+                    }}"
+                    >• {{ item.expirationLabel }}</span
+                  ><br />
+                }
                 <span class="inventory-page__muted"
                   >{{ item.expiration }}<br />{{ item.expirationDetail }}</span
                 >
               </td>
               <td>
                 <strong>{{ item.cost }}</strong
-                ><br /><span class="inventory-page__muted">/ un</span>
+                ><br /><span class="inventory-page__muted">/ {{ item.unit }}</span>
               </td>
               <td>
                 <div class="inventory-page__actions-cell">
