@@ -55,3 +55,18 @@ class MovimentacaoProducaoTests(SimpleTestCase):
             with self.assertRaises(ValidationError):
                 cancelar_pedido(pedido, [], "descarte")
             criar_cancelamento.assert_called_once()
+
+
+class SaldoCompartilhadoTests(SimpleTestCase):
+    # dois itens do mesmo produto nao podem aproveitar o mesmo saldo pronto duas vezes
+    def test_saldo_pronto_e_dividido_entre_itens_do_mesmo_produto(self):
+        from .services import _saldo_restante
+
+        reservado = {}
+        with patch(
+            "producao.services.Estoque.objects.verificar_disponibilidade",
+            return_value={"quantidade_disponivel": Decimal("3")},
+        ):
+            self.assertEqual(_saldo_restante(7, Decimal("2"), reservado), Decimal("2"))
+            self.assertEqual(_saldo_restante(7, Decimal("2"), reservado), Decimal("1"))
+            self.assertEqual(_saldo_restante(7, Decimal("2"), reservado), Decimal("0"))
