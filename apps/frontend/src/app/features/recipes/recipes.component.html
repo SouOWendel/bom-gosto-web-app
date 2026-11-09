@@ -6,22 +6,6 @@
   />
 
   <section class="recipes-page__filters" aria-label="Filtros de receitas">
-    <nav class="recipes-page__tabs" aria-label="Categorias de receitas">
-      @for (category of categories; track category) {
-        <button
-          type="button"
-          class="recipes-page__tab"
-          [class.recipes-page__tab--active]="selectedCategory() === category"
-          (click)="onCategoryChange(category)"
-        >
-          {{ category }}
-          @if (category === 'Todas as receitas') {
-            <span>({{ recipes().length }})</span>
-          }
-        </button>
-      }
-    </nav>
-
     <div class="recipes-page__filter-row">
       <app-input-text
         label="Buscar receita"
@@ -59,7 +43,6 @@
         <h2 id="recipes-table-title">Fichas técnicas</h2>
         <span>{{ totalRecipes() }} receitas cadastradas</span>
       </div>
-      <button type="button" class="recipes-page__sort">⇵ Mais recentes⌄</button>
     </header>
 
     <div class="recipes-page__table-wrap">

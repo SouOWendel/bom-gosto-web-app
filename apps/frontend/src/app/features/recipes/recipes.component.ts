@@ -41,7 +41,7 @@ export class RecipesComponent implements OnInit {
 
   readonly greetingActions: PageAction[] = [
     {
-      label: 'Adicionar receita',
+      label: 'Cadastrar nova receita',
       route: '/receitas/nova-receita',
       icon: 'plus',
       variant: 'primary',

@@ -60,6 +60,10 @@
   min-width: 0;
 }
 
+.recipes-page__filter-row app-input-text::ng-deep .field__label {
+  font-weight: 700;
+}
+
 .recipes-page__filter-row label {
   display: flex;
   flex-direction: column;
