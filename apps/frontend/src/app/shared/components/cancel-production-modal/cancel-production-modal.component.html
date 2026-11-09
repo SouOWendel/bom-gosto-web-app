@@ -1,48 +1,46 @@
 <div class="modal-backdrop" role="presentation" (click)="close()">
   <section
-    class="cancel-modal"
+    class="modal modal--lg"
     role="dialog"
     aria-modal="true"
     aria-labelledby="cancel-modal-title"
     (click)="$event.stopPropagation()"
   >
-    <header class="cancel-modal__header">
-      <div class="cancel-modal__title-wrap">
-        <span class="cancel-modal__warning-icon">
-          <svg [lucideIcon]="'alert-triangle'" [size]="17"></svg>
-        </span>
-        <div>
-          <h2 id="cancel-modal-title">
-            {{ notStarted ? 'Cancelar pedido?' : 'Cancelar pedido em produção?' }}
-          </h2>
-          <p>
-            Pedido {{ order()?.id }}
-            @if (order()?.customer) {
-              · {{ order()?.customer }}
-            }
-            @if (order()?.item) {
-              · {{ order()?.item }}
-            }
-          </p>
-        </div>
+    <header class="modal__header">
+      <span class="modal__icon modal__icon--danger" aria-hidden="true">
+        <svg [lucideIcon]="'alert-triangle'" [size]="18"></svg>
+      </span>
+      <div class="modal__heading">
+        <p class="modal__eyebrow">
+          Pedido {{ order()?.id }}
+          @if (order()?.customer) {
+            · {{ order()?.customer }}
+          }
+        </p>
+        <h2 id="cancel-modal-title" class="modal__title">
+          {{ notStarted ? 'Cancelar pedido?' : 'Cancelar pedido em produção?' }}
+        </h2>
+        @if (order()?.item) {
+          <p class="modal__subtitle">{{ order()?.item }}</p>
+        }
       </div>
-      <button type="button" class="cancel-modal__close" aria-label="Fechar" (click)="close()">
-        <svg [lucideIcon]="'x'" [size]="16"></svg>
+      <button type="button" class="modal__close" aria-label="Fechar" (click)="close()">
+        <svg [lucideIcon]="'x'" [size]="18"></svg>
       </button>
     </header>
 
-    <div class="cancel-modal__content">
+    <div class="modal__body">
       @if (productionCompleted) {
-        <div class="cancel-modal__notice">
-          <svg [lucideIcon]="'info'" [size]="13"></svg>
+        <div class="alert alert--info">
+          <svg [lucideIcon]="'info'" [size]="15"></svg>
           <span
             >A produção deste pedido já foi concluída: os insumos foram baixados e o lote gerado
             permanece disponível no estoque para reaproveitamento.</span
           >
         </div>
       } @else {
-        <div class="cancel-modal__notice">
-          <svg [lucideIcon]="'info'" [size]="13"></svg>
+        <div class="alert alert--warning">
+          <svg [lucideIcon]="'info'" [size]="15"></svg>
           @if (notStarted) {
             <span
               >A produção ainda não foi iniciada. Informe se algum insumo já foi separado ou usado
@@ -50,141 +48,144 @@
             >
           } @else {
             <span
-              >A produção já foi iniciada. Antes de confirmar o cancelamento, informe uma única
-              destinação para a massa e os insumos envolvidos.</span
+              >A produção já foi iniciada. Informe o que foi usado de cada insumo e escolha uma
+              única destinação para o que já foi preparado.</span
             >
           }
         </div>
 
-        <section class="cancel-modal__section">
-          <h3>Massa e insumos deste pedido</h3>
-          <div class="ingredients-table">
-            <div class="ingredients-table__head">
-              <span>ITEM / SITUAÇÃO</span><span>QUANTIDADE</span><span>OBSERVAÇÃO</span>
+        @if (ingredients.length > 0) {
+          <section class="modal__section">
+            <h3 class="modal__section-title">Insumos usados até agora</h3>
+            <div class="data-table-frame">
+              <table class="data-table data-table--compact">
+                <thead>
+                  <tr>
+                    <th>Insumo</th>
+                    <th class="is-numeric">Previsto / disponível</th>
+                    <th class="quantity-column">Usado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (ingredient of ingredients; track ingredient.id) {
+                    <tr>
+                      <td>
+                        <strong class="data-table__primary">{{ ingredient.name }}</strong>
+                      </td>
+                      <td class="is-numeric">{{ ingredient.observation }}</td>
+                      <td>
+                        <app-input-text
+                          label=""
+                          [inputId]="'cancel-quantity-' + ingredient.id"
+                          type="number"
+                          size="compact"
+                          [suffix]="ingredient.unit"
+                          placeholder="0"
+                          [(ngModel)]="ingredient.quantity"
+                        />
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
             </div>
-            @for (ingredient of ingredients; track ingredient.name) {
-              <div class="ingredients-table__row">
-                <strong>{{ ingredient.name }}</strong>
-                <app-input-text
-                  label=""
-                  [inputId]="'cancel-quantity-' + ingredient.name"
-                  type="number"
-                  icon="hash"
-                  size="compact"
-                  [(ngModel)]="ingredient.quantity"
-                />
-                <b>{{ ingredient.observation }}</b>
-              </div>
-            }
+          </section>
+        }
+
+        <section class="modal__section">
+          <h3 class="modal__section-title">Destinação do que foi preparado *</h3>
+          <div class="destination-options" role="radiogroup" aria-label="Destinação">
+            <button
+              type="button"
+              role="radio"
+              class="destination-card"
+              [class.is-selected]="selectedDestination === 'stock'"
+              [attr.aria-checked]="selectedDestination === 'stock'"
+              (click)="selectedDestination = 'stock'"
+            >
+              <span class="destination-card__radio" aria-hidden="true"></span>
+              <svg [lucideIcon]="'package'" [size]="18"></svg>
+              <span class="destination-card__text">
+                <strong>Enviar para o estoque (reaproveitamento)</strong>
+                <small>Cadastra um novo produto e um lote para venda rápida.</small>
+              </span>
+            </button>
+            <button
+              type="button"
+              role="radio"
+              class="destination-card"
+              [class.is-selected]="selectedDestination === 'discard'"
+              [attr.aria-checked]="selectedDestination === 'discard'"
+              (click)="selectedDestination = 'discard'"
+            >
+              <span class="destination-card__radio" aria-hidden="true"></span>
+              <svg [lucideIcon]="'trash-2'" [size]="18"></svg>
+              <span class="destination-card__text">
+                <strong>Registrar perda/descarte</strong>
+                <small>Nada entra no estoque; os insumos informados são baixados.</small>
+              </span>
+            </button>
           </div>
         </section>
 
-        <section class="cancel-modal__section">
-          <h3>Qual será a destinação da produção? <span>*</span></h3>
-          <p class="cancel-modal__hint">
-            Escolha apenas uma alternativa.
-            {{
-              selectedDestination === 'stock'
-                ? 'Enviar para o Estoque selecionado.'
-                : 'Registrar Perda/Descarte selecionado.'
-            }}
-          </p>
-
-          <button
-            type="button"
-            class="destination-card"
-            [class.destination-card--selected]="selectedDestination === 'stock'"
-            (click)="selectedDestination = 'stock'"
-          >
-            <span class="destination-card__radio"></span>
-            <svg [lucideIcon]="'package'" [size]="15"></svg>
-            <span>
-              <strong>Enviar para o Estoque (Reaproveitamento)</strong>
-              <small>Destinar a massa preparada ao estoque para reaproveitamento.</small>
-            </span>
-          </button>
-
-          @if (selectedDestination === 'stock') {
-            <div class="stock-form">
-              <strong>DADOS PARA REAPROVEITAMENTO NO ESTOQUE</strong>
+        @if (selectedDestination === 'stock') {
+          <section class="modal__section">
+            <h3 class="modal__section-title">Produto reaproveitado</h3>
+            <app-input-text
+              label="Nome do produto"
+              inputId="reuse-product-name"
+              icon="package"
+              [(ngModel)]="reuseProductName"
+            />
+            <div class="form-grid">
               <app-input-text
-                label="Nome do produto"
-                inputId="reuse-product-name"
-                icon="package"
-                [(ngModel)]="reuseProductName"
+                label="Quantidade aproveitável"
+                inputId="reuse-quantity"
+                type="number"
+                icon="hash"
+                suffix="un"
+                [(ngModel)]="reuseQuantity"
               />
-              <div class="stock-form__grid">
-                <app-input-text
-                  label="Quantidade aproveitável"
-                  inputId="reuse-quantity"
-                  type="number"
-                  icon="hash"
-                  suffix="un"
-                  size="compact"
-                  [(ngModel)]="reuseQuantity"
-                />
-                <app-input-text
-                  label="Data de validade"
-                  inputId="reuse-expiration"
-                  type="date"
-                  icon="calendar"
-                  size="compact"
-                  [(ngModel)]="reuseExpiration"
-                />
-                <app-input-text
-                  label="Custo"
-                  inputId="reuse-cost"
-                  icon="hash"
-                  size="compact"
-                  [(ngModel)]="reuseCost"
-                />
-                <app-input-text
-                  label="Preço de venda"
-                  inputId="reuse-price"
-                  icon="hash"
-                  size="compact"
-                  [(ngModel)]="reusePrice"
-                />
-              </div>
+              <app-input-text
+                label="Data de validade"
+                inputId="reuse-expiration"
+                type="date"
+                icon="calendar"
+                [(ngModel)]="reuseExpiration"
+              />
+              <app-input-text
+                label="Custo (R$)"
+                inputId="reuse-cost"
+                icon="banknote"
+                placeholder="0,00"
+                [(ngModel)]="reuseCost"
+              />
+              <app-input-text
+                label="Preço de venda (R$)"
+                inputId="reuse-price"
+                icon="banknote"
+                placeholder="0,00"
+                [(ngModel)]="reusePrice"
+              />
             </div>
-          }
-
-          <button
-            type="button"
-            class="destination-card"
-            [class.destination-card--selected]="selectedDestination === 'discard'"
-            (click)="selectedDestination = 'discard'"
-          >
-            <span class="destination-card__radio"></span>
-            <svg [lucideIcon]="'trash-2'" [size]="15"></svg>
-            <span>
-              <strong>Registrar Perda/Descarte</strong>
-              <small>Registrar a massa preparada como perda ou descarte.</small>
-            </span>
-          </button>
-          <p class="cancel-modal__footer-note">
-            As embalagens não utilizadas permanecem disponíveis. Nenhuma destinação foi registrada;
-            o pedido continua {{ notStarted ? 'como Pedido feito' : 'Em Produção' }} até esta
-            confirmação.
-          </p>
-        </section>
+          </section>
+        }
       }
     </div>
 
-    <footer class="cancel-modal__footer">
+    <footer class="modal__footer">
       @if (apiError() || errorMessage) {
-        <p class="cancel-modal__error" role="alert">{{ apiError() || errorMessage }}</p>
+        <p class="modal__error" role="alert">{{ apiError() || errorMessage }}</p>
       } @else {
-        <span
-          ><svg [lucideIcon]="'lock-keyhole'" [size]="12"></svg> Confirme a destinação para cancelar
-          o pedido.</span
-        >
+        <span class="modal__footer-note">
+          <svg [lucideIcon]="'lock-keyhole'" [size]="13"></svg>
+          O pedido continua {{ notStarted ? 'como Pedido feito' : 'Em produção' }} até a
+          confirmação.
+        </span>
       }
-      <div>
-        <app-button type="button" variant="outline" (click)="close()">Voltar</app-button>
-        <app-button type="button" variant="danger" (click)="confirm()">
-          Confirmar cancelamento
-        </app-button>
+      <div class="modal__actions">
+        <app-button variant="outline" (click)="close()">Voltar</app-button>
+        <app-button variant="danger" (click)="confirm()">Confirmar cancelamento</app-button>
       </div>
     </footer>
   </section>

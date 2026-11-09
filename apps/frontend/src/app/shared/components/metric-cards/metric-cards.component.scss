@@ -1,9 +1,9 @@
 .metric-cards-grid {
   display: grid;
   grid-template-columns: repeat(var(--columns, 2), minmax(0, 1fr));
-  gap: 1rem;
+  gap: var(--space-4);
 
-  @media (max-width: 560px) {
+  @media (max-width: 1000px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -13,166 +13,120 @@
 }
 
 .metric-card {
-  border-radius: 0.75rem;
-  min-height: 7.8rem;
-  padding: 1rem 1.15rem;
-  display: flex;
   position: relative;
+  display: flex;
+  min-height: 7.5rem;
   overflow: hidden;
-  background: #ffffff;
-  border: 1px solid rgba(123, 26, 46, 0.08);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
 
   &__content {
+    display: flex;
     width: 100%;
     flex: 1;
-    display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: 0.75rem;
+    justify-content: space-between;
+    gap: var(--space-3);
   }
 
   &__label {
     display: block;
-    margin-bottom: 0.45rem;
-    font-size: 0.67rem;
+    margin-bottom: var(--space-2);
+    color: var(--color-text-muted);
+    font-size: var(--text-2xs);
     font-weight: 700;
     letter-spacing: 0.06em;
-    text-transform: uppercase;
     line-height: 1.35;
+    text-transform: uppercase;
   }
 
   &__icon-wrap {
-    width: 3rem;
-    height: 3rem;
-    border-radius: 0.7rem;
     display: flex;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
+    border-radius: var(--radius-md);
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
   }
 
   &__body {
     display: flex;
-    flex-direction: column;
     min-width: 0;
-    gap: 0.25rem;
+    flex-direction: column;
+    gap: var(--space-1);
   }
 
   &__value {
-    font-size: 1.3rem;
+    color: var(--color-text-strong);
+    font-size: 1.375rem;
     font-weight: 800;
-    line-height: 1;
+    line-height: 1.1;
   }
 
   &__trend {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
-    font-size: 0.78rem;
-    font-weight: 600;
+    gap: var(--space-1);
     margin: 0;
+    font-size: var(--text-xs);
+    font-weight: 600;
 
     &--up {
-      color: #059669;
+      color: var(--color-success);
     }
 
     &--down {
-      color: #dc2626;
+      color: var(--color-danger);
     }
   }
 
   &__subtext {
-    color: #806d6d;
-    font-size: 0.72rem;
     margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
   }
 
-  // Vendas / Destaque primário (rosé / vinho)
+  // Cada variante só troca o acento (rótulo e ícone); fundo e borda continuam iguais
+  // para que os cartões tenham o mesmo peso visual em todas as telas.
   &--vendas,
   &--destaque {
-    background: linear-gradient(135deg, #fce7ec 0%, #f9d0d8 100%);
-    border: 1px solid rgba(123, 26, 46, 0.12);
-
     .metric-card__label {
-      color: #7b1a2e;
-    }
-
-    .metric-card__icon-wrap {
-      background: rgba(123, 26, 46, 0.12);
-      color: #7b1a2e;
-    }
-
-    .metric-card__value {
-      color: #2b181b;
+      color: var(--color-primary);
     }
   }
 
-  // Pedidos (azul suave)
   &--pedidos {
-    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-    border: 1px solid rgba(59, 130, 246, 0.15);
-
     .metric-card__label {
-      color: #1e40af;
+      color: var(--color-info);
     }
 
     .metric-card__icon-wrap {
-      background: rgba(59, 130, 246, 0.12);
-      color: #2563eb;
-    }
-
-    .metric-card__value {
-      color: #1e3a8a;
-    }
-
-    .metric-card__subtext {
-      color: #3b5fa8;
+      background: var(--color-info-bg);
+      color: var(--color-info);
     }
   }
 
-  // Alerta (âmbar/laranja suave)
   &--alerta {
-    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-    border: 1px solid rgba(217, 119, 6, 0.2);
-
     .metric-card__label {
-      color: #b45309;
+      color: var(--color-warning);
     }
 
     .metric-card__icon-wrap {
-      background: rgba(217, 119, 6, 0.12);
-      color: #b45309;
-    }
-
-    .metric-card__value {
-      color: #78350f;
-    }
-
-    .metric-card__subtext {
-      color: #92400e;
+      background: var(--color-warning-bg);
+      color: var(--color-warning);
     }
   }
 
-  // Neutro (branco/cinza padrão)
   &--neutro {
-    background: #ffffff;
-    border: 1px solid #f1e4e4;
-
-    .metric-card__label {
-      color: #6b585b;
-    }
-
     .metric-card__icon-wrap {
-      background: #fdf2f0;
-      color: #7b1a2e;
-    }
-
-    .metric-card__value {
-      color: #2b181b;
-    }
-
-    .metric-card__subtext {
-      color: #8c7377;
+      background: var(--color-surface-muted);
+      color: var(--color-text-muted);
     }
   }
 }

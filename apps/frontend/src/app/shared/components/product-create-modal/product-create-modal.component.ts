@@ -1,6 +1,7 @@
 import { Component, OnInit, effect, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { LucideDynamicIcon, LucideX, provideLucideIcons } from '@lucide/angular';
 import { ButtonComponent } from '../button/button.component';
 import { InputTextComponent } from '../input-text/input-text.component';
 import { Product, Recipe } from '../../../core/models/api.model';
@@ -8,7 +9,8 @@ import { Product, Recipe } from '../../../core/models/api.model';
 @Component({
   selector: 'app-product-create-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, InputTextComponent],
+  imports: [CommonModule, FormsModule, ButtonComponent, InputTextComponent, LucideDynamicIcon],
+  providers: [provideLucideIcons(LucideX)],
   templateUrl: './product-create-modal.component.html',
   styleUrls: ['./product-create-modal.component.scss'],
 })

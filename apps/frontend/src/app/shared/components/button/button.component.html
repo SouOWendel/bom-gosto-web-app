@@ -1,3 +1,6 @@
+<!-- O conteúdo é projetado uma única vez e reaproveitado nos dois ramos (link ou botão). -->
+<ng-template #content><ng-content /></ng-template>
+
 @if (route) {
   <a
     [routerLink]="route"
@@ -8,9 +11,10 @@
     [class.button--danger]="variant === 'danger'"
     [class.button--ghost]="variant === 'ghost'"
     [class.button--small]="size === 'small'"
+    [class.button--block]="block"
     [attr.aria-label]="ariaLabel || null"
   >
-    <ng-content />
+    <ng-container [ngTemplateOutlet]="content" />
   </a>
 } @else {
   <button
@@ -24,7 +28,8 @@
     [class.button--danger]="variant === 'danger'"
     [class.button--ghost]="variant === 'ghost'"
     [class.button--small]="size === 'small'"
+    [class.button--block]="block"
   >
-    <ng-content />
+    <ng-container [ngTemplateOutlet]="content" />
   </button>
 }

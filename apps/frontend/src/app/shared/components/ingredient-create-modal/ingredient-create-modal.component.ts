@@ -1,5 +1,6 @@
 import { Component, OnInit, effect, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { LucideDynamicIcon, LucideX, provideLucideIcons } from '@lucide/angular';
 import { ButtonComponent } from '../button/button.component';
 import { InputTextComponent } from '../input-text/input-text.component';
 import { Ingredient } from '../../../core/models/api.model';
@@ -16,7 +17,8 @@ export interface IngredientCreationPayload {
 @Component({
   selector: 'app-ingredient-create-modal',
   standalone: true,
-  imports: [FormsModule, ButtonComponent, InputTextComponent],
+  imports: [FormsModule, ButtonComponent, InputTextComponent, LucideDynamicIcon],
+  providers: [provideLucideIcons(LucideX)],
   templateUrl: './ingredient-create-modal.component.html',
   styleUrls: ['./ingredient-create-modal.component.scss'],
 })

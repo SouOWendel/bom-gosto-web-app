@@ -3,6 +3,9 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
   LucideCalendar,
   LucideBanknote,
+  LucideClock,
+  LucideMapPin,
+  LucideUser,
   LucideDynamicIcon,
   LucideEye,
   LucideEyeOff,
@@ -23,6 +26,9 @@ import {
     provideLucideIcons(
       LucideCalendar,
       LucideBanknote,
+      LucideClock,
+      LucideMapPin,
+      LucideUser,
       LucideEye,
       LucideEyeOff,
       LucideHash,
@@ -47,7 +53,8 @@ export class InputTextComponent implements ControlValueAccessor {
   @Input() type = 'text';
   @Input() autocomplete = 'off';
   @Input() placeholder = '';
-  @Input() icon = 'mail';
+  // Sem ícone por padrão; informe um nome do Lucide quando ajudar a identificar o campo.
+  @Input() icon = '';
   @Input() suffix = '';
   @Input() size: 'default' | 'compact' = 'default';
   @Input() mask: 'phone' | 'currency' | '' = '';

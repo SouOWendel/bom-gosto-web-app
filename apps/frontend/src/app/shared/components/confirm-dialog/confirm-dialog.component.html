@@ -1,33 +1,37 @@
 <div class="modal-backdrop" role="presentation" (click)="close()">
   <section
-    class="confirm-dialog"
+    class="modal"
+    [class.modal--lg]="size() === 'lg'"
     role="alertdialog"
     aria-modal="true"
     aria-labelledby="confirm-dialog-title"
     (click)="$event.stopPropagation()"
   >
-    <header class="confirm-dialog__header">
-      <h2 id="confirm-dialog-title">{{ title() }}</h2>
-      @if (message()) {
-        <p>{{ message() }}</p>
-      }
+    <header class="modal__header">
+      <div class="modal__heading">
+        <h2 id="confirm-dialog-title" class="modal__title">{{ title() }}</h2>
+        @if (message()) {
+          <p class="modal__subtitle">{{ message() }}</p>
+        }
+      </div>
+      <button type="button" class="modal__close" aria-label="Fechar" (click)="close()">
+        <svg [lucideIcon]="'x'" [size]="18"></svg>
+      </button>
     </header>
 
-    <div class="confirm-dialog__content">
+    <div class="modal__body">
       <ng-content />
     </div>
 
-    <footer class="confirm-dialog__footer">
+    <footer class="modal__footer">
       @if (error()) {
-        <p class="confirm-dialog__error" role="alert">{{ error() }}</p>
-      } @else {
-        <span></span>
+        <p class="modal__error" role="alert">{{ error() }}</p>
       }
-      <div class="confirm-dialog__actions">
-        <app-button type="button" variant="outline" [disabled]="busy()" (click)="close()">
+      <div class="modal__actions">
+        <app-button variant="outline" [disabled]="busy()" (click)="close()">
           {{ cancelLabel() }}
         </app-button>
-        <app-button type="button" [variant]="variant()" [disabled]="busy()" (click)="confirm()">
+        <app-button [variant]="variant()" [disabled]="busy()" (click)="confirm()">
           {{ confirmLabel() }}
         </app-button>
       </div>

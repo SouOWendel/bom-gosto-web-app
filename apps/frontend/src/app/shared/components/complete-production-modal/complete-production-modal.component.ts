@@ -1,6 +1,6 @@
 import { Component, HostListener, input, OnInit, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { LucideCheck, LucideDynamicIcon, provideLucideIcons } from '@lucide/angular';
+import { LucideCheck, LucideDynamicIcon, LucideX, provideLucideIcons } from '@lucide/angular';
 import { InputTextComponent } from '../input-text/input-text.component';
 import { ButtonComponent } from '../button/button.component';
 import {
@@ -14,6 +14,7 @@ interface ProductionIngredient {
   name: string;
   lot: string;
   theoreticalQuantity: string;
+  theoreticalLabel: string;
   quantity: string;
   availableQuantity: string;
   unit: string;
@@ -29,7 +30,7 @@ interface ProductionOrder {
   selector: 'app-complete-production-modal',
   standalone: true,
   imports: [FormsModule, InputTextComponent, ButtonComponent, LucideDynamicIcon],
-  providers: [provideLucideIcons(LucideCheck)],
+  providers: [provideLucideIcons(LucideCheck, LucideX)],
   templateUrl: './complete-production-modal.component.html',
   styleUrls: ['./complete-production-modal.component.scss'],
 })
@@ -56,13 +57,21 @@ export class CompleteProductionModalComponent implements OnInit {
       ...analysis.ingredientes.map((ingredient) => ({
         id: ingredient.id_ingrediente,
         name: ingredient.nome,
-        lot: `Disponível: ${ingredient.disponivel}`,
-        theoreticalQuantity: ingredient.necessario,
+        lot: `Disponível: ${this.formatNumber(ingredient.disponivel)} ${ingredient.unidade_medida ?? ''}`.trim(),
+        theoreticalQuantity: String(ingredient.necessario),
+        theoreticalLabel: this.formatNumber(ingredient.necessario),
         quantity: '',
         availableQuantity: ingredient.disponivel,
         unit: ingredient.unidade_medida ?? '',
       })),
     );
+  }
+
+  private formatNumber(value: string | number): string {
+    const number = Number(value);
+    return Number.isFinite(number)
+      ? number.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
+      : String(value);
   }
 
   @HostListener('document:keydown.escape')

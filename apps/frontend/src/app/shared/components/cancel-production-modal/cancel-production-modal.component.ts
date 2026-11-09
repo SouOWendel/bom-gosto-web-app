@@ -21,6 +21,7 @@ import {
 interface Ingredient {
   id: number;
   name: string;
+  unit: string;
   quantity: string;
   observation: string;
 }
@@ -92,12 +93,20 @@ export class CancelProductionModalComponent implements OnInit {
       ...order.analysis.ingredientes.map((ingredient) => ({
         id: ingredient.id_ingrediente,
         name: ingredient.nome,
+        unit: ingredient.unidade_medida ?? '',
         quantity: '',
         observation:
-          `Previsto: ${ingredient.necessario} ${ingredient.unidade_medida ?? ''} · Disponível: ${ingredient.disponivel}`.trim(),
+          `${this.formatNumber(ingredient.necessario)} / ${this.formatNumber(ingredient.disponivel)} ${ingredient.unidade_medida ?? ''}`.trim(),
       })),
     );
     this.reuseProductName = order.reuseName ?? (order.item ? `${order.item} reaproveitado` : '');
+  }
+
+  private formatNumber(value: string | number): string {
+    const number = Number(value);
+    return Number.isFinite(number)
+      ? number.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
+      : String(value);
   }
 
   @HostListener('document:keydown.escape')

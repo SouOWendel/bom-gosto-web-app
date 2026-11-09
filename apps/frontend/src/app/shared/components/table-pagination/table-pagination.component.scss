@@ -1,34 +1,39 @@
 .table-pagination {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.8rem var(--table-edge-padding);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--table-edge-padding);
+  border-top: 1px solid var(--table-border);
   color: var(--table-muted-color);
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
 }
 
 .table-pagination__pages {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
 }
 
 .table-pagination__pages button {
   display: grid;
-  width: 1.65rem;
-  height: 1.65rem;
-  place-items: center;
-  border: 0;
-  border-radius: 0.35rem;
-  background: var(--table-head-bg);
-  color: var(--table-head-color);
+  min-width: 1.85rem;
+  height: 1.85rem;
+  padding: 0 0.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
   cursor: pointer;
   font: inherit;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
+  place-items: center;
 
   &:hover:not(:disabled):not(.is-current) {
-    background: #fde4df;
+    border-color: var(--color-primary-border);
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
   }
 
   &:disabled {
@@ -37,8 +42,9 @@
   }
 
   &.is-current {
+    border-color: var(--color-primary);
     background: var(--color-primary);
-    color: #fff;
+    color: var(--color-text-inverse);
     font-weight: 700;
   }
 }

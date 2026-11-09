@@ -8,8 +8,9 @@
     [class.field__wrapper--password]="type === 'password'"
     [class.field__wrapper--suffix]="suffix"
     [class.field__wrapper--compact]="size === 'compact'"
+    [class.field__wrapper--icon]="icon || type === 'password'"
   >
-    @if (icon) {
+    @if (icon || type === 'password') {
       <span class="field__icon field__icon--left" aria-hidden="true">
         <svg [lucideIcon]="type === 'password' ? 'lock' : icon" [size]="16" />
       </span>

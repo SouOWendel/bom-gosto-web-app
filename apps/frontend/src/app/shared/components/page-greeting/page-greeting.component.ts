@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import {
   LucideDynamicIcon,
   provideLucideIcons,
+  LucideArrowLeft,
   LucideCalendar,
   LucidePlus,
   LucideBell,
@@ -20,6 +21,7 @@ import { ButtonComponent } from '../button/button.component';
   imports: [CommonModule, LucideDynamicIcon, ButtonComponent],
   providers: [
     provideLucideIcons(
+      LucideArrowLeft,
       LucideCalendar,
       LucidePlus,
       LucideBell,
