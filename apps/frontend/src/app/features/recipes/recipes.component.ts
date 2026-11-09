@@ -1,10 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
+import { LucideDynamicIcon, LucidePlus, LucideSearch, provideLucideIcons } from '@lucide/angular';
 import { DomainApiService } from '../../core/services/domain-api.service';
-import { Recipe as ApiRecipe } from '../../core/models/api.model';
-import { ButtonComponent } from '../../shared/components/button/button.component';
-import { InputTextComponent } from '../../shared/components/input-text/input-text.component';
+import { Product, Recipe as ApiRecipe } from '../../core/models/api.model';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
 import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
 import { TablePaginationComponent } from '../../shared/components/table-pagination/table-pagination.component';
@@ -15,23 +14,16 @@ interface RecipeRow {
   code: string;
   ingredients: number;
   product: string;
-  category: string;
   yield: string;
   totalCost: number;
   unitCost: number;
-  unit: string;
 }
 
 @Component({
   selector: 'app-recipes',
   standalone: true,
-  imports: [
-    TablePaginationComponent,
-    FormsModule,
-    ButtonComponent,
-    InputTextComponent,
-    PageGreetingComponent,
-  ],
+  imports: [TablePaginationComponent, PageGreetingComponent, LucideDynamicIcon],
+  providers: [provideLucideIcons(LucidePlus, LucideSearch)],
   templateUrl: './recipes.component.html',
   styleUrls: ['./recipes.component.scss'],
 })
@@ -39,8 +31,6 @@ export class RecipesComponent implements OnInit {
   private readonly api = inject(DomainApiService);
 
   readonly searchTerm = signal('');
-  readonly selectedCategory = signal('Todas as receitas');
-  readonly selectedUnit = signal('Todas as unidades');
   readonly recipes = signal<RecipeRow[]>([]);
   readonly errorMessage = signal('');
   readonly currentPage = signal(1);
@@ -48,34 +38,22 @@ export class RecipesComponent implements OnInit {
 
   readonly greetingActions: PageAction[] = [
     {
-      label: 'Cadastrar nova receita',
+      label: 'Nova receita',
       route: '/receitas/nova-receita',
       icon: 'plus',
       variant: 'primary',
     },
   ];
 
-  readonly categories = ['Todas as receitas'];
-
   readonly filteredRecipes = computed(() => {
     const search = this.searchTerm().trim().toLocaleLowerCase();
-    const category = this.selectedCategory();
-    const unit = this.selectedUnit();
-
-    return this.recipes().filter((recipe) => {
-      const matchesSearch =
+    return this.recipes().filter(
+      (recipe) =>
         !search ||
         recipe.name.toLocaleLowerCase().includes(search) ||
         recipe.code.toLocaleLowerCase().includes(search) ||
-        recipe.product.toLocaleLowerCase().includes(search);
-      const matchesCategory = category === 'Todas as receitas';
-      const matchesUnit =
-        unit === 'Todas as unidades' ||
-        recipe.unit === unit ||
-        (unit === 'Unidade (un)' && recipe.unit === 'un') ||
-        (unit === 'Quilograma (kg)' && recipe.unit === 'kg');
-      return matchesSearch && matchesCategory && matchesUnit;
-    });
+        recipe.product.toLocaleLowerCase().includes(search),
+    );
   });
 
   readonly totalRecipes = computed(() => this.filteredRecipes().length);
@@ -86,9 +64,9 @@ export class RecipesComponent implements OnInit {
   readonly totalPages = computed(() => Math.ceil(this.totalRecipes() / this.pageSize));
 
   ngOnInit(): void {
-    this.api.getRecipes().subscribe({
-      next: (recipes) => {
-        this.recipes.set(recipes.map((recipe) => this.toRecipeRow(recipe)));
+    forkJoin({ recipes: this.api.getRecipes(), products: this.api.getProducts() }).subscribe({
+      next: ({ recipes, products }) => {
+        this.recipes.set(recipes.map((recipe) => this.toRecipeRow(recipe, products)));
         this.errorMessage.set('');
         this.currentPage.set(1);
       },
@@ -98,16 +76,6 @@ export class RecipesComponent implements OnInit {
 
   onSearch(value: string): void {
     this.searchTerm.set(value);
-    this.currentPage.set(1);
-  }
-
-  onCategoryChange(category: string): void {
-    this.selectedCategory.set(category);
-    this.currentPage.set(1);
-  }
-
-  onUnitChange(unit: string): void {
-    this.selectedUnit.set(unit);
     this.currentPage.set(1);
   }
 
@@ -124,26 +92,32 @@ export class RecipesComponent implements OnInit {
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 
-  private toRecipeRow(recipe: ApiRecipe): RecipeRow {
+  // Produtos ligados pela receita principal (Produto.receita) ou por Receita_Produto.
+  private toRecipeRow(recipe: ApiRecipe, products: Product[]): RecipeRow {
     const totalCost = Number(recipe.custo_calculado) || 0;
     const yieldQuantity = Number(recipe.rendimento_quantidade) || 0;
-    const associatedProducts = recipe.produtos ?? [];
-    const unit =
-      associatedProducts.find((product) => product.unidade_medida)?.unidade_medida ?? '—';
+    const productIds = new Set([
+      ...products
+        .filter((product) => product.receita === recipe.id_receita)
+        .map((p) => p.id_produto),
+      ...(recipe.produtos ?? []).map((relation) => relation.produto),
+    ]);
+    const productNames = products
+      .filter((product) => productIds.has(product.id_produto))
+      .map((product) => product.nome);
 
     return {
       id: recipe.id_receita,
       name: recipe.nome,
       code: `#${recipe.id_receita}`,
       ingredients: recipe.ingredientes?.length ?? 0,
-      product: associatedProducts.length
-        ? associatedProducts.map((product) => `Produto #${product.produto}`).join(', ')
-        : '—',
-      category: '—',
-      yield: recipe.rendimento_quantidade ?? '—',
+      product: productNames.join(', ') || 'Sem produto associado',
+      yield:
+        yieldQuantity > 0
+          ? yieldQuantity.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
+          : 'Não informado',
       totalCost,
       unitCost: yieldQuantity > 0 ? totalCost / yieldQuantity : Number.NaN,
-      unit,
     };
   }
 
@@ -153,7 +127,6 @@ export class RecipesComponent implements OnInit {
         ? this.extractErrorDetail(error.error) || error.message
         : 'Ocorreu um erro inesperado.';
     this.errorMessage.set(`Não foi possível carregar as receitas. ${detail}`);
-    globalThis.alert(this.errorMessage());
   }
 
   private extractErrorDetail(error: unknown): string {
