@@ -170,10 +170,13 @@ export class DashboardComponent implements OnInit {
     return dias;
   });
 
-  // Pedidos do dia selecionado
+  // Pedidos do dia selecionado, em ordem de horário; sem horário vão para o fim
   readonly pedidosDoDia = computed(() => {
     const sel = this.dataSelecionada();
-    return this.pedidos().filter((p) => p.data === sel);
+    const chave = (horario: string) => (/^\d{2}:\d{2}$/.test(horario) ? horario : '99:99');
+    return this.pedidos()
+      .filter((p) => p.data === sel)
+      .sort((a, b) => chave(a.horario).localeCompare(chave(b.horario)) || a.id - b.id);
   });
 
   // Pedidos filtrados pela aba de categoria
