@@ -6,8 +6,11 @@
     [actions]="greetingActions"
   />
 
-  <!-- Métricas (2 cards) -->
+  <!--
+  Métricas temporariamente ocultas até que Vendas de Hoje e Pedidos Agendados
+  tenham dados completos no contrato da API.
   <app-metric-cards [items]="metricas" />
+  -->
 
   <!-- Grade principal: Calendário + Agenda -->
   <div class="dashboard__content-grid">
@@ -19,11 +22,10 @@
           <span class="calendar-panel__hint">Clique em qualquer data para abrir as encomendas</span>
         </div>
         <div class="calendar-panel__nav">
-          <button type="button" class="btn-icon" aria-label="Mês anterior">
+          <button type="button" class="btn-icon" aria-label="Mês anterior" (click)="navegarMes(-1)">
             <svg [lucideIcon]="'chevron-left'" [size]="18" [strokeWidth]="2"></svg>
           </button>
-          <span class="calendar-panel__month-label">Setembro</span>
-          <button type="button" class="btn-icon" aria-label="Próximo mês">
+          <button type="button" class="btn-icon" aria-label="Próximo mês" (click)="navegarMes(1)">
             <svg [lucideIcon]="'chevron-right'" [size]="18" [strokeWidth]="2"></svg>
           </button>
         </div>
@@ -48,7 +50,7 @@
                 [class.calendar-grid__cell--today]="dia.isHoje"
                 [class.calendar-grid__cell--selected]="dia.dataStr === dataSelecionada()"
                 (click)="selecionarDia(dia)"
-                [attr.aria-label]="'Dia ' + dia.numero + ' de Setembro'"
+                [attr.aria-label]="'Dia ' + dia.numero + ' de ' + mesAno"
               >
                 <span class="cell-day-number">{{ dia.numero }}</span>
                 @if (dia.isHoje) {

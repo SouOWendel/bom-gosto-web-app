@@ -10,10 +10,8 @@ import {
 } from '@lucide/angular';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
 import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
-import { MetricCardsComponent } from '../../shared/components/metric-cards/metric-cards.component';
 import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
 import { DashboardAgendaComponent } from './components/dashboard-agenda/dashboard-agenda.component';
-import { DashboardRemindersComponent } from './components/dashboard-reminders/dashboard-reminders.component';
 import { Order } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
 
@@ -63,9 +61,7 @@ export interface DiaCalendario {
     RouterLink,
     LucideDynamicIcon,
     PageGreetingComponent,
-    MetricCardsComponent,
     DashboardAgendaComponent,
-    DashboardRemindersComponent,
   ],
   providers: [provideLucideIcons(LucideChevronLeft, LucideChevronRight, LucidePlus)],
   templateUrl: './dashboard.component.html',
@@ -82,20 +78,7 @@ export class DashboardComponent implements OnInit {
     return this.monthLabel(this.dataSelecionada());
   }
 
-  readonly greetingActions: PageAction[] = [
-    {
-      label: 'Ver Cronograma do Dia',
-      route: '/pedidos',
-      icon: 'calendar',
-      variant: 'secondary',
-    },
-    {
-      label: 'Cadastrar Pedido',
-      route: '/pedidos',
-      icon: 'plus',
-      variant: 'primary',
-    },
-  ];
+  readonly greetingActions: PageAction[] = [];
 
   get metricas(): MetricCardItem[] {
     const orders = this.orderData();
@@ -225,6 +208,17 @@ export class DashboardComponent implements OnInit {
     this.filtroCategoria.set(cat);
   }
 
+  navegarMes(delta: number): void {
+    const selecionada = new Date(`${this.dataSelecionada()}T00:00:00`);
+    const dia = Math.min(
+      selecionada.getDate(),
+      new Date(selecionada.getFullYear(), selecionada.getMonth() + delta + 1, 0).getDate(),
+    );
+    this.dataSelecionada.set(
+      this.toDateKey(new Date(selecionada.getFullYear(), selecionada.getMonth() + delta, dia)),
+    );
+  }
+
   // Interatividade simulada: transição de status do pedido
   avancarStatus(pedido: PedidoSimulado): void {
     if (pedido.status === 'confirmado') {
@@ -304,7 +298,7 @@ export class DashboardComponent implements OnInit {
       return '';
     }
     return new Date(`${dateKey}T00:00:00`).toLocaleDateString('pt-BR', {
-      month: 'long',
+      month: 'short',
       year: 'numeric',
     });
   }
