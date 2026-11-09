@@ -45,14 +45,14 @@
       </div>
     </header>
 
-    <div class="recipes-page__table-wrap">
-      <table class="recipes-page__table">
+    <div class="data-table-wrap">
+      <table class="recipes-page__table data-table">
         <thead>
           <tr>
             <th>Receita / Código</th>
             <th>Produto associado</th>
             <th>Rendimento</th>
-            <th>Custo total<br />Ingredientes</th>
+            <th>Custo total<br />ingredientes</th>
             <th>Custo por<br />unidade</th>
             <th>Ações</th>
           </tr>
@@ -61,29 +61,35 @@
           @for (recipe of paginatedRecipes(); track recipe.code) {
             <tr>
               <td>
-                <strong>{{ recipe.name }}</strong>
-                <small>{{ recipe.code }} · {{ recipe.ingredients }} ingredientes</small>
+                <strong class="data-table__primary">{{ recipe.name }}</strong>
+                <small class="data-table__secondary"
+                  >{{ recipe.code }} · {{ recipe.ingredients }} ingredientes</small
+                >
               </td>
               <td>
-                <strong>{{ recipe.product }}</strong>
-                <small>{{ recipe.category }}</small>
+                <strong class="data-table__primary">{{ recipe.product }}</strong>
+                <small class="data-table__secondary">{{ recipe.category }}</small>
               </td>
               <td>{{ recipe.yield }}</td>
               <td>
-                <strong>{{ formatCurrency(recipe.totalCost) }}</strong>
+                <strong class="data-table__primary">{{ formatCurrency(recipe.totalCost) }}</strong>
               </td>
               <td>
-                <strong>{{ formatCurrency(recipe.unitCost) }}</strong>
-                <small>/ {{ recipe.unit }}</small>
+                <strong class="data-table__primary">{{ formatCurrency(recipe.unitCost) }}</strong>
+                <small class="data-table__secondary">/ {{ recipe.unit }}</small>
               </td>
-              <td class="recipes-page__actions">
-                <app-button size="small" variant="outline">Ver ficha</app-button>
-                <button type="button" class="recipes-page__more" aria-label="Mais ações">⋮</button>
+              <td>
+                <div class="recipes-page__actions">
+                  <app-button size="small" variant="outline">Ver ficha</app-button>
+                  <button type="button" class="recipes-page__more" aria-label="Mais ações">
+                    ⋮
+                  </button>
+                </div>
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="recipes-page__empty">
+              <td colspan="6" class="data-table__empty">
                 Nenhuma receita encontrada com os filtros selecionados.
               </td>
             </tr>
@@ -96,39 +102,12 @@
       ⓘ Custos baseados apenas nos ingredientes do inventário. Custo por unidade = custo total ÷
       rendimento.
     </div>
-    <footer class="recipes-page__footer">
-      <span
-        >Mostrando {{ visibleRange().start }}–{{ visibleRange().end }} de
-        {{ totalRecipes() }} receitas</span
-      >
-      <nav class="recipes-page__pagination" aria-label="Paginação">
-        <button
-          type="button"
-          aria-label="Página anterior"
-          [disabled]="currentPage() === 1"
-          (click)="goToPage(currentPage() - 1)"
-        >
-          ‹
-        </button>
-        @for (page of pageNumbers(); track page) {
-          <button
-            type="button"
-            [class.is-current]="currentPage() === page"
-            [attr.aria-current]="currentPage() === page ? 'page' : null"
-            (click)="goToPage(page)"
-          >
-            {{ page }}
-          </button>
-        }
-        <button
-          type="button"
-          aria-label="Próxima página"
-          [disabled]="currentPage() === totalPages() || totalPages() === 0"
-          (click)="goToPage(currentPage() + 1)"
-        >
-          ›
-        </button>
-      </nav>
-    </footer>
+    <app-table-pagination
+      [total]="totalRecipes()"
+      [pageSize]="pageSize"
+      [currentPage]="currentPage()"
+      itemLabel="receitas"
+      (pageChange)="goToPage($event)"
+    />
   </section>
 </div>

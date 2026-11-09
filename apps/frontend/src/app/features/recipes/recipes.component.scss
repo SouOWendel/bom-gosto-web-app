@@ -88,13 +88,6 @@
 }
 
 .recipes-page__table-header,
-.recipes-page__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.9rem 1.1rem;
-}
-
 .recipes-page__table-header h2 {
   margin: 0;
   color: #4b302e;
@@ -102,8 +95,7 @@
   font-weight: 700;
 }
 
-.recipes-page__table-header span,
-.recipes-page__footer span {
+.recipes-page__table-header span {
   color: #806b6a;
   font-size: 0.6rem;
 }
@@ -117,58 +109,8 @@
   font-size: 0.7rem;
 }
 
-.recipes-page__table-wrap {
-  overflow-x: auto;
-}
-
 .recipes-page__table {
-  width: 100%;
   min-width: 48rem;
-  border-collapse: collapse;
-}
-
-.recipes-page__table th {
-  padding: 0.55rem 0.45rem;
-  background: #fff0ed;
-  color: #725d5c;
-  text-align: left;
-  font-size: 0.55rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.recipes-page__table td {
-  padding: 0.65rem 0.45rem;
-  border-bottom: 1px solid #f2e4e0;
-  color: #4b3538;
-  font-size: 0.72rem;
-  vertical-align: middle;
-}
-
-.recipes-page__table th:first-child,
-.recipes-page__table td:first-child {
-  padding-left: 1.1rem;
-}
-
-.recipes-page__table th:last-child,
-.recipes-page__table td:last-child {
-  padding-right: 1.1rem;
-}
-
-.recipes-page__table td strong,
-.recipes-page__table td small {
-  display: block;
-}
-
-.recipes-page__table td strong {
-  font-size: 0.72rem;
-  font-weight: 600;
-}
-
-.recipes-page__table td small {
-  margin-top: 0.2rem;
-  color: #897474;
-  font-size: 0.6rem;
 }
 
 .recipes-page__actions {
@@ -185,12 +127,6 @@
   font-size: 1rem;
 }
 
-.recipes-page__empty {
-  padding: 2rem !important;
-  color: #897474 !important;
-  text-align: center;
-}
-
 .recipes-page__note {
   padding: 0.65rem 1.1rem;
   background: #fff8f6;
@@ -201,33 +137,6 @@
 
 .recipes-page__footer {
   padding-top: 0.7rem;
-}
-
-.recipes-page__footer small {
-  color: #a38e8c;
-  font-size: 0.58rem;
-}
-
-.recipes-page__pagination {
-  display: flex;
-  gap: 0.3rem;
-}
-
-.recipes-page__pagination button {
-  width: 1.6rem;
-  height: 1.6rem;
-  border: 0;
-  border-radius: 0.35rem;
-  background: #fff0ed;
-  color: #725d5c;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.7rem;
-}
-
-.recipes-page__pagination button.is-current {
-  background: #8b1226;
-  color: #fff;
 }
 
 @media (max-width: 700px) {

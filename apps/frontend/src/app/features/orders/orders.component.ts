@@ -26,6 +26,7 @@ import {
   Recipe,
 } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
+import { TablePaginationComponent } from '../../shared/components/table-pagination/table-pagination.component';
 
 type OrderStatus = 'retirada' | 'producao' | 'confirmado' | 'pendente' | 'cancelado';
 type OrderCategory = 'bolos' | 'doces' | 'kits';
@@ -53,6 +54,7 @@ interface OrderRow {
   selector: 'app-orders',
   standalone: true,
   imports: [
+    TablePaginationComponent,
     CommonModule,
     LucideDynamicIcon,
     PageGreetingComponent,
@@ -212,19 +214,6 @@ export class OrdersComponent implements OnInit {
     return this.filteredOrders().slice(start, start + this.pageSize);
   });
   readonly totalPages = computed(() => Math.ceil(this.filteredOrders().length / this.pageSize));
-  readonly pageNumbers = computed(() =>
-    Array.from({ length: this.totalPages() }, (_, index) => index + 1),
-  );
-  readonly visibleRange = computed(() => {
-    const total = this.filteredOrders().length;
-    if (total === 0) {
-      return { start: 0, end: 0 };
-    }
-    return {
-      start: (this.currentPage() - 1) * this.pageSize + 1,
-      end: Math.min(this.currentPage() * this.pageSize, total),
-    };
-  });
 
   ngOnInit(): void {
     this.loadOrders();

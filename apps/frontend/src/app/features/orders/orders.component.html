@@ -24,6 +24,7 @@
     @if (isCancelModalOpen()) {
       <app-cancel-production-modal
         [order]="selectedOrder()"
+        [apiError]="actionError()"
         (closed)="closeCancelModal()"
         (confirmed)="confirmOrderCancellation()"
       />
@@ -32,6 +33,7 @@
     @if (isCompleteModalOpen() && selectedOrder(); as order) {
       <app-complete-production-modal
         [order]="order"
+        [apiError]="actionError()"
         (closed)="closeCompleteModal()"
         (confirmed)="confirmOrderCompletion()"
       />
@@ -118,14 +120,14 @@
   </section>
 
   <section class="orders-table">
-    <div class="orders-table__head">
+    <div class="orders-table__head data-table__head">
       <span>Nº &amp; ENTREGA</span><span>CLIENTE &amp;<br />CONTATO</span
       ><span>ITEM ENCOMENDADO</span> <span>TOTAL &amp;<br />PAGAMENTO</span
       ><span>STATUS PRODUÇÃO</span><span>AÇÕES OPERACIONAIS</span>
     </div>
 
     @for (order of paginatedOrders(); track order.id) {
-      <article class="order-row">
+      <article class="order-row data-table__row">
         <div class="order-row__delivery">
           <strong>{{ order.id }}</strong
           ><b>{{ order.schedule }}</b
@@ -176,42 +178,15 @@
         </div>
       </article>
     } @empty {
-      <div class="orders-table__empty">Nenhum pedido encontrado com os filtros selecionados.</div>
+      <div class="data-table__empty">Nenhum pedido encontrado com os filtros selecionados.</div>
     }
 
-    <footer class="orders-table__footer">
-      <span
-        >Mostrando {{ visibleRange().start }}–{{ visibleRange().end }} de
-        {{ filteredOrders().length }} encomendas</span
-      >
-      <div>
-        <button
-          type="button"
-          aria-label="Página anterior"
-          [disabled]="currentPage() === 1"
-          (click)="goToPage(currentPage() - 1)"
-        >
-          ‹
-        </button>
-        @for (page of pageNumbers(); track page) {
-          <button
-            type="button"
-            [class.is-current]="currentPage() === page"
-            [attr.aria-current]="currentPage() === page ? 'page' : null"
-            (click)="goToPage(page)"
-          >
-            {{ page }}
-          </button>
-        }
-        <button
-          type="button"
-          aria-label="Próxima página"
-          [disabled]="currentPage() === totalPages() || totalPages() === 0"
-          (click)="goToPage(currentPage() + 1)"
-        >
-          ›
-        </button>
-      </div>
-    </footer>
+    <app-table-pagination
+      [total]="filteredOrders().length"
+      [pageSize]="pageSize"
+      [currentPage]="currentPage()"
+      itemLabel="encomendas"
+      (pageChange)="goToPage($event)"
+    />
   </section>
 </div>
