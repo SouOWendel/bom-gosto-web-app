@@ -7,6 +7,7 @@ import { ButtonComponent } from '../../shared/components/button/button.component
 import { InputTextComponent } from '../../shared/components/input-text/input-text.component';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
 import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
+import { TablePaginationComponent } from '../../shared/components/table-pagination/table-pagination.component';
 
 interface RecipeRow {
   id: number;
@@ -24,7 +25,13 @@ interface RecipeRow {
 @Component({
   selector: 'app-recipes',
   standalone: true,
-  imports: [FormsModule, ButtonComponent, InputTextComponent, PageGreetingComponent],
+  imports: [
+    TablePaginationComponent,
+    FormsModule,
+    ButtonComponent,
+    InputTextComponent,
+    PageGreetingComponent,
+  ],
   templateUrl: './recipes.component.html',
   styleUrls: ['./recipes.component.scss'],
 })
@@ -77,19 +84,6 @@ export class RecipesComponent implements OnInit {
     return this.filteredRecipes().slice(start, start + this.pageSize);
   });
   readonly totalPages = computed(() => Math.ceil(this.totalRecipes() / this.pageSize));
-  readonly pageNumbers = computed(() =>
-    Array.from({ length: this.totalPages() }, (_, index) => index + 1),
-  );
-  readonly visibleRange = computed(() => {
-    const total = this.totalRecipes();
-    if (total === 0) {
-      return { start: 0, end: 0 };
-    }
-    return {
-      start: (this.currentPage() - 1) * this.pageSize + 1,
-      end: Math.min(this.currentPage() * this.pageSize, total),
-    };
-  });
 
   ngOnInit(): void {
     this.api.getRecipes().subscribe({

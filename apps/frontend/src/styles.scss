@@ -55,25 +55,96 @@ select {
   font-family: inherit;
 }
 
-table {
+// Padrão único de tabelas: use .data-table em <table> ou .data-table__head/__row em grids.
+:root {
+  --table-head-bg: #fff4f1;
+  --table-head-color: #765d60;
+  --table-head-size: 0.65rem;
+  --table-cell-color: #4b3538;
+  --table-cell-size: 0.78rem;
+  --table-muted-color: #8c777a;
+  --table-border: #f3e7e4;
+  --table-hover-bg: #fffaf9;
+  --table-edge-padding: 1.1rem;
+}
+
+.data-table-wrap {
+  overflow-x: auto;
+}
+
+.data-table {
   width: 100%;
   border-collapse: collapse;
   background: var(--color-white);
 }
 
-thead {
-  background: #fff4f1;
+.data-table th,
+.data-table__head {
+  padding: 0.7rem 0.75rem;
+  border-bottom: 1px solid var(--table-border);
+  background: var(--table-head-bg);
+  color: var(--table-head-color);
+  font-size: var(--table-head-size);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+  text-align: left;
+  text-transform: uppercase;
 }
 
-th,
-td {
-  border-bottom: 1px solid #f1e4e0;
+.data-table td,
+.data-table__row {
+  padding: 0.8rem 0.75rem;
+  border-bottom: 1px solid var(--table-border);
+  color: var(--table-cell-color);
+  font-size: var(--table-cell-size);
   text-align: left;
   vertical-align: middle;
 }
 
-tbody tr:hover {
-  background: #fffaf8;
+.data-table th:first-child,
+.data-table td:first-child,
+.data-table__head,
+.data-table__row {
+  padding-left: var(--table-edge-padding);
+}
+
+.data-table th:last-child,
+.data-table td:last-child,
+.data-table__head,
+.data-table__row {
+  padding-right: var(--table-edge-padding);
+}
+
+.data-table tbody tr:hover td,
+.data-table__row:hover {
+  background: var(--table-hover-bg);
+}
+
+// Célula com título e linha de apoio empilhados.
+.data-table__primary,
+.data-table__secondary {
+  display: block;
+}
+
+.data-table__primary {
+  color: var(--table-cell-color);
+  font-size: var(--table-cell-size);
+  font-weight: 600;
+}
+
+.data-table__secondary {
+  margin-top: 0.2rem;
+  color: var(--table-muted-color);
+  font-size: 0.68rem;
+}
+
+.data-table__empty,
+.data-table td.data-table__empty {
+  padding: 2.5rem 1rem;
+  color: var(--table-muted-color);
+  font-size: var(--table-cell-size);
+  text-align: center;
 }
 
 .login-page {
@@ -157,6 +228,29 @@ tbody tr:hover {
   cursor: pointer;
   &:hover {
     background-color: #f7ebeb;
+    color: var(--color-primary);
+  }
+}
+// Botão de ação dentro da linha (ex.: Editar).
+.data-table__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid #d9c5c2;
+  border-radius: 0.4rem;
+  background: #fff;
+  color: #5d4649;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: var(--color-primary);
+    background: #fcf6f5;
     color: var(--color-primary);
   }
 }

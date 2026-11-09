@@ -163,23 +163,11 @@
   gap: 0.75rem;
   align-items: center;
 }
-.orders-table__head {
-  padding: 0.85rem 0.65rem;
-  background: #fff8f5;
-  color: #766365;
-  font-size: 0.55rem;
-  font-weight: 700;
-}
 .orders-table__head span:last-child {
   text-align: right;
 }
 .order-row {
   min-height: 5.2rem;
-  padding: 0.55rem 0.65rem;
-  border-bottom: 1px solid #f3e8e5;
-}
-.order-row:nth-child(even) {
-  background: #fffdfc;
 }
 .order-row > div {
   min-width: 0;
@@ -193,20 +181,20 @@
   gap: 0.15rem;
 }
 .order-row strong {
-  color: #4b3535;
-  font-size: 0.72rem;
+  color: var(--table-cell-color);
+  font-size: var(--table-cell-size);
 }
 .order-row small,
 .order-row span {
-  color: #806d6d;
-  font-size: 0.6rem;
+  color: var(--table-muted-color);
+  font-size: 0.68rem;
 }
 .order-row__delivery > strong {
   color: #8d0d24;
   font-size: 0.95rem;
 }
 .order-row__delivery b {
-  font-size: 0.62rem;
+  font-size: 0.68rem;
 }
 .order-row__item {
   display: flex;
@@ -233,7 +221,7 @@
   width: fit-content;
   padding: 0.25rem 0.55rem;
   border-radius: 1rem;
-  font-size: 0.6rem !important;
+  font-size: 0.65rem !important;
   font-weight: 700;
 }
 .status-pill--retirada {
@@ -286,46 +274,11 @@
   background: #8d0d24;
   color: #fff;
   font: inherit;
-  font-size: 0.56rem;
+  font-size: 0.68rem;
   font-weight: 700;
   line-height: 1.25;
   cursor: pointer;
 }
-.orders-table__empty {
-  padding: 3rem;
-  text-align: center;
-  color: #806d6d;
-}
-.orders-table__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.85rem 0.75rem;
-  color: #806d6d;
-  font-size: 0.62rem;
-}
-.orders-table__footer strong {
-  color: #8d0d24;
-}
-.orders-table__footer div {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-.orders-table__footer button {
-  width: 1.65rem;
-  height: 1.65rem;
-  border: 0;
-  border-radius: 0.35rem;
-  background: #fff;
-  color: #806d6d;
-  cursor: pointer;
-}
-.orders-table__footer button.is-current {
-  background: #8d0d24;
-  color: #fff;
-}
-
 @media (max-width: 1000px) {
   .orders-page__summary {
     grid-template-columns: repeat(2, 1fr);

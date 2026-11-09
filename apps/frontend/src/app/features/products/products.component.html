@@ -27,15 +27,15 @@
       </span>
     </div>
 
-    <div class="products-table-wrap">
-      <table class="products-table">
+    <div class="products-table-wrap data-table-wrap">
+      <table class="data-table">
         <thead>
           <tr>
-            <th>CÓDIGO</th>
-            <th>NOME DO PRODUTO</th>
-            <th>PREÇO DE VENDA</th>
-            <th>RECEITA VINCULADA</th>
-            <th>AÇÕES</th>
+            <th>Código</th>
+            <th>Nome do produto</th>
+            <th>Preço de venda</th>
+            <th>Receita vinculada</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -61,7 +61,7 @@
                 <div class="product-actions">
                   <button
                     type="button"
-                    class="btn-action"
+                    class="data-table__action"
                     aria-label="Editar produto"
                     title="Editar produto"
                     (click)="openEditModal(prod)"
@@ -74,7 +74,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="5" class="products-table__empty">
+              <td colspan="5" class="data-table__empty">
                 Nenhum produto encontrado. Clique em "+ Novo Produto" para cadastrar.
               </td>
             </tr>

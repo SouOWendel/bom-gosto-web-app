@@ -1,4 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { LucideDynamicIcon, LucidePencil, provideLucideIcons } from '@lucide/angular';
 import { MetricCardsComponent } from '../../shared/components/metric-cards/metric-cards.component';
 import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
@@ -9,6 +10,7 @@ import {
   IngredientCreateModalComponent,
   IngredientCreationPayload,
 } from '../../shared/components/ingredient-create-modal/ingredient-create-modal.component';
+import { TablePaginationComponent } from '../../shared/components/table-pagination/table-pagination.component';
 
 interface InventoryItem {
   raw: Ingredient;
@@ -29,7 +31,14 @@ interface InventoryItem {
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [PageGreetingComponent, MetricCardsComponent, IngredientCreateModalComponent],
+  imports: [
+    TablePaginationComponent,
+    PageGreetingComponent,
+    MetricCardsComponent,
+    IngredientCreateModalComponent,
+    LucideDynamicIcon,
+  ],
+  providers: [provideLucideIcons(LucidePencil)],
   templateUrl: './inventory.component.html',
   styleUrls: ['./inventory.component.scss'],
 })
@@ -51,19 +60,6 @@ export class InventoryComponent implements OnInit {
     return this.filteredInventoryItems().slice(start, start + this.pageSize);
   });
   readonly totalPages = computed(() => Math.ceil(this.totalItems() / this.pageSize));
-  readonly pageNumbers = computed(() =>
-    Array.from({ length: this.totalPages() }, (_, index) => index + 1),
-  );
-  readonly visibleRange = computed(() => {
-    const total = this.totalItems();
-    if (total === 0) {
-      return { start: 0, end: 0 };
-    }
-    return {
-      start: (this.currentPage() - 1) * this.pageSize + 1,
-      end: Math.min(this.currentPage() * this.pageSize, total),
-    };
-  });
 
   readonly greetingActions: PageAction[] = [
     { label: 'Novo Insumo', icon: 'plus', variant: 'primary' },

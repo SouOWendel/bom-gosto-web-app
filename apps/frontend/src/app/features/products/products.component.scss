@@ -6,6 +6,7 @@
 }
 
 .products-panel {
+  overflow: hidden;
   background: #fff;
   border-radius: 0.75rem;
   border: 1px solid #ebdcd9;
@@ -53,38 +54,6 @@
   font-weight: 500;
 }
 
-.products-table-wrap {
-  overflow-x: auto;
-}
-
-.products-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-
-  th {
-    text-align: left;
-    padding: 0.75rem 1rem;
-    background: #fcf9f8;
-    color: #7d686b;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    border-bottom: 1px solid #ebdcd9;
-  }
-
-  td {
-    padding: 0.9rem 1rem;
-    border-bottom: 1px solid #f3eae8;
-    color: #473235;
-    vertical-align: middle;
-  }
-
-  tr:hover td {
-    background: #fdfbfb;
-  }
-}
-
 .product-code {
   font-family: monospace;
   font-weight: 600;
@@ -121,34 +90,12 @@
   font-size: 0.8rem;
 }
 
-.products-table__empty {
-  text-align: center;
-  padding: 2.5rem 1rem !important;
-  color: #8c777a;
-  font-style: italic;
-}
-
 .product-actions {
   display: flex;
   gap: 0.5rem;
 }
 
-.btn-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.65rem;
-  border: 1px solid #d9c5c2;
-  border-radius: 0.4rem;
-  background: #fff;
-  color: #5d4649;
-  font-size: 0.78rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
-
-  &:hover {
-    background: #fcf6f5;
-    border-color: #a3112d;
-    color: #a3112d;
-  }
+// A tabela ocupa toda a largura do painel, como nas demais telas.
+.products-table-wrap {
+  margin: 0 -1.25rem -1.25rem;
 }

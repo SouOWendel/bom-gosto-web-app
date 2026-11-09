@@ -72,8 +72,8 @@
       >
     </div>
 
-    <div class="inventory-page__table-wrap">
-      <table class="inventory-page__table">
+    <div class="data-table-wrap">
+      <table class="inventory-page__table data-table">
         <thead>
           <tr>
             <th>Insumo / Código</th>
@@ -90,8 +90,8 @@
           @for (item of paginatedInventoryItems(); track item.code) {
             <tr>
               <td>
-                <strong class="inventory-page__item-name">{{ item.name }}</strong>
-                <small class="inventory-page__item-code">{{ item.code }}</small>
+                <strong class="data-table__primary">{{ item.name }}</strong>
+                <small class="data-table__secondary">{{ item.code }}</small>
               </td>
               <td>
                 <span class="inventory-page__level"
@@ -126,14 +126,17 @@
               </td>
               <td>
                 <div class="inventory-page__actions-cell">
-                  <button
-                    type="button"
-                    class="inventory-page__row-action"
-                    (click)="openEditModal(item)"
-                  >
-                    Editar Insumo
+                  <button type="button" class="data-table__action" (click)="openEditModal(item)">
+                    <svg [lucideIcon]="'pencil'" [size]="14"></svg>
+                    <span>Editar</span>
                   </button>
                 </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="data-table__empty">
+                Nenhum insumo encontrado com os filtros selecionados.
               </td>
             </tr>
           }
@@ -141,39 +144,12 @@
       </table>
     </div>
 
-    <footer class="inventory-page__footer">
-      <span
-        >Mostrando {{ visibleRange().start }}–{{ visibleRange().end }} de
-        {{ totalItems() }} insumos</span
-      >
-      <div class="inventory-page__pagination" aria-label="Paginação">
-        <button
-          type="button"
-          aria-label="Página anterior"
-          [disabled]="currentPage() === 1"
-          (click)="goToPage(currentPage() - 1)"
-        >
-          ‹
-        </button>
-        @for (page of pageNumbers(); track page) {
-          <button
-            type="button"
-            [class.is-current]="currentPage() === page"
-            [attr.aria-current]="currentPage() === page ? 'page' : null"
-            (click)="goToPage(page)"
-          >
-            {{ page }}
-          </button>
-        }
-        <button
-          type="button"
-          aria-label="Próxima página"
-          [disabled]="currentPage() === totalPages() || totalPages() === 0"
-          (click)="goToPage(currentPage() + 1)"
-        >
-          ›
-        </button>
-      </div>
-    </footer>
+    <app-table-pagination
+      [total]="totalItems()"
+      [pageSize]="pageSize"
+      [currentPage]="currentPage()"
+      itemLabel="insumos"
+      (pageChange)="goToPage($event)"
+    />
   </section>
 </div>
