@@ -14,15 +14,6 @@
       (submitted)="saveIngredient($event)"
     />
   }
-  @if (ingredientToMove(); as ingredient) {
-    <app-ingredient-movement-modal
-      [ingredient]="ingredient"
-      [type]="movementType()"
-      [apiError]="movementError()"
-      (closed)="closeMovementModal()"
-      (submitted)="moveIngredient($event)"
-    />
-  }
   @if (createError()) {
     <p class="inventory-page__create-error" role="alert">{{ createError() }}</p>
   }
@@ -32,7 +23,6 @@
   <section class="inventory-page__panel" aria-label="Lista de matérias-primas">
     <div class="inventory-page__filters">
       <div class="inventory-page__tabs" role="tablist" aria-label="Categorias do inventário">
-<<<<<<< HEAD
         <button
           type="button"
           class="inventory-page__tab"
@@ -51,20 +41,6 @@
         </button>
       </div>
       <div class="inventory-page__filter-row">
-=======
-        <button type="button" class="inventory-page__tab inventory-page__tab--active">
-          Todos ({{ totalItems() }})
-        </button>
-        <button type="button" class="inventory-page__tab">Ingredientes Base</button>
-        <button type="button" class="inventory-page__tab">Embalagens &amp; Caixas</button>
-        <button type="button" class="inventory-page__tab">Descartáveis &amp; Utensílios</button>
-      </div>
-      <div class="inventory-page__filter-row">
-        <button type="button" class="inventory-page__alert-filter">
-          Em Alerta de Reposição ({{ belowMinimumCount() }})
-          <span class="inventory-page__alert-count">{{ belowMinimumCount() }}</span>
-        </button>
->>>>>>> origin/dev
         <label class="inventory-page__search">
           <svg class="inventory-page__icon" viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="11" cy="11" r="6" />
@@ -80,8 +56,8 @@
       </div>
     </div>
 
-    <div class="inventory-page__legend" aria-label="Legenda do semáforo de validade">
-      <strong>Semáforo de validade</strong>
+    <div class="inventory-page__legend" aria-label="Legenda do status de validade">
+      <strong>Status de validade</strong>
       <span class="inventory-page__legend-item"
         ><i class="inventory-page__dot inventory-page__dot--critical"></i>Crítico (Vencido /
         Hoje)</span
@@ -107,19 +83,15 @@
             <th>Status</th>
             <th>Validade</th>
             <th>Custo</th>
-            <th>Últ. Mov. / Ações</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody>
-<<<<<<< HEAD
-          @for (item of filteredInventoryItems(); track item.code) {
-=======
           @for (item of paginatedInventoryItems(); track item.code) {
->>>>>>> origin/dev
             <tr>
               <td>
                 <strong class="inventory-page__item-name">{{ item.name }}</strong>
-                <small class="inventory-page__item-code">{{ item.code }} · {{ item.lot }}</small>
+                <small class="inventory-page__item-code">{{ item.code }}</small>
               </td>
               <td>
                 <span class="inventory-page__level"
@@ -135,7 +107,7 @@
                 ></span>
               </td>
               <td>
-                {{ item.unit }}<br /><span class="inventory-page__muted">{{ item.packaging }}</span>
+                {{ item.unit }}
               </td>
               <td>{{ item.minimum }}</td>
               <td>
@@ -153,28 +125,7 @@
                 ><br /><span class="inventory-page__muted">/ un</span>
               </td>
               <td>
-                <span class="inventory-page__muted"
-                  >{{ item.lastMovement }}<br />{{ item.author }}</span
-                >
                 <div class="inventory-page__actions-cell">
-                  <button
-                    type="button"
-                    class="inventory-page__movement-action inventory-page__movement-action--add"
-                    (click)="openMovementModal(item, 'entrada')"
-                    [attr.aria-label]="'Adicionar estoque de ' + item.name"
-                    title="Adicionar entrada"
-                  >
-                    +
-                  </button>
-                  <button
-                    type="button"
-                    class="inventory-page__movement-action inventory-page__movement-action--remove"
-                    (click)="openMovementModal(item, 'saida')"
-                    [attr.aria-label]="'Registrar saída de ' + item.name"
-                    title="Registrar saída"
-                  >
-                    −
-                  </button>
                   <button
                     type="button"
                     class="inventory-page__row-action"
@@ -192,11 +143,6 @@
 
     <footer class="inventory-page__footer">
       <span
-<<<<<<< HEAD
-        >Exibindo <strong>{{ filteredInventoryItems().length }}</strong> de
-        {{ ingredients().length }} insumos</span
-      >
-=======
         >Mostrando {{ visibleRange().start }}–{{ visibleRange().end }} de
         {{ totalItems() }} insumos</span
       >
@@ -228,7 +174,6 @@
           ›
         </button>
       </div>
->>>>>>> origin/dev
     </footer>
   </section>
 </div>

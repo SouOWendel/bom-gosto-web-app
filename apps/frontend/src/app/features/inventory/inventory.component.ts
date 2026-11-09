@@ -9,10 +9,6 @@ import {
   IngredientCreateModalComponent,
   IngredientCreationPayload,
 } from '../../shared/components/ingredient-create-modal/ingredient-create-modal.component';
-import {
-  IngredientMovementModalComponent,
-  IngredientMovementPayload,
-} from '../../shared/components/ingredient-movement-modal/ingredient-movement-modal.component';
 
 interface InventoryItem {
   raw: Ingredient;
@@ -22,26 +18,18 @@ interface InventoryItem {
   level: string;
   percentage: number;
   unit: string;
-  packaging: string;
   minimum: string;
   status: 'low' | 'normal' | 'critical';
   statusLabel: string;
   expiration: string;
   expirationDetail: string;
   cost: string;
-  lastMovement: string;
-  author: string;
 }
 
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [
-    PageGreetingComponent,
-    MetricCardsComponent,
-    IngredientCreateModalComponent,
-    IngredientMovementModalComponent,
-  ],
+  imports: [PageGreetingComponent, MetricCardsComponent, IngredientCreateModalComponent],
   templateUrl: './inventory.component.html',
   styleUrls: ['./inventory.component.scss'],
 })
@@ -53,9 +41,6 @@ export class InventoryComponent implements OnInit {
   readonly isCreateModalOpen = signal(false);
   readonly createError = signal<string | null>(null);
   readonly ingredientToEdit = signal<Ingredient | null>(null);
-  readonly ingredientToMove = signal<Ingredient | null>(null);
-  readonly movementType = signal<'entrada' | 'saida'>('entrada');
-  readonly movementError = signal<string | null>(null);
   readonly searchTerm = signal('');
   readonly alertOnly = signal(false);
   readonly currentPage = signal(1);
@@ -201,39 +186,6 @@ export class InventoryComponent implements OnInit {
     this.isCreateModalOpen.set(true);
   }
 
-  openMovementModal(item: InventoryItem, type: 'entrada' | 'saida'): void {
-    this.ingredientToMove.set(item.raw);
-    this.movementType.set(type);
-    this.movementError.set(null);
-  }
-
-  closeMovementModal(): void {
-    this.ingredientToMove.set(null);
-    this.movementError.set(null);
-  }
-
-  moveIngredient(payload: IngredientMovementPayload): void {
-    const ingredient = this.ingredientToMove();
-    if (!ingredient) {
-      return;
-    }
-
-    this.domainApi.moveIngredient(ingredient.id_ingrediente, payload).subscribe({
-      next: (updated) => {
-        this.ingredients.update((items) =>
-          items.map((item) => (item.id_ingrediente === updated.id_ingrediente ? updated : item)),
-        );
-        this.closeMovementModal();
-      },
-      error: (error: unknown) => {
-        this.movementError.set(
-          `Não foi possível registrar a movimentação. ${this.errorDetail(error)}`,
-        );
-        console.error('Falha ao movimentar ingrediente.', error);
-      },
-    });
-  }
-
   closeCreateModal(): void {
     this.isCreateModalOpen.set(false);
     this.ingredientToEdit.set(null);
@@ -290,7 +242,7 @@ export class InventoryComponent implements OnInit {
       raw: ingredient,
       name: ingredient.nome,
       code: `INS-${String(ingredient.id_ingrediente).padStart(4, '0')}`,
-      lot: 'Lote não informado',
+      lot: '',
       level: `${this.formatQuantity(ingredient.quantidade_disponivel)} un.`,
       percentage:
         minimum > 0
@@ -299,7 +251,6 @@ export class InventoryComponent implements OnInit {
             ? 100
             : 0,
       unit: 'un.',
-      packaging: 'Embalagem não informada',
       minimum:
         ingredient.quantidade_minima === null
           ? 'Não informado'
@@ -309,8 +260,6 @@ export class InventoryComponent implements OnInit {
       expiration: this.formatDate(ingredient.data_validade),
       expirationDetail: this.expirationDetail(ingredient.alerta_validade),
       cost: this.formatCurrencyOrUnavailable(ingredient.custo_unitario),
-      lastMovement: 'Não informado',
-      author: 'Não informado',
     };
   }
 
