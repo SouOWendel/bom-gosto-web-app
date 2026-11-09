@@ -37,8 +37,9 @@ export class MainLayoutComponent {
   });
 
   onLogout(): void {
-    this.authService.logout().subscribe(() => {
-      this.router.navigate(['/auth/login']);
+    this.authService.logout().subscribe({
+      next: () => void this.router.navigate(['/auth/login']),
+      error: () => void this.router.navigate(['/auth/login']),
     });
   }
 }
