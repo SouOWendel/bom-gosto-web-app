@@ -17,7 +17,7 @@ import {
 })
 export class TopbarComponent {
   readonly dataAtual = computed<string>(() => {
-    const now = new Date(2026, 8, 15); // 15 de Setembro de 2026 (mês é 0-indexado)
+    const now = new Date();
     return now.toLocaleDateString('pt-BR', {
       weekday: 'long',
       day: 'numeric',
