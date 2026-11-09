@@ -9,6 +9,17 @@ from .models import Cancelamento, Cliente, ItemPedido, Pedido, Produto, status_o
 from producao.services import analisar_pedido
 
 
+# Reaproveita o cliente com o mesmo telefone em vez de duplicar o cadastro.
+def _cliente_por_contato(nome, telefone):
+    cliente = Cliente.objects.filter(telefone=telefone).order_by("id_cliente").first()
+    if cliente is None:
+        return Cliente.objects.create(nome=nome, telefone=telefone)
+    if cliente.nome != nome:
+        cliente.nome = nome
+        cliente.save(update_fields=["nome"])
+    return cliente
+
+
 # Serializador para consulta e cadastro de produtos comercializados.
 class ProdutoSerializer(serializers.ModelSerializer):
     receita_nome = serializers.CharField(source="receita.nome", read_only=True, allow_null=True)
@@ -267,7 +278,7 @@ class PedidoSerializer(serializers.ModelSerializer):
         nome = validated_data.pop("contato_nome", None)
         telefone = validated_data.pop("contato_telefone", None)
         if not validated_data.get("cliente") and nome and telefone:
-            validated_data["cliente"] = Cliente.objects.create(nome=nome, telefone=telefone)
+            validated_data["cliente"] = _cliente_por_contato(nome, telefone)
         itens_data = validated_data.pop("itens", [])
         pedido = Pedido.objects.create(**validated_data)
 
@@ -282,7 +293,7 @@ class PedidoSerializer(serializers.ModelSerializer):
         nome = validated_data.pop("contato_nome", None)
         telefone = validated_data.pop("contato_telefone", None)
         if not validated_data.get("cliente") and nome and telefone:
-            validated_data["cliente"] = Cliente.objects.create(nome=nome, telefone=telefone)
+            validated_data["cliente"] = _cliente_por_contato(nome, telefone)
         itens_data = validated_data.pop("itens", None)
 
         for campo, valor in validated_data.items():

@@ -1,23 +1,19 @@
-from rest_framework.permissions import BasePermission, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from django.db import transaction
+from django.db.models.deletion import ProtectedError
+from django.shortcuts import get_object_or_404
 
+from core.permissions import SenhaInicialAlterada
 from .models import Cancelamento, Pedido, Produto, status_operacional
 from .serializers import CancelamentoRegistroSerializer, PedidoSerializer, ProdutoSerializer
 from estoque.services import baixar_lotes
 from producao.serializers import CancelamentoSerializer
 
-
-# Bloqueia as rotas de pedidos até a senha provisória ser trocada.
-class SenhaInicialAlterada(BasePermission):
-    message = "Altere a senha inicial antes de acessar os pedidos."
-
-    def has_permission(self, request, view):
-        return not getattr(request.user, "primeiro_acesso", True)
 
 
 # Oferece o CRUD de pedidos e as ações operacionais de consumo, conclusão e cancelamento.
@@ -35,7 +31,7 @@ class PedidoViewSet(ModelViewSet):
     @action(detail=True, methods=["post"], url_path="consumir-estoque")
     @transaction.atomic
     def consumir_estoque(self, request, pk=None):
-        pedido = Pedido.objects.select_for_update().get(pk=pk)
+        pedido = get_object_or_404(Pedido.objects.select_for_update(), pk=pk)
         pedido.status = status_operacional(pedido.status)
         if pedido.tipo != Pedido.Tipo.EXTERNO:
             return Response({"tipo": "A baixa por consumo é reservada a pedidos externos; a produção interna gera reposição."}, status=status.HTTP_400_BAD_REQUEST)
@@ -66,7 +62,7 @@ class PedidoViewSet(ModelViewSet):
     @action(detail=True, methods=["post"], url_path="concluir")
     @transaction.atomic
     def concluir(self, request, pk=None):
-        pedido = Pedido.objects.select_for_update().get(pk=pk)
+        pedido = get_object_or_404(Pedido.objects.select_for_update(), pk=pk)
         pedido.status = status_operacional(pedido.status)
         if pedido.tipo != Pedido.Tipo.INTERNO or pedido.status != Pedido.Status.PRODUCAO_CONCLUIDA:
             return Response({"status": "A conclusão direta é reservada à reposição interna após finalizar a produção."}, status=status.HTTP_400_BAD_REQUEST)
@@ -78,7 +74,7 @@ class PedidoViewSet(ModelViewSet):
     @action(detail=True, methods=["post"], url_path="cancelar")
     @transaction.atomic
     def cancelar(self, request, pk=None):
-        pedido = Pedido.objects.select_for_update().get(pk=pk)
+        pedido = get_object_or_404(Pedido.objects.select_for_update(), pk=pk)
         serializer = CancelamentoSerializer(data=request.data, context={"pedido": pedido})
         serializer.is_valid(raise_exception=True)
         pedido_cancelado, cancelamento = serializer.save()
@@ -103,3 +99,10 @@ class ProdutoViewSet(ModelViewSet):
     queryset = Produto.objects.select_related("receita").all().order_by("nome")
     serializer_class = ProdutoSerializer
     permission_classes = [IsAuthenticated, SenhaInicialAlterada]
+
+    # Recusa com 400 a exclusão de produtos que já têm lotes ou pedidos vinculados.
+    def perform_destroy(self, instance):
+        try:
+            instance.delete()
+        except ProtectedError as erro:
+            raise ValidationError("O produto possui lotes em estoque ou pedidos vinculados e não pode ser excluído.") from erro
