@@ -183,8 +183,11 @@
     padding: 0 0.7rem;
     background: #f3f7f4;
     color: #7d8b84;
-    font-size: 0.58rem;
-    font-weight: 800;
+    // Mesma tipografia de cabeçalho das tabelas do app (styles.scss).
+    font-size: var(--table-head-size);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
 
   &__row {
@@ -259,4 +262,11 @@
     width: 100%;
     justify-content: center;
   }
+}
+
+.complete-modal__error {
+  margin: 0;
+  color: #a3112d;
+  font-size: 0.7rem;
+  font-weight: 600;
 }

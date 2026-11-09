@@ -35,6 +35,7 @@ interface ProductionOrder {
 })
 export class CompleteProductionModalComponent implements OnInit {
   readonly order = input.required<ProductionOrder>();
+  readonly apiError = input<string | null>(null);
   readonly closed = output<void>();
   readonly confirmed = output<void>();
   submittedPayload: CompleteProductionPayload | null = null;
@@ -42,11 +43,12 @@ export class CompleteProductionModalComponent implements OnInit {
   readonly ingredients: ProductionIngredient[] = [];
 
   expirationDate = '';
+  errorMessage = '';
 
   ngOnInit(): void {
     const analysis = this.order().analysis;
     if (!analysis) {
-      console.error('Não há análise de produção disponível para concluir este pedido.');
+      this.errorMessage = 'Não há análise de produção disponível para concluir este pedido.';
       return;
     }
 
@@ -74,19 +76,19 @@ export class CompleteProductionModalComponent implements OnInit {
 
   confirm(): void {
     if (!this.expirationDate || this.ingredients.length === 0) {
-      console.error('Informe a validade e os consumos reais antes de concluir a produção.');
+      this.errorMessage = 'Informe a validade e os consumos reais antes de concluir a produção.';
       return;
     }
 
     const consumos: ProductionConsumption[] = [];
     for (const ingredient of this.ingredients) {
       if (!ingredient.quantity.trim()) {
-        console.error(`Informe o consumo real de ${ingredient.name}; use zero se não houve consumo.`);
+        this.errorMessage = `Informe o consumo real de ${ingredient.name}; use zero se não houve consumo.`;
         return;
       }
       const quantity = Number(ingredient.quantity);
       if (!Number.isFinite(quantity) || quantity < 0) {
-        console.error(`Quantidade inválida para o ingrediente ${ingredient.name}.`);
+        this.errorMessage = `Quantidade inválida para o ingrediente ${ingredient.name}.`;
         return;
       }
       consumos.push({
@@ -95,6 +97,7 @@ export class CompleteProductionModalComponent implements OnInit {
       });
     }
 
+    this.errorMessage = '';
     this.submittedPayload = {
       data_validade: this.expirationDate,
       consumos,

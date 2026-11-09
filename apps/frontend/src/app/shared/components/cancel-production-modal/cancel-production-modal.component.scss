@@ -139,8 +139,11 @@
   &__head {
     padding: 0.38rem 0;
     color: #806d6d;
-    font-size: 0.58rem;
+    // Mesma tipografia de cabeçalho das tabelas do app (styles.scss).
+    font-size: var(--table-head-size);
     font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
 
   &__row {
@@ -316,4 +319,11 @@
   .cancel-modal__primary {
     flex: 1;
   }
+}
+
+.cancel-modal__error {
+  margin: 0;
+  color: #a3112d;
+  font-size: 0.7rem;
+  font-weight: 600;
 }
