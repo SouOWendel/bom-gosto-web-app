@@ -143,7 +143,8 @@ export class StockComponent implements OnInit {
   ngOnInit(): void {
     this.domainApi.getStock().subscribe({
       next: (lots) => {
-        this.stockLots.set(lots);
+        // Lotes totalmente consumidos não têm o que vender; ficam fora da vitrine.
+        this.stockLots.set(lots.filter((lot) => this.toNumber(lot.quantidade_disponivel) > 0));
         this.loadError.set(null);
         this.currentPage.set(1);
       },
@@ -166,7 +167,13 @@ export class StockComponent implements OnInit {
   private toStockItem(lot: StockLot): StockItem {
     const alertLevel = lot.alerta_validade?.nivel;
     const isCritical = lot.vencido || alertLevel === 'critico';
-    const status = isCritical ? 'critico' : alertLevel === 'atencao' ? 'atencao' : 'preventivo';
+    const status = isCritical
+      ? 'critico'
+      : alertLevel === 'atencao'
+        ? 'atencao'
+        : alertLevel === 'preventivo'
+          ? 'preventivo'
+          : 'normal';
     const productName = lot.produto_nome || `Produto #${lot.id_produto}`;
 
     return {

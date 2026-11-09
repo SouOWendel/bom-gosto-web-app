@@ -1,4 +1,4 @@
-export type StockProductStatus = 'critico' | 'atencao' | 'preventivo';
+export type StockProductStatus = 'critico' | 'atencao' | 'preventivo' | 'normal';
 
 export interface StockProductSize {
   label: string;
