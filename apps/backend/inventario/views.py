@@ -5,18 +5,12 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import BasePermission, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 
+from core.permissions import SenhaInicialAlterada
 from .models import Ingrediente
 from .serializers import IngredienteSerializer
-
-# permite que apenas usuarios que ja alteraram a senha inicial possam acessar os endpoints do Inventario, garantindo que a politica de seguranca seja aplicada antes de permitir o acesso aos recursos da API
-class SenhaInicialAlterada(BasePermission):
-    message = "Altere a senha inicial antes de acessar o inventário."
-
-    def has_permission(self, request, view):
-        return not getattr(request.user, "primeiro_acesso", True)
 
 
 # Permite cadastrar, consultar e editar os ingredientes do Inventário.
