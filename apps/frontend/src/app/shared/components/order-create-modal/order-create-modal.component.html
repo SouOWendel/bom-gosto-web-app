@@ -22,9 +22,9 @@
           }}
         </p>
       </div>
-      <button type="button" class="order-modal__close" aria-label="Fechar" (click)="close()">
+      <app-button type="button" variant="ghost" size="small" ariaLabel="Fechar" (click)="close()">
         <svg [lucideIcon]="'x'" [size]="17"></svg>
-      </button>
+      </app-button>
     </header>
 
     <form class="order-modal__content" (ngSubmit)="submit()">
@@ -53,6 +53,7 @@
               label="Telefone"
               inputId="order-contact-phone"
               icon="phone"
+              mask="phone"
               [(ngModel)]="contactPhone"
               name="contactPhone"
             />
@@ -108,9 +109,9 @@
       <section class="order-modal__section">
         <div class="order-modal__section-heading">
           <h3>Itens do pedido</h3>
-          <button type="button" class="order-modal__add" (click)="addItem()">
+          <app-button type="button" variant="outline" size="small" (click)="addItem()">
             <svg [lucideIcon]="'plus'" [size]="14"></svg> Adicionar item
-          </button>
+          </app-button>
         </div>
         @for (item of items; track $index; let index = $index) {
           <div class="order-modal__item">
@@ -147,19 +148,21 @@
             <app-input-text
               label="Preço unitário"
               [inputId]="'order-item-price-' + index"
-              icon="hash"
+              icon="banknote"
+              mask="currency"
               [(ngModel)]="item.unitPrice"
               [name]="'item-price-' + index"
             />
-            <button
+            <app-button
               type="button"
-              class="order-modal__remove"
+              variant="ghost"
+              size="small"
               [disabled]="items.length === 1"
               aria-label="Remover item"
               (click)="removeItem(index)"
             >
               <svg [lucideIcon]="'trash-2'" [size]="15"></svg>
-            </button>
+            </app-button>
           </div>
         }
       </section>
@@ -169,14 +172,16 @@
           <app-input-text
             label="Valor total"
             inputId="order-total"
-            icon="hash"
+            icon="banknote"
+            mask="currency"
             [(ngModel)]="total"
             name="total"
           />
           <app-input-text
             label="Sinal"
             inputId="order-deposit"
-            icon="hash"
+            icon="banknote"
+            mask="currency"
             [(ngModel)]="deposit"
             name="deposit"
           />

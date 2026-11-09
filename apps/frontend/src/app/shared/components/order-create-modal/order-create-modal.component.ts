@@ -143,7 +143,7 @@ export class OrderCreateModalComponent implements OnInit {
 
     if (this.tipo === 'externo' && (this.contactName.trim() || this.contactPhone.trim())) {
       payload.contato_nome = this.contactName.trim();
-      payload.contato_telefone = this.contactPhone.trim();
+      payload.contato_telefone = this.contactPhone.replace(/\D/g, '');
     }
 
     this.submitted.emit(payload);
@@ -208,6 +208,10 @@ export class OrderCreateModalComponent implements OnInit {
   }
 
   private toDecimal(value: string): string {
-    return value.trim().replace(',', '.');
+    const normalized = value.trim().replace(/[R$\s]/g, '');
+    if (normalized.includes(',')) {
+      return normalized.replace(/\./g, '').replace(',', '.');
+    }
+    return normalized;
   }
 }
