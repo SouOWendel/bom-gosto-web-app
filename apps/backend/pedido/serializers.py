@@ -46,6 +46,8 @@ class CancelamentoRegistroSerializer(serializers.ModelSerializer):
 # Valida os dados de cada item e apresenta sua disponibilidade em Estoque.
 class ItemPedidoSerializer(serializers.ModelSerializer):
     verificacao_estoque = serializers.SerializerMethodField()
+    produto_nome = serializers.CharField(source="produto.nome", read_only=True, default=None)
+    receita_nome = serializers.CharField(source="receita.nome", read_only=True, default=None)
 
     class Meta:
         model = ItemPedido
@@ -60,8 +62,10 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
             "quantidade_peso",
             "decoracao",
             "verificacao_estoque",
+            "produto_nome",
+            "receita_nome",
         )
-        read_only_fields = ("id_item_pedido", "verificacao_estoque")
+        read_only_fields = ("id_item_pedido", "verificacao_estoque", "produto_nome", "receita_nome")
 
     # Confere o saldo do produto pronto e sinaliza quando o item precisa de Produção.
     def get_verificacao_estoque(self, item):
@@ -147,12 +151,16 @@ class PedidoSerializer(serializers.ModelSerializer):
     contato_nome = serializers.CharField(write_only=True, required=False, allow_blank=False, max_length=100)
     contato_telefone = serializers.CharField(write_only=True, required=False, allow_blank=False, max_length=20)
     analise = serializers.SerializerMethodField()
+    cliente_nome = serializers.CharField(source="cliente.nome", read_only=True, default=None)
+    cliente_telefone = serializers.CharField(source="cliente.telefone", read_only=True, default=None)
 
     class Meta:
         model = Pedido
         fields = (
             "id_pedido",
             "cliente",
+            "cliente_nome",
+            "cliente_telefone",
             "tipo",
             "subtipo",
             "status",
@@ -167,7 +175,7 @@ class PedidoSerializer(serializers.ModelSerializer):
             "contato_nome",
             "contato_telefone",
         )
-        read_only_fields = ("id_pedido", "status", "analise")
+        read_only_fields = ("id_pedido", "status", "analise", "cliente_nome", "cliente_telefone")
 
     # Aplica as regras de tipo, contato, subtipo, itens e valores do pedido.
     def validate(self, attrs):

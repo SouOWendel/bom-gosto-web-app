@@ -12,7 +12,9 @@
           <svg [lucideIcon]="'alert-triangle'" [size]="17"></svg>
         </span>
         <div>
-          <h2 id="cancel-modal-title">Cancelar pedido em produção?</h2>
+          <h2 id="cancel-modal-title">
+            {{ notStarted ? 'Cancelar pedido?' : 'Cancelar pedido em produção?' }}
+          </h2>
           <p>
             Pedido {{ order()?.id }}
             @if (order()?.customer) {
@@ -41,10 +43,17 @@
       } @else {
         <div class="cancel-modal__notice">
           <svg [lucideIcon]="'info'" [size]="13"></svg>
-          <span
-            >A produção já foi iniciada. Antes de confirmar o cancelamento, informe uma única
-            destinação para a massa e os insumos envolvidos.</span
-          >
+          @if (notStarted) {
+            <span
+              >A produção ainda não foi iniciada. Informe se algum insumo já foi separado ou usado
+              (use 0 quando nada foi usado) e escolha a destinação.</span
+            >
+          } @else {
+            <span
+              >A produção já foi iniciada. Antes de confirmar o cancelamento, informe uma única
+              destinação para a massa e os insumos envolvidos.</span
+            >
+          }
         </div>
 
         <section class="cancel-modal__section">
@@ -73,7 +82,12 @@
         <section class="cancel-modal__section">
           <h3>Qual será a destinação da produção? <span>*</span></h3>
           <p class="cancel-modal__hint">
-            Escolha apenas uma alternativa. Enviar para o Estoque selecionado.
+            Escolha apenas uma alternativa.
+            {{
+              selectedDestination === 'stock'
+                ? 'Enviar para o Estoque selecionado.'
+                : 'Registrar Perda/Descarte selecionado.'
+            }}
           </p>
 
           <button
@@ -150,7 +164,8 @@
           </button>
           <p class="cancel-modal__footer-note">
             As embalagens não utilizadas permanecem disponíveis. Nenhuma destinação foi registrada;
-            o pedido continua Em Produção até esta confirmação.
+            o pedido continua {{ notStarted ? 'como Pedido feito' : 'Em Produção' }} até esta
+            confirmação.
           </p>
         </section>
       }

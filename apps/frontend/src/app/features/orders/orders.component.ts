@@ -45,6 +45,7 @@ interface OrderRow {
   phone: string;
   address: string;
   item: string;
+  reuseName: string;
   category: OrderCategory | null;
   total: string;
   payment: string;
@@ -606,15 +607,10 @@ export class OrdersComponent implements OnInit {
   }
 
   private toOrderRow(order: ApiOrder): OrderRow {
-    const itemNames = order.itens.map((item) => {
-      const name =
-        item.receita !== null
-          ? `Receita #${item.receita}`
-          : item.produto !== null
-            ? `Produto #${item.produto}`
-            : 'Item sem produto vinculado';
+    const baseNames = order.itens.map((item) => this.itemName(item));
+    const itemNames = order.itens.map((item, index) => {
       const quantity = item.quantidade ?? item.quantidade_peso;
-      return `${name}${quantity === null ? '' : ` (${quantity})`}`;
+      return `${baseNames[index]}${quantity === null || quantity === undefined ? '' : ` (${quantity})`}`;
     });
     const total = this.toNumber(order.valor_total);
     const balance = Math.max(0, total - this.toNumber(order.valor_sinal));
@@ -629,10 +625,17 @@ export class OrdersComponent implements OnInit {
 
     return {
       id: `#${order.id_pedido}`,
-      customer: order.cliente === null ? 'Cliente não informado' : `Cliente #${order.cliente}`,
-      phone: 'Contato não informado',
+      customer:
+        order.cliente_nome ??
+        (order.cliente === null
+          ? order.tipo === 'interno'
+            ? 'Pedido interno'
+            : 'Cliente não informado'
+          : `Cliente #${order.cliente}`),
+      phone: order.cliente_telefone || 'Contato não informado',
       address: order.endereco_entrega ?? 'Endereço não informado',
       item: itemNames.join(', ') || 'Itens não informados',
+      reuseName: baseNames.length > 0 ? `${baseNames[0]} reaproveitado` : '',
       category: this.toCategory(itemNames.join(' ')),
       total: this.formatCurrency(total),
       payment:
@@ -651,6 +654,19 @@ export class OrdersComponent implements OnInit {
       apiOrder: order,
       analysis: order.analise ?? null,
     };
+  }
+
+  private itemName(item: ApiOrder['itens'][number]): string {
+    if (item.produto_nome) {
+      return item.produto_nome;
+    }
+    if (item.receita_nome) {
+      return item.receita_nome;
+    }
+    if (item.produto !== null) {
+      return this.productName(item.produto);
+    }
+    return item.receita !== null ? `Receita #${item.receita}` : 'Item sem produto vinculado';
   }
 
   private toViewStatus(status: ApiOrder['status']): OrderStatus {
@@ -680,7 +696,7 @@ export class OrdersComponent implements OnInit {
   private actionLabel(order: ApiOrder): string {
     switch (order.status) {
       case 'pedido_feito':
-        return order.tipo === 'externo' ? 'Validar pedido' : 'Validar e iniciar';
+        return 'Iniciar Produção';
       case 'em_producao':
         return 'Concluir Produção';
       case 'producao_concluida':

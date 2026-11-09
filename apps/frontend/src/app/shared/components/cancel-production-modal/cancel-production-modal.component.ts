@@ -29,6 +29,7 @@ export interface CancelProductionOrder {
   id: string;
   customer?: string;
   item: string;
+  reuseName?: string;
   analysis: ProductionAnalysis | null;
   apiOrder?: { status: string };
 }
@@ -56,6 +57,8 @@ export class CancelProductionModalComponent implements OnInit {
   errorMessage = '';
   // Produção concluída já baixou os insumos e gerou o lote: só resta mantê-lo no estoque.
   productionCompleted = false;
+  // Pedido ainda em "Pedido feito": nada foi produzido, então o padrão é não reaproveitar.
+  notStarted = false;
   reuseProductName = '';
   reuseQuantity = '';
   reuseExpiration = '';
@@ -73,6 +76,10 @@ export class CancelProductionModalComponent implements OnInit {
   ngOnInit(): void {
     const order = this.order();
     this.productionCompleted = order?.apiOrder?.status === 'producao_concluida';
+    this.notStarted = order?.apiOrder?.status === 'pedido_feito';
+    if (this.notStarted) {
+      this.selectedDestination = 'discard';
+    }
     if (this.productionCompleted) {
       return;
     }
@@ -86,10 +93,11 @@ export class CancelProductionModalComponent implements OnInit {
         id: ingredient.id_ingrediente,
         name: ingredient.nome,
         quantity: '',
-        observation: `Previsto: ${ingredient.necessario} · Disponível: ${ingredient.disponivel}`,
+        observation:
+          `Previsto: ${ingredient.necessario} ${ingredient.unidade_medida ?? ''} · Disponível: ${ingredient.disponivel}`.trim(),
       })),
     );
-    this.reuseProductName = order.item ? `${order.item} reaproveitado` : '';
+    this.reuseProductName = order.reuseName ?? (order.item ? `${order.item} reaproveitado` : '');
   }
 
   @HostListener('document:keydown.escape')
