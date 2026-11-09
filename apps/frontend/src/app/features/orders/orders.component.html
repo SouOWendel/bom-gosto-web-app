@@ -1,11 +1,7 @@
 <div class="orders-page">
   <app-page-greeting
     title="Gestão de Pedidos & Encomendas"
-<<<<<<< HEAD
-    [subtitle]="orders().length + ' pedidos ativos • ' + activeCount() + ' aguardando produção'"
-=======
     [subtitle]="ordersSubtitle()"
->>>>>>> origin/dev
     [actions]="greetingActions"
     (actionClick)="handleGreetingAction($event)"
   />
@@ -109,11 +105,7 @@
         [class.is-active]="selectedStatus() === 'todos'"
         (click)="setStatus('todos')"
       >
-<<<<<<< HEAD
-        Todos <b>{{ orders().length }}</b>
-=======
         Todos <b>{{ statusCounts().todos }}</b>
->>>>>>> origin/dev
       </button>
       <button
         type="button"
@@ -121,11 +113,7 @@
         [class.is-active]="selectedStatus() === 'pendente'"
         (click)="setStatus('pendente')"
       >
-<<<<<<< HEAD
-        Pendentes <b>{{ pendingCount() }}</b>
-=======
         Pendentes <b>{{ statusCounts().pendente }}</b>
->>>>>>> origin/dev
       </button>
       <button
         type="button"
@@ -133,11 +121,7 @@
         [class.is-active]="selectedStatus() === 'confirmado'"
         (click)="setStatus('confirmado')"
       >
-<<<<<<< HEAD
-        Confirmados <b>{{ confirmedCount() }}</b>
-=======
         Confirmados <b>{{ statusCounts().confirmado }}</b>
->>>>>>> origin/dev
       </button>
       <button
         type="button"
@@ -145,11 +129,7 @@
         [class.is-active]="selectedStatus() === 'producao'"
         (click)="setStatus('producao')"
       >
-<<<<<<< HEAD
-        Em Produção <b>{{ productionCount() }}</b>
-=======
         Em Produção <b>{{ statusCounts().producao }}</b>
->>>>>>> origin/dev
       </button>
       <button
         type="button"
@@ -157,11 +137,7 @@
         [class.is-active]="selectedStatus() === 'retirada'"
         (click)="setStatus('retirada')"
       >
-<<<<<<< HEAD
-        Prontos para Entrega <b>{{ readyCount() }}</b>
-=======
         Prontos para Entrega <b>{{ statusCounts().retirada }}</b>
->>>>>>> origin/dev
       </button>
       <button
         type="button"
@@ -235,9 +211,6 @@
     }
 
     <footer class="orders-table__footer">
-<<<<<<< HEAD
-      <span>Mostrando {{ filteredOrders().length }} de {{ orders().length }} encomendas</span>
-=======
       <span
         >Mostrando {{ visibleRange().start }}–{{ visibleRange().end }} de
         {{ filteredOrders().length }} encomendas</span
@@ -270,7 +243,6 @@
           ›
         </button>
       </div>
->>>>>>> origin/dev
     </footer>
   </section>
 </div>

@@ -41,14 +41,14 @@ export class RecipesComponent implements OnInit {
 
   readonly greetingActions: PageAction[] = [
     {
-      label: 'Cadastrar nova receita',
+      label: 'Adicionar receita',
       route: '/receitas/nova-receita',
       icon: 'plus',
       variant: 'primary',
     },
   ];
 
-  readonly categories = ['Todas as receitas', 'Bolos', 'Doces e brigadeiros', 'Massas e recheios'];
+  readonly categories = ['Todas as receitas'];
 
   readonly filteredRecipes = computed(() => {
     const search = this.searchTerm().trim().toLocaleLowerCase();
@@ -61,7 +61,7 @@ export class RecipesComponent implements OnInit {
         recipe.name.toLocaleLowerCase().includes(search) ||
         recipe.code.toLocaleLowerCase().includes(search) ||
         recipe.product.toLocaleLowerCase().includes(search);
-      const matchesCategory = category === 'Todas as receitas' || recipe.category === category;
+      const matchesCategory = category === 'Todas as receitas';
       const matchesUnit =
         unit === 'Todas as unidades' ||
         recipe.unit === unit ||

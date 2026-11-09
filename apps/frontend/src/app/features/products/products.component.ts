@@ -16,8 +16,6 @@ import { PageAction } from '../../shared/components/page-greeting/page-greeting.
 import { MetricCardsComponent } from '../../shared/components/metric-cards/metric-cards.component';
 import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
 import { ProductCreateModalComponent } from '../../shared/components/product-create-modal/product-create-modal.component';
-import { ButtonComponent } from '../../shared/components/button/button.component';
-import { InputTextComponent } from '../../shared/components/input-text/input-text.component';
 
 @Component({
   selector: 'app-products',
@@ -29,8 +27,6 @@ import { InputTextComponent } from '../../shared/components/input-text/input-tex
     PageGreetingComponent,
     MetricCardsComponent,
     ProductCreateModalComponent,
-    ButtonComponent,
-    InputTextComponent,
   ],
   providers: [provideLucideIcons(LucidePackage, LucidePlus, LucidePencil, LucideSearch)],
   templateUrl: './products.component.html',
@@ -52,7 +48,6 @@ export class ProductsComponent implements OnInit {
 
   get summaryCards(): MetricCardItem[] {
     const list = this.products();
-    const withRecipe = list.filter((p) => p.receita !== null).length;
     const avgPrice = list.length
       ? list.reduce((acc, p) => acc + (Number(p.preco_venda) || 0), 0) / list.length
       : 0;
@@ -64,13 +59,6 @@ export class ProductsComponent implements OnInit {
         subtext: 'Cadastrados no catálogo',
         icon: 'package',
         variant: 'destaque',
-      },
-      {
-        label: 'Com receita vinculada',
-        value: `${withRecipe} produtos`,
-        subtext: 'Produzidos a partir de ficha técnica',
-        icon: 'cake-slice',
-        variant: 'neutro',
       },
       {
         label: 'Preço médio de venda',

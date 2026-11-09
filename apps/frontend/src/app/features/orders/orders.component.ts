@@ -91,12 +91,9 @@ export class OrdersComponent implements OnInit {
   readonly isEditModalOpen = signal(false);
   readonly creationInProgress = signal(false);
   readonly operationInProgress = signal(false);
-<<<<<<< HEAD
   readonly products = signal<Product[]>([]);
-=======
   readonly currentPage = signal(1);
   readonly pageSize = 6;
->>>>>>> origin/dev
   @ViewChild(CancelProductionModalComponent)
   private cancelProductionModal?: CancelProductionModalComponent;
   @ViewChild(CompleteProductionModalComponent)

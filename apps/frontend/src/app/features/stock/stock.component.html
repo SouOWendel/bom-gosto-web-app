@@ -60,17 +60,8 @@
   </section>
 
   <section class="stock-grid" aria-label="Produtos armazenados">
-<<<<<<< HEAD
-    @for (item of filteredItems(); track item.id) {
-      <app-stock-product-card
-        [product]="item"
-        (technicalSheet)="onTechnicalSheet()"
-        (pricing)="onViewProduct()"
-      />
-=======
     @for (item of paginatedItems(); track item.id) {
       <app-stock-product-card [product]="item" />
->>>>>>> origin/dev
     } @empty {
       <p class="stock-page__empty">Nenhum produto encontrado com os filtros selecionados.</p>
     }
@@ -78,11 +69,6 @@
 
   <footer class="stock-page__footer">
     <span
-<<<<<<< HEAD
-      >Mostrando <strong>{{ filteredItems().length }}</strong> de {{ stockLots().length }} lotes em
-      estoque</span
-    >
-=======
       >Mostrando <strong>{{ visibleRange().start }}–{{ visibleRange().end }}</strong> de
       {{ filteredItems().length }} lotes cadastrados</span
     >
@@ -114,6 +100,5 @@
         ›
       </button>
     </div>
->>>>>>> origin/dev
   </footer>
 </div>
