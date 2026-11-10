@@ -48,7 +48,7 @@
 
 .order-modal__item {
   display: grid;
-  grid-template-columns: 0.8fr 1.5fr 0.75fr 0.9fr auto;
+  grid-template-columns: 0.8fr 1.4fr 0.8fr 0.7fr 0.9fr auto;
   align-items: end;
   gap: var(--space-3);
   padding: var(--space-3);
@@ -57,8 +57,17 @@
   background: var(--color-surface-muted);
 }
 
+// Recheio e decoração ocupam uma segunda linha do card do item.
+.order-modal__item-details {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: 1fr 2fr;
+  gap: var(--space-3);
+}
+
 @media (max-width: 700px) {
-  .order-modal__item {
+  .order-modal__item,
+  .order-modal__item-details {
     grid-template-columns: 1fr;
   }
 

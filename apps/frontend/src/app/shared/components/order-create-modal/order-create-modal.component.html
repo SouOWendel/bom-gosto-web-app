@@ -149,10 +149,16 @@
               <app-input-text
                 label="Quantidade"
                 [inputId]="'order-item-quantity-' + index"
-                type="number"
-                icon="hash"
+                suffix="un"
                 [(ngModel)]="item.quantity"
                 [name]="'item-quantity-' + index"
+              />
+              <app-input-text
+                label="Peso (opcional)"
+                [inputId]="'order-item-weight-' + index"
+                suffix="kg"
+                [(ngModel)]="item.weight"
+                [name]="'item-weight-' + index"
               />
               <app-input-text
                 label="Preço unitário"
@@ -172,6 +178,20 @@
               >
                 <svg [lucideIcon]="'trash-2'" [size]="15"></svg>
               </app-button>
+              <div class="order-modal__item-details">
+                <app-input-text
+                  label="Recheio (opcional)"
+                  [inputId]="'order-item-filling-' + index"
+                  [(ngModel)]="item.filling"
+                  [name]="'item-filling-' + index"
+                />
+                <app-input-text
+                  label="Decoração (opcional)"
+                  [inputId]="'order-item-decoration-' + index"
+                  [(ngModel)]="item.decoration"
+                  [name]="'item-decoration-' + index"
+                />
+              </div>
             </div>
           }
         </section>

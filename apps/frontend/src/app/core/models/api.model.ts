@@ -111,6 +111,9 @@ export interface OrderCreationItem {
   quantidade?: number;
   preco_unitario: string;
   quantidade_peso?: string;
+  custo_unitario?: string | null;
+  recheio?: string | null;
+  decoracao?: string | null;
 }
 
 export interface OrderCreationPayload {

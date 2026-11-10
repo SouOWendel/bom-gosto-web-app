@@ -627,8 +627,12 @@ export class OrdersComponent implements OnInit {
   private toOrderRow(order: ApiOrder): OrderRow {
     const baseNames = order.itens.map((item) => this.itemName(item));
     const itemNames = order.itens.map((item, index) => {
-      const quantity = item.quantidade ?? item.quantidade_peso;
-      return `${baseNames[index]}${quantity === null || quantity === undefined ? '' : ` (${quantity})`}`;
+      // Mostra unidades e peso juntos quando houver os dois (ex.: "Bolo (1 · 1,5 kg)").
+      const parts = [
+        item.quantidade ?? null,
+        item.quantidade_peso ? `${Number(item.quantidade_peso).toLocaleString('pt-BR')} kg` : null,
+      ].filter((part) => part !== null);
+      return `${baseNames[index]}${parts.length ? ` (${parts.join(' · ')})` : ''}`;
     });
     const total = this.toNumber(order.valor_total);
     const balance = Math.max(0, total - this.toNumber(order.valor_sinal));
