@@ -16,6 +16,7 @@ import { ButtonComponent } from '../../shared/components/button/button.component
 import { Order } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
 import { ORDER_STATUS_LABELS } from '../../core/models/order-status';
+import { OrderCategory, orderCategory, orderItemName } from '../../core/utils/order-category';
 
 export interface ResumoCard {
   titulo: string;
@@ -26,7 +27,7 @@ export interface ResumoCard {
   icone: string;
 }
 
-export type CategoriaPedido = 'bolo' | 'doce' | 'kit';
+export type CategoriaPedido = OrderCategory;
 export type StatusPedido = 'confirmado' | 'em_producao' | 'pronto' | 'entregue';
 
 export interface PedidoSimulado {
@@ -230,18 +231,10 @@ export class DashboardComponent implements OnInit {
     );
   }
 
-  // Interatividade simulada: transição de status do pedido
+  // Iniciar ou concluir produção acontece na tela de Pedidos, que valida estoque,
+  // receitas e ingredientes e pede confirmação antes de mudar o status.
   avancarStatus(pedido: PedidoSimulado): void {
-    if (pedido.status === 'confirmado') {
-      this.api.startProduction(pedido.id).subscribe({
-        next: () => this.reloadOrders(),
-        error: (error) => console.error('Falha ao iniciar a producao do pedido.', error),
-      });
-      return;
-    }
-    if (pedido.status === 'em_producao') {
-      void this.router.navigate(['/pedidos']);
-    }
+    void this.router.navigate(['/pedidos'], { queryParams: { acao: pedido.id } });
   }
 
   abrirWhatsApp(telefone: string, cliente: string): void {
@@ -260,13 +253,6 @@ export class DashboardComponent implements OnInit {
     if (!dataStr) return '';
     const partes = dataStr.split('-');
     return partes[2] ?? '';
-  }
-
-  private reloadOrders(): void {
-    this.api.getOrders().subscribe({
-      next: (orders) => this.setOrders(orders),
-      error: (error) => console.error('Falha ao atualizar os pedidos do dashboard.', error),
-    });
   }
 
   private setOrders(orders: Order[]): void {
@@ -292,12 +278,18 @@ export class DashboardComponent implements OnInit {
       horario: order.horario_entrega?.slice(0, 5) ?? '—',
       modalidade: order.endereco_entrega ? 'DELIVERY' : 'RETIRADA',
       titulo: `Pedido #${order.id_pedido}`,
-      descricao: `${order.itens.length} item(ns)`,
-      categoria: null,
+      descricao:
+        order.itens
+          .map((item) => orderItemName(item))
+          .filter(Boolean)
+          .join(', ') || `${order.itens.length} item(ns)`,
+      categoria: orderCategory(order.itens),
       status,
       statusLabel: ORDER_STATUS_LABELS[order.status],
-      cliente: order.cliente ? `Cliente #${order.cliente}` : 'Cliente não informado',
-      telefone: '',
+      cliente:
+        order.cliente_nome ??
+        (order.tipo === 'interno' ? 'Reposição interna' : 'Cliente não informado'),
+      telefone: order.cliente_telefone ?? '',
       endereco: order.endereco_entrega ?? undefined,
       pagamentoInfo: `Total: ${this.formatCurrency(subtotal)} • Sinal: ${this.formatCurrency(Number(order.valor_sinal))}`,
       botaoAcao: order.status === 'pedido_feito' ? 'Iniciar Preparo' : undefined,
