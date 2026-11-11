@@ -42,25 +42,23 @@
             >
           </div>
           @if (tipo === 'externo') {
-            @if (!orderToEdit()) {
-              <div class="form-grid">
-                <app-input-text
-                  label="Nome do cliente"
-                  inputId="order-contact-name"
-                  icon="user"
-                  [(ngModel)]="contactName"
-                  name="contactName"
-                />
-                <app-input-text
-                  label="Telefone"
-                  inputId="order-contact-phone"
-                  icon="phone"
-                  mask="phone"
-                  [(ngModel)]="contactPhone"
-                  name="contactPhone"
-                />
-              </div>
-            }
+            <div class="form-grid">
+              <app-input-text
+                label="Nome do cliente"
+                inputId="order-contact-name"
+                icon="user"
+                [(ngModel)]="contactName"
+                name="contactName"
+              />
+              <app-input-text
+                label="Telefone"
+                inputId="order-contact-phone"
+                icon="phone"
+                mask="phone"
+                [(ngModel)]="contactPhone"
+                name="contactPhone"
+              />
+            </div>
             <label class="form-field order-modal__half">
               <span class="form-field__label">Modalidade</span>
               <select class="form-control" name="subtipo" [(ngModel)]="subtipo">
@@ -161,7 +159,7 @@
                 [name]="'item-weight-' + index"
               />
               <app-input-text
-                label="Preço unitário"
+                [label]="item.weight.trim() ? 'Preço por kg' : 'Preço unitário'"
                 [inputId]="'order-item-price-' + index"
                 icon="banknote"
                 mask="currency"
@@ -197,7 +195,15 @@
         </section>
 
         <section class="modal__section">
-          <h3 class="modal__section-title">Valores</h3>
+          <div class="order-modal__section-heading">
+            <h3 class="modal__section-title">Valores</h3>
+            <span class="order-modal__items-total">
+              Soma dos itens: <strong>{{ formatCurrency(itemsTotal) }}</strong>
+              <app-button type="button" variant="outline" size="small" (click)="useItemsTotal()">
+                Usar soma
+              </app-button>
+            </span>
+          </div>
           <div class="form-grid">
             <app-input-text
               label="Valor total"
@@ -216,6 +222,11 @@
               name="deposit"
             />
           </div>
+          @if (totalDiffersFromItems) {
+            <p class="order-modal__warning" role="status">
+              O valor total difere da soma dos itens. Confira se há desconto ou taxa.
+            </p>
+          }
         </section>
       </div>
 

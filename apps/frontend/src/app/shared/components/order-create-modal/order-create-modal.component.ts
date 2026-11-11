@@ -85,6 +85,9 @@ export class OrderCreateModalComponent implements OnInit {
     this.paymentMethod = order.forma_pagamento ?? 'pix';
     this.total = order.valor_total ?? '';
     this.deposit = order.valor_sinal ?? '0';
+    // O contato fica editável para corrigir nome ou telefone digitados errado.
+    this.contactName = order.cliente_nome ?? '';
+    this.contactPhone = order.cliente_telefone ?? '';
 
     if (order.itens && order.itens.length > 0) {
       this.items = order.itens.map((item): OrderItemForm => {
@@ -117,6 +120,33 @@ export class OrderCreateModalComponent implements OnInit {
       }
     }
     return [...products.entries()].map(([id, label]) => ({ id, label }));
+  }
+
+  // Soma preço x peso (quando informado) ou preço x quantidade de cada item.
+  get itemsTotal(): number {
+    return this.items.reduce((sum, item) => {
+      const price = Number(this.toDecimal(item.unitPrice)) || 0;
+      const weight = Number(this.toDecimal(item.weight)) || 0;
+      const quantity = Number(item.quantity) || 0;
+      return sum + price * (weight > 0 ? weight : quantity);
+    }, 0);
+  }
+
+  get totalDiffersFromItems(): boolean {
+    const total = Number(this.toDecimal(this.total));
+    return (
+      Number.isFinite(total) &&
+      this.total.trim() !== '' &&
+      Math.abs(total - this.itemsTotal) > 0.004
+    );
+  }
+
+  formatCurrency(value: number): string {
+    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  useItemsTotal(): void {
+    this.total = this.itemsTotal.toFixed(2).replace('.', ',');
   }
 
   addItem(): void {
@@ -194,12 +224,11 @@ export class OrderCreateModalComponent implements OnInit {
   }
 
   private validate(): string | null {
-    if (
-      this.tipo === 'externo' &&
-      !this.orderToEdit() &&
-      (!this.contactName.trim() || !this.contactPhone.trim())
-    ) {
+    if (this.tipo === 'externo' && (!this.contactName.trim() || !this.contactPhone.trim())) {
       return 'Informe o nome e o telefone do cliente.';
+    }
+    if (this.tipo === 'externo' && this.contactPhone.replace(/\D/g, '').length < 10) {
+      return 'Informe o telefone com DDD.';
     }
     if (
       this.tipo === 'externo' &&

@@ -57,6 +57,25 @@
   background: var(--color-surface-muted);
 }
 
+.order-modal__items-total {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+
+  strong {
+    color: var(--color-text);
+  }
+}
+
+.order-modal__warning {
+  margin-top: var(--space-2);
+  color: var(--color-warning);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
 // Recheio e decoração ocupam uma segunda linha do card do item.
 .order-modal__item-details {
   display: grid;

@@ -29,6 +29,8 @@ import {
 } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
 import { TablePaginationComponent } from '../../shared/components/table-pagination/table-pagination.component';
+import { apiErrorMessage } from '../../core/utils/api-error';
+import { ORDER_STATUS_LABELS } from '../../core/models/order-status';
 
 type OrderStatus = 'retirada' | 'producao' | 'pendente' | 'cancelado';
 type OrderCategory = 'bolos' | 'doces' | 'kits';
@@ -97,6 +99,7 @@ export class OrdersComponent implements OnInit {
   readonly operationInProgress = signal(false);
   readonly products = signal<Product[]>([]);
   readonly pendingStart = signal<PendingStart | null>(null);
+  readonly pendingFinish = signal<OrderRow | null>(null);
   readonly currentPage = signal(1);
   readonly pageSize = 6;
   @ViewChild(CancelProductionModalComponent)
@@ -308,11 +311,9 @@ export class OrdersComponent implements OnInit {
         this.validateAndStartOrder(order);
         return;
       case 'producao_concluida':
-        if (order.apiOrder.tipo === 'externo') {
-          this.consumeOrderStock(order);
-        } else {
-          this.finishInternalOrder(order);
-        }
+        // Baixa de estoque e conclusão são definitivas: pede confirmação (RNF04).
+        this.actionError.set(null);
+        this.pendingFinish.set(order);
         return;
       default:
         this.actionError.set('Esta ação não está disponível para o status atual do pedido.');
@@ -540,6 +541,26 @@ export class OrdersComponent implements OnInit {
     });
   }
 
+  confirmFinish(): void {
+    const order = this.pendingFinish();
+    if (!order || this.operationInProgress()) {
+      return;
+    }
+    if (order.apiOrder.tipo === 'externo') {
+      this.consumeOrderStock(order);
+    } else {
+      this.finishInternalOrder(order);
+    }
+  }
+
+  closeFinishDialog(): void {
+    if (this.operationInProgress()) {
+      return;
+    }
+    this.pendingFinish.set(null);
+    this.actionError.set(null);
+  }
+
   closeStartDialog(): void {
     if (this.operationInProgress()) {
       return;
@@ -594,6 +615,7 @@ export class OrdersComponent implements OnInit {
   }
 
   private finishActionWithOrder(order: ApiOrder): void {
+    this.pendingFinish.set(null);
     this.replaceOrder(order);
     this.operationInProgress.set(false);
     this.actionError.set(null);
@@ -662,7 +684,7 @@ export class OrdersComponent implements OnInit {
       total: this.formatCurrency(total),
       payment: this.paymentLabel(order),
       status,
-      statusLabel: this.statusLabel(status),
+      statusLabel: ORDER_STATUS_LABELS[order.status],
       schedule: this.formatSchedule(order.data_entrega, order.horario_entrega),
       modality: order.endereco_entrega ? 'Entrega' : 'Retirada',
       detail:
@@ -725,16 +747,6 @@ export class OrdersComponent implements OnInit {
     }
   }
 
-  private statusLabel(status: OrderStatus): string {
-    const labels: Record<OrderStatus, string> = {
-      retirada: 'Pronto / concluído',
-      producao: 'Em produção',
-      pendente: 'Pendente',
-      cancelado: 'Cancelado',
-    };
-    return labels[status];
-  }
-
   private actionLabel(order: ApiOrder): string {
     switch (order.status) {
       case 'pedido_feito':
@@ -788,29 +800,6 @@ export class OrdersComponent implements OnInit {
   }
 
   private errorDetail(error: unknown): string {
-    if (typeof error === 'object' && error !== null && 'error' in error) {
-      const detail = error.error;
-      if (typeof detail === 'string') {
-        return detail;
-      }
-      if (detail !== null && detail !== undefined) {
-        try {
-          return JSON.stringify(detail) ?? 'Erro desconhecido ao consultar a API.';
-        } catch {
-          return 'Erro desconhecido ao consultar a API.';
-        }
-      }
-    }
-    if (error instanceof Error) {
-      return error.message;
-    }
-    if (typeof error === 'string') {
-      return error;
-    }
-    try {
-      return JSON.stringify(error) ?? 'Erro desconhecido ao consultar a API.';
-    } catch {
-      return 'Erro desconhecido ao consultar a API.';
-    }
+    return apiErrorMessage(error);
   }
 }
