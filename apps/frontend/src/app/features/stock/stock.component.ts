@@ -7,6 +7,8 @@ import { PageAction } from '../../shared/components/page-greeting/page-greeting.
 import { StockProductCardComponent } from './components/stock-product-card/stock-product-card.component';
 import { StockProductCardItem } from './components/stock-product-card/stock-product-card.model';
 import { TablePaginationComponent } from '../../shared/components/table-pagination/table-pagination.component';
+import { StockLotEditModalComponent } from '../../shared/components/stock-lot-edit-modal/stock-lot-edit-modal.component';
+import { HttpErrorResponse } from '@angular/common/http';
 import { StockLot } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
 
@@ -19,6 +21,7 @@ import { DomainApiService } from '../../core/services/domain-api.service';
     MetricCardsComponent,
     StockProductCardComponent,
     TablePaginationComponent,
+    StockLotEditModalComponent,
   ],
   providers: [provideLucideIcons(LucidePlus, LucideSearch)],
   templateUrl: './stock.component.html',
@@ -29,6 +32,9 @@ export class StockComponent implements OnInit {
   readonly stockLots = signal<StockLot[]>([]);
 
   readonly loadError = signal<string | null>(null);
+  readonly editingLot = signal<StockLot | null>(null);
+  readonly editError = signal<string | null>(null);
+  readonly saving = signal(false);
 
   readonly greetingActions: PageAction[] = [
     { label: 'Nova produção (Pedidos)', route: '/pedidos', icon: 'plus', variant: 'primary' },
@@ -97,6 +103,37 @@ export class StockComponent implements OnInit {
     if (page >= 1 && page <= this.totalPages()) {
       this.currentPage.set(page);
     }
+  }
+
+  openEdit(lotId: string): void {
+    this.editError.set(null);
+    this.editingLot.set(this.stockLots().find((lot) => String(lot.id_estoque) === lotId) ?? null);
+  }
+
+  closeEdit(): void {
+    if (!this.saving()) {
+      this.editingLot.set(null);
+    }
+  }
+
+  saveLot(lotId: number, payload: Partial<StockLot>): void {
+    this.saving.set(true);
+    this.editError.set(null);
+    this.domainApi.updateStockLot(lotId, payload).subscribe({
+      next: (updated) => {
+        this.saving.set(false);
+        this.editingLot.set(null);
+        this.stockLots.update((lots) =>
+          lots
+            .map((lot) => (lot.id_estoque === updated.id_estoque ? updated : lot))
+            .filter((lot) => this.toNumber(lot.quantidade_disponivel) > 0),
+        );
+      },
+      error: (error: unknown) => {
+        this.saving.set(false);
+        this.editError.set(`Não foi possível salvar o lote. ${this.errorDetail(error)}`);
+      },
+    });
   }
 
   ngOnInit(): void {
@@ -188,6 +225,12 @@ export class StockComponent implements OnInit {
   }
 
   private errorDetail(error: unknown): string {
+    if (error instanceof HttpErrorResponse && error.error && typeof error.error === 'object') {
+      // Erros de validação do DRF: {campo: [mensagens]} -> primeira mensagem de cada campo.
+      return Object.values(error.error as Record<string, unknown>)
+        .map((value) => (Array.isArray(value) ? value[0] : value))
+        .join(' ');
+    }
     return error instanceof Error ? error.message : 'Erro desconhecido ao consultar a API.';
   }
 }

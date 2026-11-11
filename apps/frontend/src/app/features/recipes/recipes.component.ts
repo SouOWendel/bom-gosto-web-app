@@ -1,9 +1,17 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
-import { LucideDynamicIcon, LucidePlus, LucideSearch, provideLucideIcons } from '@lucide/angular';
+import {
+  LucideDynamicIcon,
+  LucidePencil,
+  LucidePlus,
+  LucideSearch,
+  provideLucideIcons,
+} from '@lucide/angular';
+import { Router } from '@angular/router';
 import { DomainApiService } from '../../core/services/domain-api.service';
 import { Product, Recipe as ApiRecipe } from '../../core/models/api.model';
+import { ButtonComponent } from '../../shared/components/button/button.component';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
 import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
 import { TablePaginationComponent } from '../../shared/components/table-pagination/table-pagination.component';
@@ -22,13 +30,14 @@ interface RecipeRow {
 @Component({
   selector: 'app-recipes',
   standalone: true,
-  imports: [TablePaginationComponent, PageGreetingComponent, LucideDynamicIcon],
-  providers: [provideLucideIcons(LucidePlus, LucideSearch)],
+  imports: [TablePaginationComponent, PageGreetingComponent, ButtonComponent, LucideDynamicIcon],
+  providers: [provideLucideIcons(LucidePencil, LucidePlus, LucideSearch)],
   templateUrl: './recipes.component.html',
   styleUrls: ['./recipes.component.scss'],
 })
 export class RecipesComponent implements OnInit {
   private readonly api = inject(DomainApiService);
+  private readonly router = inject(Router);
 
   readonly searchTerm = signal('');
   readonly recipes = signal<RecipeRow[]>([]);
@@ -72,6 +81,11 @@ export class RecipesComponent implements OnInit {
       },
       error: (error: unknown) => this.handleError(error),
     });
+  }
+
+  // A tela de cadastro abre a receita existente quando recebe ?id=.
+  editRecipe(id: number): void {
+    void this.router.navigate(['/receitas/nova-receita'], { queryParams: { id } });
   }
 
   onSearch(value: string): void {

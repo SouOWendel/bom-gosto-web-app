@@ -31,5 +31,10 @@
         {{ product().expiry }} · {{ product().expiryDetail }}
       </span>
     </div>
+
+    <app-button size="small" variant="outline" (click)="edit.emit()">
+      <svg [lucideIcon]="'pencil'" [size]="14"></svg>
+      Editar lote
+    </app-button>
   </div>
 </article>

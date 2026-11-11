@@ -38,7 +38,7 @@
 
     <div class="stock-grid">
       @for (item of paginatedItems(); track item.id) {
-        <app-stock-product-card [product]="item" />
+        <app-stock-product-card [product]="item" (edit)="openEdit(item.id)" />
       } @empty {
         <p class="data-table__empty stock-grid__empty">
           Nenhum lote encontrado com os filtros selecionados.
@@ -54,4 +54,14 @@
       (pageChange)="goToPage($event)"
     />
   </section>
+
+  @if (editingLot(); as lot) {
+    <app-stock-lot-edit-modal
+      [lot]="lot"
+      [apiError]="editError()"
+      [busy]="saving()"
+      (closed)="closeEdit()"
+      (submitted)="saveLot(lot.id_estoque, $event)"
+    />
+  }
 </div>
