@@ -12,6 +12,24 @@ from .models import IngredienteReceita
 CENTAVO = Decimal("0.01")
 
 
+# Soma quantidade x custo unitário dos ingredientes e grava o custo da receita.
+# As quantidades da receita usam a mesma unidade do insumo no inventário.
+def recalcular_custo_receita(receita):
+    custo = Decimal("0")
+    for linha in IngredienteReceita.objects.filter(receita_id=receita.pk).select_related("ingrediente"):
+        custo += linha.quantidade_necessaria * (linha.ingrediente.custo_unitario or Decimal("0"))
+    receita.custo_calculado = custo.quantize(CENTAVO, rounding=ROUND_HALF_UP)
+    receita.save(update_fields=["custo_calculado"])
+    return receita.custo_calculado
+
+
+# Atualiza o custo de todas as receitas que usam o ingrediente.
+def recalcular_receitas_do_ingrediente(ingrediente):
+    ids = IngredienteReceita.objects.filter(ingrediente_id=ingrediente.pk).values_list("receita_id", flat=True)
+    for receita in Receita.objects.filter(pk__in=ids):
+        recalcular_custo_receita(receita)
+
+
 # Obtém a quantidade usada para comparar o item com o Estoque e a receita.
 def _quantidade_item(item):
     return Decimal(item.quantidade or item.quantidade_peso or 0)

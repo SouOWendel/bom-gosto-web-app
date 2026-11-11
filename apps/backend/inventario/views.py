@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 
 from core.permissions import SenhaInicialAlterada
+from producao.services import recalcular_receitas_do_ingrediente
 from .models import Ingrediente
 from .serializers import IngredienteSerializer
 
@@ -20,6 +21,13 @@ class IngredienteViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated, SenhaInicialAlterada]
     # nao expor o metodo DELETE.
     http_method_names = ["get", "post", "put", "patch", "head", "options"]
+
+    # Um novo custo unitário muda o custo das receitas que usam o insumo.
+    def perform_update(self, serializer):
+        custo_anterior = serializer.instance.custo_unitario
+        ingrediente = serializer.save()
+        if ingrediente.custo_unitario != custo_anterior:
+            recalcular_receitas_do_ingrediente(ingrediente)
 
     @action(detail=True, methods=["post"], url_path="movimentar")
     @transaction.atomic

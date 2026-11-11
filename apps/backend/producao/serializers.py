@@ -5,7 +5,7 @@ from rest_framework import serializers
 from inventario.models import Ingrediente
 from pedido.models import Pedido, Produto, Receita, ReceitaProduto
 from .models import IngredienteReceita
-from .services import analisar_pedido, cancelar_pedido, concluir_producao
+from .services import analisar_pedido, cancelar_pedido, concluir_producao, recalcular_custo_receita
 
 
 # Valida o ingrediente e a quantidade necessária na composição da receita.
@@ -90,6 +90,7 @@ class ReceitaSerializer(serializers.ModelSerializer):
             for relacao in produtos:
                 produto = relacao.pop("produto")
                 ReceitaProduto.objects.update_or_create(receita=receita, produto=produto, defaults=relacao)
+            recalcular_custo_receita(receita)
         return receita
 
     # Atualiza relações aninhadas quando recebidas, preservando as omitidas.
@@ -111,6 +112,7 @@ class ReceitaSerializer(serializers.ModelSerializer):
                 for relacao in produtos:
                     produto = relacao.pop("produto")
                     ReceitaProduto.objects.update_or_create(receita=instance, produto=produto, defaults=relacao)
+            recalcular_custo_receita(instance)
         return instance
 
 
