@@ -21,8 +21,14 @@ import { InputTextComponent } from '../input-text/input-text.component';
 interface OrderItemForm {
   kind: 'produto' | 'receita';
   referenceId: number | null;
+  // Quantidade (un) e peso (kg) podem vir juntos, ex.: 1 bolo de 1,5 kg.
   quantity: string;
+  weight: string;
   unitPrice: string;
+  filling: string;
+  decoration: string;
+  // Custo já gravado no item, reenviado na edição para não se perder.
+  unitCost: string | null;
 }
 
 @Component({
@@ -81,12 +87,18 @@ export class OrderCreateModalComponent implements OnInit {
     this.deposit = order.valor_sinal ?? '0';
 
     if (order.itens && order.itens.length > 0) {
-      this.items = order.itens.map((item) => ({
-        kind: item.produto ? 'produto' : 'receita',
-        referenceId: item.produto ?? item.receita ?? null,
-        quantity: String(item.quantidade ?? item.quantidade_peso ?? 1),
-        unitPrice: String(item.preco_unitario ?? ''),
-      }));
+      this.items = order.itens.map((item): OrderItemForm => {
+        return {
+          kind: item.produto ? 'produto' : 'receita',
+          referenceId: item.produto ?? item.receita ?? null,
+          quantity: item.quantidade == null ? '' : String(item.quantidade),
+          weight: item.quantidade_peso ? this.toDisplayDecimal(item.quantidade_peso) : '',
+          unitPrice: String(item.preco_unitario ?? ''),
+          filling: item.recheio ?? '',
+          decoration: item.decoracao ?? '',
+          unitCost: item.custo_unitario ?? null,
+        };
+      });
     }
   }
 
@@ -154,7 +166,11 @@ export class OrderCreateModalComponent implements OnInit {
       kind: 'receita',
       referenceId: null,
       quantity: '1',
+      weight: '',
       unitPrice: '',
+      filling: '',
+      decoration: '',
+      unitCost: null,
     };
   }
 
@@ -163,7 +179,17 @@ export class OrderCreateModalComponent implements OnInit {
       preco_unitario: this.toDecimal(item.unitPrice),
     };
     apiItem[item.kind] = item.referenceId as number;
-    apiItem.quantidade = Number(item.quantity);
+    if (item.quantity.trim()) {
+      apiItem.quantidade = Number(item.quantity.trim());
+    }
+    if (item.weight.trim()) {
+      apiItem.quantidade_peso = this.toDecimal(item.weight);
+    }
+    apiItem.recheio = item.filling.trim() || null;
+    apiItem.decoracao = item.decoration.trim() || null;
+    if (item.unitCost !== null) {
+      apiItem.custo_unitario = item.unitCost;
+    }
     return apiItem;
   }
 
@@ -182,8 +208,24 @@ export class OrderCreateModalComponent implements OnInit {
     ) {
       return 'Pedidos de vitrine precisam usar produtos prontos.';
     }
-    if (this.items.some((item) => item.referenceId === null || Number(item.quantity) <= 0)) {
-      return 'Informe um item válido e uma quantidade maior que zero.';
+    if (this.items.some((item) => item.referenceId === null)) {
+      return 'Selecione a receita ou o produto de cada item.';
+    }
+    for (const item of this.items) {
+      const quantity = item.quantity.trim();
+      const weight = this.toDecimal(item.weight);
+      if (!quantity && !weight) {
+        return 'Informe a quantidade ou o peso de cada item.';
+      }
+      if (quantity && (!/^\d+$/.test(quantity) || Number(quantity) <= 0)) {
+        return 'A quantidade deve ser um número inteiro maior que zero.';
+      }
+      if (weight && (!/^\d+(\.\d{1,2})?$/.test(weight) || Number(weight) <= 0)) {
+        return 'Informe o peso em kg, maior que zero e com até duas casas decimais.';
+      }
+    }
+    if (this.items.some((item) => item.filling.length > 100 || item.decoration.length > 200)) {
+      return 'O recheio aceita até 100 caracteres e a decoração, até 200.';
     }
     if (
       this.items.some((item) => {
@@ -205,6 +247,12 @@ export class OrderCreateModalComponent implements OnInit {
       return 'Para pedidos externos, o sinal deve ser zero ou metade do total.';
     }
     return null;
+  }
+
+  // Exibe decimais da API (1.50) no formato brasileiro (1,5).
+  private toDisplayDecimal(value: string): string {
+    const number = Number(value);
+    return Number.isFinite(number) ? String(number).replace('.', ',') : value;
   }
 
   private toDecimal(value: string): string {
