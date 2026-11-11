@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 from .models import Usuario
 
 
@@ -55,6 +56,8 @@ class CadastroTesteView(APIView):
 # Autentica login e senha e inicia a sessão do usuário.
 class LoginView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "login"
 
     @method_decorator(csrf_protect)
     def post(self, request):

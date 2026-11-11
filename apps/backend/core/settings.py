@@ -174,4 +174,8 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
         "core.permissions.SenhaInicialAlterada",
     ],
+    # Limita tentativas de login por IP contra adivinhação de senha.
+    "DEFAULT_THROTTLE_RATES": {
+        "login": os.getenv("LOGIN_THROTTLE_RATE", "5/min"),
+    },
 }

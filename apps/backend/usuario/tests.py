@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
@@ -13,6 +14,8 @@ class AuthCsrfTests(TestCase):
             primeiro_acesso=False,
         )
         self.client = APIClient(enforce_csrf_checks=True)
+        # o limite de tentativas de login fica no cache; zera entre os testes
+        cache.clear()
 
     def test_csrf_endpoint_sets_cookie_and_returns_token(self):
         response = self.client.get("/api/auth/csrf/")
@@ -98,3 +101,18 @@ class AuthCsrfTests(TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertTrue(Usuario.objects.filter(login="cadastro-com-csrf").exists())
+
+
+class LoginThrottleTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        Usuario.objects.create_user(login="limite-teste", password="senha-correta-123", primeiro_acesso=False)
+
+    # depois de 5 tentativas por minuto o login responde 429, mesmo com a senha certa
+    def test_login_bloqueia_apos_muitas_tentativas(self):
+        client = APIClient()
+        for _ in range(5):
+            resposta = client.post("/api/auth/login/", {"login": "limite-teste", "senha": "errada"}, format="json")
+            self.assertEqual(resposta.status_code, 401)
+        bloqueada = client.post("/api/auth/login/", {"login": "limite-teste", "senha": "senha-correta-123"}, format="json")
+        self.assertEqual(bloqueada.status_code, 429)
