@@ -231,18 +231,10 @@ export class DashboardComponent implements OnInit {
     );
   }
 
-  // Interatividade simulada: transição de status do pedido
+  // Iniciar ou concluir produção acontece na tela de Pedidos, que valida estoque,
+  // receitas e ingredientes e pede confirmação antes de mudar o status.
   avancarStatus(pedido: PedidoSimulado): void {
-    if (pedido.status === 'confirmado') {
-      this.api.startProduction(pedido.id).subscribe({
-        next: () => this.reloadOrders(),
-        error: (error) => console.error('Falha ao iniciar a producao do pedido.', error),
-      });
-      return;
-    }
-    if (pedido.status === 'em_producao') {
-      void this.router.navigate(['/pedidos']);
-    }
+    void this.router.navigate(['/pedidos'], { queryParams: { acao: pedido.id } });
   }
 
   abrirWhatsApp(telefone: string, cliente: string): void {
@@ -261,13 +253,6 @@ export class DashboardComponent implements OnInit {
     if (!dataStr) return '';
     const partes = dataStr.split('-');
     return partes[2] ?? '';
-  }
-
-  private reloadOrders(): void {
-    this.api.getOrders().subscribe({
-      next: (orders) => this.setOrders(orders),
-      error: (error) => console.error('Falha ao atualizar os pedidos do dashboard.', error),
-    });
   }
 
   private setOrders(orders: Order[]): void {

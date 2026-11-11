@@ -1,4 +1,5 @@
 import { Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import {
   LucideDynamicIcon,
@@ -85,6 +86,8 @@ interface OrderRow {
 })
 export class OrdersComponent implements OnInit {
   private readonly domainApi = inject(DomainApiService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly isCancelModalOpen = signal(false);
   readonly isCompleteModalOpen = signal(false);
@@ -480,12 +483,28 @@ export class OrdersComponent implements OnInit {
         this.orders.set(orders.map((order) => this.toOrderRow(order)));
         this.loadError.set(null);
         this.currentPage.set(1);
+        this.runRequestedAction();
       },
       error: (error: unknown) => {
         this.loadError.set(this.errorDetail(error));
         console.error('Falha ao carregar os pedidos.', error);
       },
     });
+  }
+
+  // O Início abre /pedidos?acao=<id> para que a ação passe pelas mesmas validações daqui.
+  private runRequestedAction(): void {
+    const requested = Number(this.route.snapshot.queryParamMap.get('acao'));
+    if (!requested) {
+      return;
+    }
+    void this.router.navigate([], { queryParams: { acao: null }, replaceUrl: true });
+    const row = this.orders().find((order) => order.apiOrder.id_pedido === requested);
+    if (row) {
+      this.completeOrder(row);
+    } else {
+      this.actionError.set(`Pedido #${requested} não encontrado.`);
+    }
   }
 
   private refreshOrders(): void {
