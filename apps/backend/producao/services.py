@@ -40,6 +40,20 @@ def _receita_item(item):
     return item.receita or (item.produto.receita if item.produto_id else None)
 
 
+# Descobre o produto pronto do item: o próprio produto ou o da receita usada.
+def produto_do_item(item):
+    if item.produto is not None:
+        return item.produto
+    receita = _receita_item(item)
+    if receita is None:
+        return None
+    produto = receita.produtos.order_by("id_produto").first()
+    if produto is None:
+        relacao = ReceitaProduto.objects.filter(receita_id=receita.pk).select_related("produto").first()
+        produto = relacao.produto if relacao else None
+    return produto
+
+
 # Desconta o saldo pronto já reservado por itens anteriores do mesmo produto.
 def _saldo_restante(produto_id, solicitado, reservado):
     saldo = Estoque.objects.verificar_disponibilidade(produto_id, solicitado)["quantidade_disponivel"]
@@ -180,13 +194,7 @@ def concluir_producao(pedido, consumos, data_validade):
     saidas = []
     reservado = {}
     for item in pedido.itens.select_related("produto__receita", "receita"):
-        produto = item.produto
-        receita = _receita_item(item)
-        if produto is None and receita:
-            produto = receita.produtos.order_by("id_produto").first()
-            if produto is None:
-                relacao = ReceitaProduto.objects.filter(receita_id=receita.pk).select_related("produto").first()
-                produto = relacao.produto if relacao else None
+        produto = produto_do_item(item)
         if produto is None:
             raise ValidationError({"itens": "Associe um produto à receita antes de concluir a produção."})
         solicitado = _quantidade_item(item)

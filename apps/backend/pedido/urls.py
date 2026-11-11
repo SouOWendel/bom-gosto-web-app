@@ -8,6 +8,5 @@ router = DefaultRouter()
 router.register("pedido", PedidoViewSet, basename="pedido")
 router.register("cancelamento", CancelamentoViewSet, basename="cancelamento")
 router.register("produtos", ProdutoViewSet, basename="produtos")
-router.register("produto", ProdutoViewSet, basename="produto")
 
 urlpatterns = router.urls
