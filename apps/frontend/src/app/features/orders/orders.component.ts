@@ -29,6 +29,7 @@ import {
 } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
 import { TablePaginationComponent } from '../../shared/components/table-pagination/table-pagination.component';
+import { apiErrorMessage } from '../../core/utils/api-error';
 
 type OrderStatus = 'retirada' | 'producao' | 'pendente' | 'cancelado';
 type OrderCategory = 'bolos' | 'doces' | 'kits';
@@ -788,29 +789,6 @@ export class OrdersComponent implements OnInit {
   }
 
   private errorDetail(error: unknown): string {
-    if (typeof error === 'object' && error !== null && 'error' in error) {
-      const detail = error.error;
-      if (typeof detail === 'string') {
-        return detail;
-      }
-      if (detail !== null && detail !== undefined) {
-        try {
-          return JSON.stringify(detail) ?? 'Erro desconhecido ao consultar a API.';
-        } catch {
-          return 'Erro desconhecido ao consultar a API.';
-        }
-      }
-    }
-    if (error instanceof Error) {
-      return error.message;
-    }
-    if (typeof error === 'string') {
-      return error;
-    }
-    try {
-      return JSON.stringify(error) ?? 'Erro desconhecido ao consultar a API.';
-    } catch {
-      return 'Erro desconhecido ao consultar a API.';
-    }
+    return apiErrorMessage(error);
   }
 }
