@@ -48,7 +48,7 @@ Comandos úteis:
 ```powershell
 docker compose ps
 docker compose logs -f backend frontend
-docker compose exec backend python manage.py migrate
+docker compose exec backend python manage.py migrate  # após git pull com os containers rodando
 docker compose exec backend python manage.py seed_desenvolvimento
 docker compose exec backend python manage.py seed_desenvolvimento --resetar-demo  # recomeça o roteiro de demonstração
 docker compose exec -T postgres psql -U postgres -d db_confeitaria
