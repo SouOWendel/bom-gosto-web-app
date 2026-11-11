@@ -1,29 +1,30 @@
-<div class="dashboard">
-  <!-- Saudação -->
+<div class="page">
   <app-page-greeting
-    [title]="'Bom dia, Chef ' + nomeChef + '! 👩‍🍳🔍'"
-    subtitle="🔔 Acesse os atalhos a seguir."
+    [title]="saudacao + ', Chef ' + nomeChef + '!'"
+    subtitle="Calendário de encomendas e agenda de produção do dia selecionado."
     [actions]="greetingActions"
   />
 
-  <!-- Métricas (2 cards) -->
+  <!--
+  Métricas temporariamente ocultas até que Vendas de Hoje e Pedidos Agendados
+  tenham dados completos no contrato da API.
   <app-metric-cards [items]="metricas" />
+  -->
 
   <!-- Grade principal: Calendário + Agenda -->
   <div class="dashboard__content-grid">
     <!-- Coluna Esquerda: Calendário -->
-    <section class="dashboard__panel calendar-panel" aria-label="Calendário de encomendas">
+    <section class="panel panel__body calendar-panel" aria-label="Calendário de encomendas">
       <div class="calendar-panel__header">
         <div class="calendar-panel__title-box">
           <h2 class="calendar-panel__month">{{ mesAno }}</h2>
           <span class="calendar-panel__hint">Clique em qualquer data para abrir as encomendas</span>
         </div>
         <div class="calendar-panel__nav">
-          <button type="button" class="btn-icon" aria-label="Mês anterior">
+          <button type="button" class="btn-icon" aria-label="Mês anterior" (click)="navegarMes(-1)">
             <svg [lucideIcon]="'chevron-left'" [size]="18" [strokeWidth]="2"></svg>
           </button>
-          <span class="calendar-panel__month-label">Setembro</span>
-          <button type="button" class="btn-icon" aria-label="Próximo mês">
+          <button type="button" class="btn-icon" aria-label="Próximo mês" (click)="navegarMes(1)">
             <svg [lucideIcon]="'chevron-right'" [size]="18" [strokeWidth]="2"></svg>
           </button>
         </div>
@@ -48,7 +49,7 @@
                 [class.calendar-grid__cell--today]="dia.isHoje"
                 [class.calendar-grid__cell--selected]="dia.dataStr === dataSelecionada()"
                 (click)="selecionarDia(dia)"
-                [attr.aria-label]="'Dia ' + dia.numero + ' de Setembro'"
+                [attr.aria-label]="'Dia ' + dia.numero + ' de ' + mesAno"
               >
                 <span class="cell-day-number">{{ dia.numero }}</span>
                 @if (dia.isHoje) {
@@ -85,12 +86,10 @@
       </div>
 
       <!-- Botão rápido -->
-      <div class="calendar-footer">
-        <a routerLink="/pedidos" class="btn btn--outline-primary btn--block">
-          <svg [lucideIcon]="'plus'" [size]="16" [strokeWidth]="2.5"></svg>
-          <span>Novo Pedido para dia {{ getDiaDoMes(dataSelecionada()) }}</span>
-        </a>
-      </div>
+      <app-button route="/pedidos" variant="secondary" [block]="true">
+        <svg [lucideIcon]="'plus'" [size]="16" [strokeWidth]="2.5"></svg>
+        Novo pedido para o dia {{ getDiaDoMes(dataSelecionada()) }}
+      </app-button>
     </section>
 
     <!-- Coluna Direita: Agenda de Produção -->

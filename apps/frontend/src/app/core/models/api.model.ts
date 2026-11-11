@@ -11,6 +11,7 @@ export type ApiCollection<T> = T[] | ApiList<T>;
 export interface Ingredient {
   id_ingrediente: number;
   nome: string;
+  unidade_medida: string;
   quantidade_disponivel: string | null;
   quantidade_minima: string | null;
   data_validade: string | null;
@@ -76,6 +77,8 @@ export interface OrderItem {
   recheio?: string | null;
   quantidade_peso?: string | null;
   decoracao?: string | null;
+  produto_nome?: string | null;
+  receita_nome?: string | null;
   verificacao_estoque?: {
     verificado: boolean;
     disponivel: boolean | null;
@@ -87,6 +90,8 @@ export interface OrderItem {
 export interface Order {
   id_pedido: number;
   cliente: number | null;
+  cliente_nome?: string | null;
+  cliente_telefone?: string | null;
   tipo: 'interno' | 'externo';
   subtipo: 'vitrine' | 'personalizado' | null;
   status: 'pedido_feito' | 'em_producao' | 'producao_concluida' | 'concluido' | 'cancelado';
@@ -142,6 +147,7 @@ export interface ProductionAnalysis {
 export interface ProductionIngredient {
   id_ingrediente: number;
   nome: string;
+  unidade_medida?: string;
   necessario: string;
   disponivel: string;
   suficiente: boolean;

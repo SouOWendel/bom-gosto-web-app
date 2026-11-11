@@ -1,20 +1,20 @@
 <div class="modal-backdrop" role="presentation" (click)="close()">
   <section
-    class="order-modal"
+    class="modal modal--xl"
     role="dialog"
     aria-modal="true"
     aria-labelledby="order-modal-title"
     (click)="$event.stopPropagation()"
   >
-    <header class="order-modal__header">
-      <div>
-        <p class="order-modal__eyebrow">GESTÃO DE PEDIDOS</p>
-        <h2 id="order-modal-title">
+    <header class="modal__header">
+      <div class="modal__heading">
+        <p class="modal__eyebrow">Gestão de pedidos</p>
+        <h2 id="order-modal-title" class="modal__title">
           {{
             orderToEdit() ? 'Editar pedido #' + orderToEdit()?.id_pedido : 'Cadastrar novo pedido'
           }}
         </h2>
-        <p>
+        <p class="modal__subtitle">
           {{
             orderToEdit()
               ? 'Altere as especificações e condições do pedido.'
@@ -22,176 +22,193 @@
           }}
         </p>
       </div>
-      <button type="button" class="order-modal__close" aria-label="Fechar" (click)="close()">
-        <svg [lucideIcon]="'x'" [size]="17"></svg>
+      <button type="button" class="modal__close" aria-label="Fechar" (click)="close()">
+        <svg [lucideIcon]="'x'" [size]="18"></svg>
       </button>
     </header>
 
-    <form class="order-modal__content" (ngSubmit)="submit()">
-      <section class="order-modal__section">
-        <h3>Tipo do pedido</h3>
-        <div class="order-modal__choice-row">
-          <label
-            ><input type="radio" name="tipo" value="externo" [(ngModel)]="tipo" /> Cliente
-            externo</label
-          >
-          <label
-            ><input type="radio" name="tipo" value="interno" [(ngModel)]="tipo" /> Reposição
-            interna</label
-          >
-        </div>
-        @if (tipo === 'externo') {
-          <div class="order-modal__grid order-modal__grid--two">
-            <app-input-text
-              label="Nome do cliente"
-              inputId="order-contact-name"
-              icon="mail"
-              [(ngModel)]="contactName"
-              name="contactName"
-            />
-            <app-input-text
-              label="Telefone"
-              inputId="order-contact-phone"
-              icon="phone"
-              [(ngModel)]="contactPhone"
-              name="contactPhone"
-            />
-          </div>
-          <label class="order-modal__select-label">
-            Modalidade
-            <select name="subtipo" [(ngModel)]="subtipo">
-              <option value="personalizado">Personalizado</option>
-              <option value="vitrine">Vitrine</option>
-            </select>
-          </label>
-        }
-      </section>
-
-      <section class="order-modal__section">
-        <h3>Entrega e pagamento</h3>
-        <div class="order-modal__grid order-modal__grid--two">
-          <app-input-text
-            label="Data de entrega"
-            inputId="order-delivery-date"
-            type="date"
-            icon="calendar"
-            [(ngModel)]="deliveryDate"
-            name="deliveryDate"
-          />
-          <app-input-text
-            label="Horário"
-            inputId="order-delivery-time"
-            type="time"
-            icon="calendar"
-            [(ngModel)]="deliveryTime"
-            name="deliveryTime"
-          />
-          <app-input-text
-            label="Endereço (opcional)"
-            inputId="order-address"
-            icon="package"
-            [(ngModel)]="address"
-            name="address"
-          />
-          <label class="order-modal__select-label">
-            Forma de pagamento
-            <select name="paymentMethod" [(ngModel)]="paymentMethod">
-              <option value="pix">Pix</option>
-              <option value="cartao">Cartão</option>
-              <option value="dinheiro">Dinheiro</option>
-              <option value="pendente">A definir</option>
-            </select>
-          </label>
-        </div>
-      </section>
-
-      <section class="order-modal__section">
-        <div class="order-modal__section-heading">
-          <h3>Itens do pedido</h3>
-          <button type="button" class="order-modal__add" (click)="addItem()">
-            <svg [lucideIcon]="'plus'" [size]="14"></svg> Adicionar item
-          </button>
-        </div>
-        @for (item of items; track $index; let index = $index) {
-          <div class="order-modal__item">
-            <label class="order-modal__select-label">
-              Tipo
-              <select [name]="'item-kind-' + index" [(ngModel)]="item.kind">
-                <option value="receita">Receita</option>
-                <option value="produto">Produto pronto</option>
-              </select>
-            </label>
-            <label class="order-modal__select-label">
-              {{ item.kind === 'receita' ? 'Receita' : 'Produto' }}
-              <select [name]="'item-reference-' + index" [(ngModel)]="item.referenceId">
-                <option [ngValue]="null">Selecione</option>
-                @if (item.kind === 'receita') {
-                  @for (recipe of recipes(); track recipe.id_receita) {
-                    <option [ngValue]="recipe.id_receita">{{ recipe.nome }}</option>
-                  }
-                } @else {
-                  @for (product of products; track product.id) {
-                    <option [ngValue]="product.id">{{ product.label }}</option>
-                  }
-                }
-              </select>
-            </label>
-            <app-input-text
-              label="Quantidade"
-              [inputId]="'order-item-quantity-' + index"
-              type="number"
-              icon="hash"
-              [(ngModel)]="item.quantity"
-              [name]="'item-quantity-' + index"
-            />
-            <app-input-text
-              label="Preço unitário"
-              [inputId]="'order-item-price-' + index"
-              icon="hash"
-              [(ngModel)]="item.unitPrice"
-              [name]="'item-price-' + index"
-            />
-            <button
-              type="button"
-              class="order-modal__remove"
-              [disabled]="items.length === 1"
-              aria-label="Remover item"
-              (click)="removeItem(index)"
+    <form class="order-modal__form" (ngSubmit)="submit()">
+      <div class="modal__body">
+        <section class="modal__section">
+          <h3 class="modal__section-title">Tipo do pedido</h3>
+          <div class="order-modal__choice-row">
+            <label
+              ><input type="radio" name="tipo" value="externo" [(ngModel)]="tipo" /> Cliente
+              externo</label
             >
-              <svg [lucideIcon]="'trash-2'" [size]="15"></svg>
-            </button>
+            <label
+              ><input type="radio" name="tipo" value="interno" [(ngModel)]="tipo" /> Reposição
+              interna</label
+            >
           </div>
+          @if (tipo === 'externo') {
+            @if (!orderToEdit()) {
+              <div class="form-grid">
+                <app-input-text
+                  label="Nome do cliente"
+                  inputId="order-contact-name"
+                  icon="user"
+                  [(ngModel)]="contactName"
+                  name="contactName"
+                />
+                <app-input-text
+                  label="Telefone"
+                  inputId="order-contact-phone"
+                  icon="phone"
+                  mask="phone"
+                  [(ngModel)]="contactPhone"
+                  name="contactPhone"
+                />
+              </div>
+            }
+            <label class="form-field order-modal__half">
+              <span class="form-field__label">Modalidade</span>
+              <select class="form-control" name="subtipo" [(ngModel)]="subtipo">
+                <option value="personalizado">Personalizado</option>
+                <option value="vitrine">Vitrine</option>
+              </select>
+            </label>
+          }
+        </section>
+
+        <section class="modal__section">
+          <h3 class="modal__section-title">Entrega e pagamento</h3>
+          <div class="form-grid">
+            <app-input-text
+              label="Data de entrega"
+              inputId="order-delivery-date"
+              type="date"
+              icon="calendar"
+              [(ngModel)]="deliveryDate"
+              name="deliveryDate"
+            />
+            <app-input-text
+              label="Horário"
+              inputId="order-delivery-time"
+              type="time"
+              icon="clock"
+              [(ngModel)]="deliveryTime"
+              name="deliveryTime"
+            />
+            <app-input-text
+              label="Endereço (opcional)"
+              inputId="order-address"
+              icon="map-pin"
+              [(ngModel)]="address"
+              name="address"
+            />
+            <label class="form-field">
+              <span class="form-field__label">Forma de pagamento</span>
+              <select class="form-control" name="paymentMethod" [(ngModel)]="paymentMethod">
+                <option value="pix">Pix</option>
+                <option value="cartao">Cartão</option>
+                <option value="dinheiro">Dinheiro</option>
+                <option value="pendente">A definir</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="modal__section">
+          <div class="order-modal__section-heading">
+            <h3 class="modal__section-title">Itens do pedido</h3>
+            <app-button type="button" variant="outline" size="small" (click)="addItem()">
+              <svg [lucideIcon]="'plus'" [size]="14"></svg> Adicionar item
+            </app-button>
+          </div>
+          @for (item of items; track $index; let index = $index) {
+            <div class="order-modal__item">
+              <label class="form-field">
+                <span class="form-field__label">Tipo</span>
+                <select class="form-control" [name]="'item-kind-' + index" [(ngModel)]="item.kind">
+                  <option value="receita">Receita</option>
+                  <option value="produto">Produto pronto</option>
+                </select>
+              </label>
+              <label class="form-field">
+                <span class="form-field__label">{{
+                  item.kind === 'receita' ? 'Receita' : 'Produto'
+                }}</span>
+                <select
+                  class="form-control"
+                  [name]="'item-reference-' + index"
+                  [(ngModel)]="item.referenceId"
+                >
+                  <option [ngValue]="null">Selecione</option>
+                  @if (item.kind === 'receita') {
+                    @for (recipe of recipes(); track recipe.id_receita) {
+                      <option [ngValue]="recipe.id_receita">{{ recipe.nome }}</option>
+                    }
+                  } @else {
+                    @for (product of products; track product.id) {
+                      <option [ngValue]="product.id">{{ product.label }}</option>
+                    }
+                  }
+                </select>
+              </label>
+              <app-input-text
+                label="Quantidade"
+                [inputId]="'order-item-quantity-' + index"
+                type="number"
+                icon="hash"
+                [(ngModel)]="item.quantity"
+                [name]="'item-quantity-' + index"
+              />
+              <app-input-text
+                label="Preço unitário"
+                [inputId]="'order-item-price-' + index"
+                icon="banknote"
+                mask="currency"
+                [(ngModel)]="item.unitPrice"
+                [name]="'item-price-' + index"
+              />
+              <app-button
+                type="button"
+                variant="ghost"
+                size="small"
+                [disabled]="items.length === 1"
+                aria-label="Remover item"
+                (click)="removeItem(index)"
+              >
+                <svg [lucideIcon]="'trash-2'" [size]="15"></svg>
+              </app-button>
+            </div>
+          }
+        </section>
+
+        <section class="modal__section">
+          <h3 class="modal__section-title">Valores</h3>
+          <div class="form-grid">
+            <app-input-text
+              label="Valor total"
+              inputId="order-total"
+              icon="banknote"
+              mask="currency"
+              [(ngModel)]="total"
+              name="total"
+            />
+            <app-input-text
+              label="Sinal"
+              inputId="order-deposit"
+              icon="banknote"
+              mask="currency"
+              [(ngModel)]="deposit"
+              name="deposit"
+            />
+          </div>
+        </section>
+      </div>
+
+      <footer class="modal__footer">
+        @if (apiError() || errorMessage) {
+          <p class="modal__error" role="alert">{{ apiError() || errorMessage }}</p>
         }
-      </section>
-
-      <section class="order-modal__section">
-        <div class="order-modal__grid order-modal__grid--two">
-          <app-input-text
-            label="Valor total"
-            inputId="order-total"
-            icon="hash"
-            [(ngModel)]="total"
-            name="total"
-          />
-          <app-input-text
-            label="Sinal"
-            inputId="order-deposit"
-            icon="hash"
-            [(ngModel)]="deposit"
-            name="deposit"
-          />
+        <div class="modal__actions">
+          <app-button type="button" variant="outline" (click)="close()">Cancelar</app-button>
+          <app-button type="submit" variant="primary">{{
+            orderToEdit() ? 'Salvar alterações' : 'Cadastrar pedido'
+          }}</app-button>
         </div>
-      </section>
-
-      @if (apiError() || errorMessage) {
-        <p class="order-modal__error" role="alert">{{ apiError() || errorMessage }}</p>
-      }
-
-      <footer class="order-modal__footer">
-        <app-button type="button" variant="outline" (click)="close()">Cancelar</app-button>
-        <app-button type="submit" variant="primary">{{
-          orderToEdit() ? 'Salvar alterações' : 'Cadastrar pedido'
-        }}</app-button>
       </footer>
     </form>
   </section>

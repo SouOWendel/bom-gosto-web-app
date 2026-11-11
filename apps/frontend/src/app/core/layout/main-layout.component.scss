@@ -1,13 +1,27 @@
 .main-layout {
   display: flex;
   min-height: 100vh;
-  background-color: #faf5f5;
+  background-color: var(--color-bg-app);
 
   &__content {
-    flex: 1;
-    min-width: 0;
-    margin-left: 16.5rem;
     display: flex;
+    min-width: 0;
+    flex: 1;
     flex-direction: column;
+    margin-left: 16.5rem;
+  }
+
+  // Fundo escurecido atrás do menu lateral aberto em telas pequenas.
+  &__overlay {
+    position: fixed;
+    z-index: 90;
+    inset: 0;
+    background: var(--backdrop);
+  }
+
+  @media (max-width: 1024px) {
+    &__content {
+      margin-left: 0;
+    }
   }
 }

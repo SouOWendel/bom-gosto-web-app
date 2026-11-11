@@ -1,106 +1,67 @@
-<div class="recipes-page">
+<div class="page">
   <app-page-greeting
     title="Receitas"
-    subtitle="Consulte suas fichas técnicas, rendimentos e custos de ingredientes."
+    subtitle="Fichas técnicas com rendimento e custo calculado a partir do inventário."
     [actions]="greetingActions"
   />
 
-  <section class="recipes-page__filters" aria-label="Filtros de receitas">
-    <nav class="recipes-page__tabs" aria-label="Categorias de receitas">
-      @for (category of categories; track category) {
-        <button
-          type="button"
-          class="recipes-page__tab"
-          [class.recipes-page__tab--active]="selectedCategory() === category"
-          (click)="onCategoryChange(category)"
-        >
-          {{ category }}
-          @if (category === 'Todas as receitas') {
-            <span>({{ recipes().length }})</span>
-          }
-        </button>
-      }
-    </nav>
+  @if (errorMessage()) {
+    <div class="alert alert--danger" role="alert">{{ errorMessage() }}</div>
+  }
 
-    <div class="recipes-page__filter-row">
-      <app-input-text
-        label="Buscar receita"
-        inputId="recipe-search"
-        placeholder="Buscar por nome, código ou produto..."
-        icon="search"
-        size="compact"
-        [ngModel]="searchTerm()"
-        (ngModelChange)="onSearch($event)"
-      />
-      <label>
-        Produto associado
-        <select aria-label="Filtrar por produto">
-          <option>Todos os produtos</option>
-        </select>
-      </label>
-      <label>
-        Unidade de rendimento
-        <select
-          [ngModel]="selectedUnit()"
-          (ngModelChange)="onUnitChange($event)"
-          aria-label="Filtrar por unidade"
-        >
-          <option>Todas as unidades</option>
-          <option>Unidade (un)</option>
-          <option>Quilograma (kg)</option>
-        </select>
-      </label>
-    </div>
-  </section>
-
-  <section class="recipes-page__table-card" aria-labelledby="recipes-table-title">
-    <header class="recipes-page__table-header">
+  <section class="panel" aria-labelledby="recipes-table-title">
+    <header class="panel__header">
       <div>
-        <h2 id="recipes-table-title">Fichas técnicas</h2>
-        <span>{{ totalRecipes() }} receitas cadastradas</span>
+        <h2 id="recipes-table-title" class="panel__title">Fichas técnicas</h2>
+        <p class="panel__subtitle">{{ totalRecipes() }} receitas encontradas</p>
       </div>
-      <button type="button" class="recipes-page__sort">⇵ Mais recentes⌄</button>
     </header>
 
-    <div class="recipes-page__table-wrap">
-      <table class="recipes-page__table">
+    <div class="panel__toolbar">
+      <label class="search-field recipes-page__search">
+        <svg [lucideIcon]="'search'" [size]="16"></svg>
+        <input
+          type="search"
+          placeholder="Buscar por receita, código ou produto..."
+          aria-label="Buscar receitas"
+          [value]="searchTerm()"
+          (input)="onSearch($any($event.target).value)"
+        />
+      </label>
+    </div>
+
+    <div class="data-table-wrap">
+      <table class="data-table recipes-page__table">
         <thead>
           <tr>
-            <th>Receita / Código</th>
-            <th>Produto associado</th>
-            <th>Rendimento</th>
-            <th>Custo total<br />Ingredientes</th>
-            <th>Custo por<br />unidade</th>
-            <th>Ações</th>
+            <th>Receita</th>
+            <th>Produtos associados</th>
+            <th class="is-numeric">Rendimento</th>
+            <th class="is-numeric">Custo dos ingredientes</th>
+            <th class="is-numeric">Custo por unidade</th>
           </tr>
         </thead>
         <tbody>
           @for (recipe of paginatedRecipes(); track recipe.code) {
             <tr>
               <td>
-                <strong>{{ recipe.name }}</strong>
-                <small>{{ recipe.code }} · {{ recipe.ingredients }} ingredientes</small>
+                <strong class="data-table__primary">{{ recipe.name }}</strong>
+                <small class="data-table__secondary"
+                  >{{ recipe.code }} · {{ recipe.ingredients }} ingredientes</small
+                >
               </td>
-              <td>
-                <strong>{{ recipe.product }}</strong>
-                <small>{{ recipe.category }}</small>
+              <td>{{ recipe.product }}</td>
+              <td class="is-numeric">{{ recipe.yield }}</td>
+              <td class="is-numeric">
+                <strong class="data-table__primary">{{ formatCurrency(recipe.totalCost) }}</strong>
               </td>
-              <td>{{ recipe.yield }}</td>
-              <td>
-                <strong>{{ formatCurrency(recipe.totalCost) }}</strong>
-              </td>
-              <td>
-                <strong>{{ formatCurrency(recipe.unitCost) }}</strong>
-                <small>/ {{ recipe.unit }}</small>
-              </td>
-              <td class="recipes-page__actions">
-                <app-button size="small" variant="outline">Ver ficha</app-button>
-                <button type="button" class="recipes-page__more" aria-label="Mais ações">⋮</button>
+              <td class="is-numeric">
+                <strong class="data-table__primary">{{ formatCurrency(recipe.unitCost) }}</strong>
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="recipes-page__empty">
+              <td colspan="5" class="data-table__empty">
                 Nenhuma receita encontrada com os filtros selecionados.
               </td>
             </tr>
@@ -109,43 +70,16 @@
       </table>
     </div>
 
-    <div class="recipes-page__note">
-      ⓘ Custos baseados apenas nos ingredientes do inventário. Custo por unidade = custo total ÷
-      rendimento.
-    </div>
-    <footer class="recipes-page__footer">
-      <span
-        >Mostrando {{ visibleRange().start }}–{{ visibleRange().end }} de
-        {{ totalRecipes() }} receitas<br /><small>6 receitas por página</small></span
-      >
-      <nav class="recipes-page__pagination" aria-label="Paginação">
-        <button
-          type="button"
-          aria-label="Página anterior"
-          [disabled]="currentPage() === 1"
-          (click)="goToPage(currentPage() - 1)"
-        >
-          ‹
-        </button>
-        @for (page of pageNumbers(); track page) {
-          <button
-            type="button"
-            [class.is-current]="currentPage() === page"
-            [attr.aria-current]="currentPage() === page ? 'page' : null"
-            (click)="goToPage(page)"
-          >
-            {{ page }}
-          </button>
-        }
-        <button
-          type="button"
-          aria-label="Próxima página"
-          [disabled]="currentPage() === totalPages() || totalPages() === 0"
-          (click)="goToPage(currentPage() + 1)"
-        >
-          ›
-        </button>
-      </nav>
-    </footer>
+    <p class="panel__note">
+      Custos calculados com os ingredientes do inventário. Custo por unidade = custo dos
+      ingredientes ÷ rendimento.
+    </p>
+    <app-table-pagination
+      [total]="totalRecipes()"
+      [pageSize]="pageSize"
+      [currentPage]="currentPage()"
+      itemLabel="receitas"
+      (pageChange)="goToPage($event)"
+    />
   </section>
 </div>

@@ -1,6 +1,6 @@
 import { Component, HostListener, input, OnInit, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { LucideCheck, LucideDynamicIcon, provideLucideIcons } from '@lucide/angular';
+import { LucideCheck, LucideDynamicIcon, LucideX, provideLucideIcons } from '@lucide/angular';
 import { InputTextComponent } from '../input-text/input-text.component';
 import { ButtonComponent } from '../button/button.component';
 import {
@@ -14,6 +14,7 @@ interface ProductionIngredient {
   name: string;
   lot: string;
   theoreticalQuantity: string;
+  theoreticalLabel: string;
   quantity: string;
   availableQuantity: string;
   unit: string;
@@ -29,12 +30,13 @@ interface ProductionOrder {
   selector: 'app-complete-production-modal',
   standalone: true,
   imports: [FormsModule, InputTextComponent, ButtonComponent, LucideDynamicIcon],
-  providers: [provideLucideIcons(LucideCheck)],
+  providers: [provideLucideIcons(LucideCheck, LucideX)],
   templateUrl: './complete-production-modal.component.html',
   styleUrls: ['./complete-production-modal.component.scss'],
 })
 export class CompleteProductionModalComponent implements OnInit {
   readonly order = input.required<ProductionOrder>();
+  readonly apiError = input<string | null>(null);
   readonly closed = output<void>();
   readonly confirmed = output<void>();
   submittedPayload: CompleteProductionPayload | null = null;
@@ -42,11 +44,12 @@ export class CompleteProductionModalComponent implements OnInit {
   readonly ingredients: ProductionIngredient[] = [];
 
   expirationDate = '';
+  errorMessage = '';
 
   ngOnInit(): void {
     const analysis = this.order().analysis;
     if (!analysis) {
-      console.error('Não há análise de produção disponível para concluir este pedido.');
+      this.errorMessage = 'Não há análise de produção disponível para concluir este pedido.';
       return;
     }
 
@@ -54,13 +57,21 @@ export class CompleteProductionModalComponent implements OnInit {
       ...analysis.ingredientes.map((ingredient) => ({
         id: ingredient.id_ingrediente,
         name: ingredient.nome,
-        lot: `Disponível: ${ingredient.disponivel}`,
-        theoreticalQuantity: ingredient.necessario,
+        lot: `Disponível: ${this.formatNumber(ingredient.disponivel)} ${ingredient.unidade_medida ?? ''}`.trim(),
+        theoreticalQuantity: String(ingredient.necessario),
+        theoreticalLabel: this.formatNumber(ingredient.necessario),
         quantity: '',
         availableQuantity: ingredient.disponivel,
-        unit: '',
+        unit: ingredient.unidade_medida ?? '',
       })),
     );
+  }
+
+  private formatNumber(value: string | number): string {
+    const number = Number(value);
+    return Number.isFinite(number)
+      ? number.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
+      : String(value);
   }
 
   @HostListener('document:keydown.escape')
@@ -74,19 +85,19 @@ export class CompleteProductionModalComponent implements OnInit {
 
   confirm(): void {
     if (!this.expirationDate || this.ingredients.length === 0) {
-      console.error('Informe a validade e os consumos reais antes de concluir a produção.');
+      this.errorMessage = 'Informe a validade e os consumos reais antes de concluir a produção.';
       return;
     }
 
     const consumos: ProductionConsumption[] = [];
     for (const ingredient of this.ingredients) {
       if (!ingredient.quantity.trim()) {
-        console.error(`Informe o consumo real de ${ingredient.name}; use zero se não houve consumo.`);
+        this.errorMessage = `Informe o consumo real de ${ingredient.name}; use zero se não houve consumo.`;
         return;
       }
       const quantity = Number(ingredient.quantity);
       if (!Number.isFinite(quantity) || quantity < 0) {
-        console.error(`Quantidade inválida para o ingrediente ${ingredient.name}.`);
+        this.errorMessage = `Quantidade inválida para o ingrediente ${ingredient.name}.`;
         return;
       }
       consumos.push({
@@ -95,6 +106,7 @@ export class CompleteProductionModalComponent implements OnInit {
       });
     }
 
+    this.errorMessage = '';
     this.submittedPayload = {
       data_validade: this.expirationDate,
       consumos,

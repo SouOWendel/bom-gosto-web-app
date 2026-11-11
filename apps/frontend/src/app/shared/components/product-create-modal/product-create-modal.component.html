@@ -1,69 +1,72 @@
 <div class="modal-backdrop" role="presentation" (click)="close()">
   <section
-    class="product-modal"
+    class="modal"
     role="dialog"
     aria-modal="true"
     aria-labelledby="product-modal-title"
     (click)="$event.stopPropagation()"
   >
-    <header class="product-modal__header">
-      <div>
-        <p>GESTÃO DE PRODUTOS</p>
-        <h2 id="product-modal-title">{{ productToEdit() ? 'Editar produto' : 'Novo produto' }}</h2>
-        <span>{{
-          productToEdit()
-            ? 'Atualize as informações do item comercializado.'
-            : 'Cadastre um item final comercializado pela confeitaria.'
-        }}</span>
+    <header class="modal__header">
+      <div class="modal__heading">
+        <p class="modal__eyebrow">Gestão de produtos</p>
+        <h2 id="product-modal-title" class="modal__title">
+          {{ productToEdit() ? 'Editar produto' : 'Novo produto' }}
+        </h2>
+        <p class="modal__subtitle">
+          {{
+            productToEdit()
+              ? 'Atualize as informações do item comercializado.'
+              : 'Cadastre um item final comercializado pela confeitaria.'
+          }}
+        </p>
       </div>
-      <button type="button" aria-label="Fechar" (click)="close()">×</button>
+      <button type="button" class="modal__close" aria-label="Fechar" (click)="close()">
+        <svg [lucideIcon]="'x'" [size]="18"></svg>
+      </button>
     </header>
 
-    <form class="product-modal__content" (ngSubmit)="submit()">
-      <app-input-text
-        label="Nome do produto *"
-        inputId="product-name"
-        icon="package"
-        [(ngModel)]="name"
-        name="name"
-      />
-
-      <div class="product-modal__grid">
+    <form class="product-modal__form" (ngSubmit)="submit()">
+      <div class="modal__body">
         <app-input-text
-          label="Preço de venda (R$) *"
-          inputId="product-price"
-          icon="hash"
-          [(ngModel)]="salePrice"
-          name="salePrice"
+          label="Nome do produto *"
+          inputId="product-name"
+          icon="package"
+          [(ngModel)]="name"
+          name="name"
         />
 
-        <div class="product-modal__select-wrap">
-          <label for="product-recipe" class="product-modal__label"
-            >Receita vinculada (opcional)</label
-          >
-          <select
-            id="product-recipe"
-            [(ngModel)]="recipeId"
-            name="recipeId"
-            class="product-modal__select"
-          >
-            <option [ngValue]="null">Sem receita direta</option>
-            @for (rec of recipes(); track rec.id_receita) {
-              <option [ngValue]="rec.id_receita">{{ rec.nome }} (#{{ rec.id_receita }})</option>
-            }
-          </select>
+        <div class="form-grid">
+          <app-input-text
+            label="Preço de venda (R$) *"
+            inputId="product-price"
+            icon="banknote"
+            placeholder="0,00"
+            [(ngModel)]="salePrice"
+            name="salePrice"
+          />
+
+          <label class="form-field" for="product-recipe">
+            <span class="form-field__label">Receita vinculada (opcional)</span>
+            <select id="product-recipe" class="form-control" [(ngModel)]="recipeId" name="recipeId">
+              <option [ngValue]="null">Sem receita direta</option>
+              @for (rec of recipes(); track rec.id_receita) {
+                <option [ngValue]="rec.id_receita">{{ rec.nome }} (#{{ rec.id_receita }})</option>
+              }
+            </select>
+          </label>
         </div>
       </div>
 
-      @if (apiError() || errorMessage) {
-        <p class="product-modal__error" role="alert">{{ apiError() || errorMessage }}</p>
-      }
-
-      <footer class="product-modal__footer">
-        <app-button type="button" variant="outline" (click)="close()">Cancelar</app-button>
-        <app-button type="submit" variant="primary">
-          {{ productToEdit() ? 'Salvar alterações' : 'Cadastrar produto' }}
-        </app-button>
+      <footer class="modal__footer">
+        @if (apiError() || errorMessage) {
+          <p class="modal__error" role="alert">{{ apiError() || errorMessage }}</p>
+        }
+        <div class="modal__actions">
+          <app-button type="button" variant="outline" (click)="close()">Cancelar</app-button>
+          <app-button type="submit" variant="primary">
+            {{ productToEdit() ? 'Salvar alterações' : 'Cadastrar produto' }}
+          </app-button>
+        </div>
       </footer>
     </form>
   </section>

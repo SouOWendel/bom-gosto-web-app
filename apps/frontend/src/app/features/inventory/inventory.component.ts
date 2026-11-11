@@ -1,4 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { LucideDynamicIcon, LucidePencil, LucideSearch, provideLucideIcons } from '@lucide/angular';
+import { ButtonComponent } from '../../shared/components/button/button.component';
 import { MetricCardsComponent } from '../../shared/components/metric-cards/metric-cards.component';
 import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
@@ -9,10 +11,7 @@ import {
   IngredientCreateModalComponent,
   IngredientCreationPayload,
 } from '../../shared/components/ingredient-create-modal/ingredient-create-modal.component';
-import {
-  IngredientMovementModalComponent,
-  IngredientMovementPayload,
-} from '../../shared/components/ingredient-movement-modal/ingredient-movement-modal.component';
+import { TablePaginationComponent } from '../../shared/components/table-pagination/table-pagination.component';
 
 interface InventoryItem {
   raw: Ingredient;
@@ -22,26 +21,28 @@ interface InventoryItem {
   level: string;
   percentage: number;
   unit: string;
-  packaging: string;
   minimum: string;
   status: 'low' | 'normal' | 'critical';
   statusLabel: string;
   expiration: string;
   expirationDetail: string;
+  expirationLevel: 'critico' | 'atencao' | 'preventivo' | null;
+  expirationLabel: string;
   cost: string;
-  lastMovement: string;
-  author: string;
 }
 
 @Component({
   selector: 'app-inventory',
   standalone: true,
   imports: [
+    TablePaginationComponent,
     PageGreetingComponent,
     MetricCardsComponent,
     IngredientCreateModalComponent,
-    IngredientMovementModalComponent,
+    ButtonComponent,
+    LucideDynamicIcon,
   ],
+  providers: [provideLucideIcons(LucidePencil, LucideSearch)],
   templateUrl: './inventory.component.html',
   styleUrls: ['./inventory.component.scss'],
 })
@@ -53,9 +54,6 @@ export class InventoryComponent implements OnInit {
   readonly isCreateModalOpen = signal(false);
   readonly createError = signal<string | null>(null);
   readonly ingredientToEdit = signal<Ingredient | null>(null);
-  readonly ingredientToMove = signal<Ingredient | null>(null);
-  readonly movementType = signal<'entrada' | 'saida'>('entrada');
-  readonly movementError = signal<string | null>(null);
   readonly searchTerm = signal('');
   readonly alertOnly = signal(false);
   readonly currentPage = signal(1);
@@ -66,23 +64,22 @@ export class InventoryComponent implements OnInit {
     return this.filteredInventoryItems().slice(start, start + this.pageSize);
   });
   readonly totalPages = computed(() => Math.ceil(this.totalItems() / this.pageSize));
-  readonly pageNumbers = computed(() =>
-    Array.from({ length: this.totalPages() }, (_, index) => index + 1),
-  );
-  readonly visibleRange = computed(() => {
-    const total = this.totalItems();
-    if (total === 0) {
-      return { start: 0, end: 0 };
-    }
-    return {
-      start: (this.currentPage() - 1) * this.pageSize + 1,
-      end: Math.min(this.currentPage() * this.pageSize, total),
-    };
-  });
 
   readonly greetingActions: PageAction[] = [
-    { label: 'Novo Insumo', icon: 'plus', variant: 'primary' },
+    { label: 'Novo insumo', icon: 'plus', variant: 'primary' },
   ];
+
+  // Cores únicas para estoque e validade (ver .badge em styles.scss).
+  readonly stockBadge: Record<InventoryItem['status'], string> = {
+    normal: 'badge--success',
+    low: 'badge--warning',
+    critical: 'badge--danger',
+  };
+  readonly expiryBadge: Record<'critico' | 'atencao' | 'preventivo', string> = {
+    critico: 'badge--danger',
+    atencao: 'badge--warning',
+    preventivo: 'badge--info',
+  };
 
   get summaryCards(): MetricCardItem[] {
     const ingredients = this.ingredients();
@@ -184,7 +181,7 @@ export class InventoryComponent implements OnInit {
   }
 
   handleGreetingAction(action: PageAction): void {
-    if (action.label === 'Novo Insumo') {
+    if (action.label === 'Novo insumo') {
       this.openCreateModal();
     }
   }
@@ -199,39 +196,6 @@ export class InventoryComponent implements OnInit {
     this.ingredientToEdit.set(item.raw);
     this.createError.set(null);
     this.isCreateModalOpen.set(true);
-  }
-
-  openMovementModal(item: InventoryItem, type: 'entrada' | 'saida'): void {
-    this.ingredientToMove.set(item.raw);
-    this.movementType.set(type);
-    this.movementError.set(null);
-  }
-
-  closeMovementModal(): void {
-    this.ingredientToMove.set(null);
-    this.movementError.set(null);
-  }
-
-  moveIngredient(payload: IngredientMovementPayload): void {
-    const ingredient = this.ingredientToMove();
-    if (!ingredient) {
-      return;
-    }
-
-    this.domainApi.moveIngredient(ingredient.id_ingrediente, payload).subscribe({
-      next: (updated) => {
-        this.ingredients.update((items) =>
-          items.map((item) => (item.id_ingrediente === updated.id_ingrediente ? updated : item)),
-        );
-        this.closeMovementModal();
-      },
-      error: (error: unknown) => {
-        this.movementError.set(
-          `Não foi possível registrar a movimentação. ${this.errorDetail(error)}`,
-        );
-        console.error('Falha ao movimentar ingrediente.', error);
-      },
-    });
   }
 
   closeCreateModal(): void {
@@ -279,6 +243,7 @@ export class InventoryComponent implements OnInit {
     const quantity = this.toNumber(ingredient.quantidade_disponivel);
     const minimum = this.toNumber(ingredient.quantidade_minima);
     const belowMinimum = ingredient.abaixo_do_minimo === true;
+    const unit = ingredient.unidade_medida || 'un';
     const status =
       ingredient.quantidade_disponivel !== null && quantity <= 0
         ? 'critical'
@@ -290,27 +255,27 @@ export class InventoryComponent implements OnInit {
       raw: ingredient,
       name: ingredient.nome,
       code: `INS-${String(ingredient.id_ingrediente).padStart(4, '0')}`,
-      lot: 'Lote não informado',
-      level: `${this.formatQuantity(ingredient.quantidade_disponivel)} un.`,
+      lot: '',
+      level: `${this.formatQuantity(ingredient.quantidade_disponivel)} ${unit}`,
+      // A barra vai até o dobro do mínimo: metade da barra = exatamente o mínimo.
       percentage:
         minimum > 0
-          ? Math.min(100, Math.round((quantity / minimum) * 100))
+          ? Math.min(100, Math.round((quantity / (minimum * 2)) * 100))
           : quantity > 0
             ? 100
             : 0,
-      unit: 'un.',
-      packaging: 'Embalagem não informada',
+      unit,
       minimum:
         ingredient.quantidade_minima === null
           ? 'Não informado'
-          : `${this.formatQuantity(ingredient.quantidade_minima)} un.`,
+          : `${this.formatQuantity(ingredient.quantidade_minima)} ${unit}`,
       status,
       statusLabel: status === 'critical' ? 'Esgotado' : status === 'low' ? 'Baixo' : 'Normal',
       expiration: this.formatDate(ingredient.data_validade),
       expirationDetail: this.expirationDetail(ingredient.alerta_validade),
+      expirationLevel: ingredient.alerta_validade?.nivel ?? null,
+      expirationLabel: this.expirationLabel(ingredient.alerta_validade?.nivel ?? null),
       cost: this.formatCurrencyOrUnavailable(ingredient.custo_unitario),
-      lastMovement: 'Não informado',
-      author: 'Não informado',
     };
   }
 
@@ -340,6 +305,20 @@ export class InventoryComponent implements OnInit {
 
     const date = new Date(`${value}T00:00:00`);
     return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('pt-BR');
+  }
+
+  // Semáforo de validade (RN17): crítico, atenção ou preventivo.
+  private expirationLabel(level: InventoryItem['expirationLevel']): string {
+    switch (level) {
+      case 'critico':
+        return 'Crítico';
+      case 'atencao':
+        return 'Atenção';
+      case 'preventivo':
+        return 'Preventivo';
+      default:
+        return '';
+    }
   }
 
   private expirationDetail(alert: Ingredient['alerta_validade']): string {

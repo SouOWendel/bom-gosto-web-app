@@ -1,27 +1,28 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input } from '@angular/core';
 import {
   LucideCalendar,
   LucideDynamicIcon,
-  LucideFileText,
-  LucidePencil,
+  LucidePackage,
   provideLucideIcons,
 } from '@lucide/angular';
 import { StockProductCardItem } from './stock-product-card.model';
-import { ButtonComponent } from '../../../../shared/components/button/button.component';
 
 @Component({
   selector: 'app-stock-product-card',
   standalone: true,
-  imports: [LucideDynamicIcon, ButtonComponent],
-  providers: [provideLucideIcons(LucideCalendar, LucideFileText, LucidePencil)],
+  imports: [LucideDynamicIcon],
+  providers: [provideLucideIcons(LucideCalendar, LucidePackage)],
   templateUrl: './stock-product-card.component.html',
   styleUrls: ['./stock-product-card.component.scss'],
 })
 export class StockProductCardComponent {
   readonly product = input.required<StockProductCardItem>();
 
-  readonly technicalSheet = output<StockProductCardItem>();
-  readonly details = output<StockProductCardItem>();
-  readonly pricing = output<StockProductCardItem>();
-  readonly edit = output<StockProductCardItem>();
+  // Mesma cor do semáforo de validade usada no inventário (ver .badge em styles.scss).
+  readonly statusBadge: Record<StockProductCardItem['status'], string> = {
+    critico: 'badge--danger',
+    atencao: 'badge--warning',
+    preventivo: 'badge--info',
+    normal: 'badge--success',
+  };
 }

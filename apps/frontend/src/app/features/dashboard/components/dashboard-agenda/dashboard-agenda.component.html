@@ -1,181 +1,126 @@
-<section class="agenda-panel" aria-label="Agenda de produção">
-  <!-- Cabeçalho -->
-  <div class="agenda-panel__header">
-    <div class="agenda-panel__info">
-      <h2 class="agenda-panel__title">Agenda de Produção</h2>
-      <span class="agenda-panel__subtitle">
-        {{ pedidosFiltrados().length }} entrega(s) programada(s) nesta data
-      </span>
+<section class="panel agenda-panel" aria-label="Agenda de produção">
+  <header class="panel__header">
+    <div>
+      <h2 class="panel__title">Agenda de produção</h2>
+      <p class="panel__subtitle">
+        {{ pedidosFiltrados().length }} entrega(s) programada(s) para o dia
+        {{ getDiaDoMes(dataSelecionada()) }}
+      </p>
+    </div>
+  </header>
+
+  <div class="panel__toolbar">
+    <div class="filter-tabs" role="tablist" aria-label="Filtrar por categoria">
+      @for (aba of abas; track aba.valor) {
+        <button
+          type="button"
+          role="tab"
+          class="filter-tab"
+          [class.is-active]="filtroCategoria() === aba.valor"
+          [attr.aria-selected]="filtroCategoria() === aba.valor"
+          (click)="setFiltro(aba.valor)"
+        >
+          {{ aba.rotulo }}
+          <span class="filter-tab__count">{{ contadoresCategoria()[aba.valor] }}</span>
+        </button>
+      }
     </div>
   </div>
 
-  <!-- Filtro por abas -->
-  <div class="agenda-tabs" role="tablist">
-    <button
-      type="button"
-      class="agenda-tab"
-      [class.agenda-tab--active]="filtroCategoria() === 'todos'"
-      (click)="setFiltro('todos')"
-      role="tab"
-    >
-      Todos <span class="agenda-tab__badge">{{ contadoresCategoria().todos }}</span>
-    </button>
-    <button
-      type="button"
-      class="agenda-tab"
-      [class.agenda-tab--active]="filtroCategoria() === 'bolo'"
-      (click)="setFiltro('bolo')"
-      role="tab"
-    >
-      Bolos <span class="agenda-tab__badge">{{ contadoresCategoria().bolo }}</span>
-    </button>
-    <button
-      type="button"
-      class="agenda-tab"
-      [class.agenda-tab--active]="filtroCategoria() === 'doce'"
-      (click)="setFiltro('doce')"
-      role="tab"
-    >
-      Doces <span class="agenda-tab__badge">{{ contadoresCategoria().doce }}</span>
-    </button>
-    <button
-      type="button"
-      class="agenda-tab"
-      [class.agenda-tab--active]="filtroCategoria() === 'kit'"
-      (click)="setFiltro('kit')"
-      role="tab"
-    >
-      Kits <span class="agenda-tab__badge">{{ contadoresCategoria().kit }}</span>
-    </button>
-  </div>
-
-  <!-- Lista de pedidos -->
   <div class="agenda-list">
     @if (pedidosFiltrados().length === 0) {
       <div class="agenda-empty">
-        <div class="agenda-empty__icon">
-          <svg [lucideIcon]="'package'" [size]="36" [strokeWidth]="1.5"></svg>
-        </div>
+        <svg [lucideIcon]="'package'" [size]="32" [strokeWidth]="1.5"></svg>
         <h3>Nenhum pedido agendado</h3>
-        <p>Não há encomendas para o filtro ou data selecionada.</p>
-        <a routerLink="/pedidos" class="btn btn--sm btn--primary">Cadastrar Encomenda</a>
+        <p>Não há encomendas para o filtro ou a data selecionada.</p>
+        <app-button route="/pedidos" variant="primary" size="small">Cadastrar encomenda</app-button>
       </div>
     } @else {
       @for (pedido of pedidosFiltrados(); track pedido.id) {
-        <article class="order-card order-card--{{ pedido.status }}">
-          <!-- Linha superior: horário + status badge -->
+        <article class="order-card">
           <div class="order-card__top">
-            <div class="order-card__time-badge">
-              <svg [lucideIcon]="'clock'" [size]="13" [strokeWidth]="2"></svg>
+            <div class="order-card__time">
+              <svg [lucideIcon]="'clock'" [size]="14" [strokeWidth]="2"></svg>
               <strong>{{ pedido.horario }}</strong>
-              <span class="order-card__bullet">&bull;</span>
-              <span>{{ pedido.modalidade }}</span>
+              <span>· {{ pedido.modalidade }}</span>
             </div>
-            <span class="status-chip status-chip--{{ pedido.status }}">
+            <span class="badge badge--dot" [class]="statusBadge[pedido.status]">
               {{ pedido.statusLabel }}
             </span>
           </div>
 
-          <!-- Conteúdo: imagem + detalhes -->
           <div class="order-card__body">
-            <!-- Placeholder imagem -->
             <div
-              class="order-card__image order-card__image--{{ pedido.categoria }}"
+              class="order-card__icon order-card__icon--{{ pedido.categoria }}"
               aria-hidden="true"
             >
-              @if (pedido.categoria === 'bolo') {
-                🎂
-              }
-              @if (pedido.categoria === 'doce') {
-                🍬
-              }
-              @if (pedido.categoria === 'kit') {
-                🎁
-              }
+              <svg [lucideIcon]="iconeCategoria[pedido.categoria ?? 'bolo']" [size]="22"></svg>
             </div>
 
             <div class="order-card__details">
-              <h3 class="order-card__item-title">{{ pedido.titulo }}</h3>
+              <h3 class="order-card__title">{{ pedido.titulo }}</h3>
               @if (pedido.descricao) {
-                <p class="order-card__item-desc">{{ pedido.descricao }}</p>
+                <p class="order-card__desc">{{ pedido.descricao }}</p>
               }
-              <div class="order-card__client-info">
-                <span
-                  >Cliente: <strong>{{ pedido.cliente }}</strong></span
-                >
-              </div>
+              <p class="order-card__client">
+                Cliente: <strong>{{ pedido.cliente }}</strong>
+              </p>
 
               @if (pedido.endereco) {
-                <div class="order-card__address">
-                  <svg [lucideIcon]="'map-pin'" [size]="12" [strokeWidth]="2"></svg>
-                  <span>{{ pedido.endereco }}</span>
-                </div>
+                <p class="order-card__address">
+                  <svg [lucideIcon]="'map-pin'" [size]="13" [strokeWidth]="2"></svg>
+                  {{ pedido.endereco }}
+                </p>
               }
 
               @if (pedido.etapaProducao) {
-                <div class="order-card__progress-box">
-                  <div class="progress-labels">{{ pedido.etapaProducao }}</div>
-                  <div class="progress-bar">
-                    <div
-                      class="progress-bar__fill"
-                      [style.width.%]="pedido.progressoPct ?? 0"
-                    ></div>
+                <div class="order-card__progress">
+                  <span>{{ pedido.etapaProducao }}</span>
+                  <div class="order-card__progress-bar">
+                    <div [style.width.%]="pedido.progressoPct ?? 0"></div>
                   </div>
                 </div>
               }
 
-              <div class="order-card__payment-info">
+              <p class="order-card__payment">
                 @if (pedido.status === 'pronto') {
                   <span class="order-card__paid">
-                    <svg [lucideIcon]="'circle-check'" [size]="13" [strokeWidth]="2.5"></svg>
+                    <svg [lucideIcon]="'circle-check'" [size]="14" [strokeWidth]="2.5"></svg>
                     Pago
                   </span>
                 }
-                <span class="order-card__payment-value">{{ pedido.pagamentoInfo }}</span>
-              </div>
+                <strong>{{ pedido.pagamentoInfo }}</strong>
+              </p>
             </div>
           </div>
 
-          <!-- Ações -->
           <div class="order-card__actions">
-            @if (pedido.status === 'pronto') {
-              <a routerLink="/pedidos" class="btn-action-secondary">
-                <svg [lucideIcon]="'file-text'" [size]="13" [strokeWidth]="2"></svg>
-                <span>Ficha</span>
-              </a>
-            } @else if (pedido.status === 'em_producao') {
-              <button
-                type="button"
-                class="btn btn--sm btn--primary order-card__cta"
-                (click)="avancarStatus(pedido)"
-              >
-                Avançar para Pronto →
-              </button>
-            } @else if (pedido.status === 'confirmado') {
-              <button
-                type="button"
-                class="btn btn--sm btn--outline-primary"
-                (click)="avancarStatus(pedido)"
-              >
-                Iniciar Preparo
-              </button>
-            }
-            <button
-              type="button"
-              class="btn-action-secondary"
+            <app-button
+              variant="outline"
+              size="small"
+              ariaLabel="Conversar com o cliente no WhatsApp"
               (click)="abrirWhatsApp(pedido.telefone, pedido.cliente)"
-              title="Conversar com o cliente no WhatsApp"
             >
-              <svg [lucideIcon]="'phone'" [size]="13" [strokeWidth]="2"></svg>
-              <span>WhatsApp</span>
-            </button>
+              <svg [lucideIcon]="'phone'" [size]="14" [strokeWidth]="2"></svg>
+              WhatsApp
+            </app-button>
+            @if (pedido.status === 'pronto') {
+              <app-button route="/pedidos" variant="outline" size="small">
+                <svg [lucideIcon]="'file-text'" [size]="14" [strokeWidth]="2"></svg>
+                Ver pedido
+              </app-button>
+            } @else if (pedido.status === 'em_producao') {
+              <app-button variant="primary" size="small" (click)="avancarStatus(pedido)">
+                Concluir produção
+              </app-button>
+            } @else if (pedido.status === 'confirmado') {
+              <app-button variant="primary" size="small" (click)="avancarStatus(pedido)">
+                Iniciar produção
+              </app-button>
+            }
           </div>
         </article>
       }
     }
-  </div>
-
-  <div class="agenda-panel__footer">
-    <span>Visualizando encomendas do dia {{ getDiaDoMes(dataSelecionada()) }} de Setembro</span>
   </div>
 </section>

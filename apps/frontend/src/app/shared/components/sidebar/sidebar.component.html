@@ -1,8 +1,8 @@
-<aside class="sidebar">
+<aside class="sidebar" [class.sidebar--open]="mobileOpen()">
   <!-- Top: Brand / Header -->
   <div class="sidebar__brand">
     <div class="sidebar__logo-badge" aria-hidden="true">
-      <svg lucideCakeSlice [size]="24" [strokeWidth]="2" ></svg>
+      <svg lucideCakeSlice [size]="24" [strokeWidth]="2"></svg>
     </div>
 
     <div class="sidebar__brand-text">
@@ -46,9 +46,9 @@
   <div class="sidebar__footer">
     <div class="sidebar__profile-card">
       <div class="sidebar__profile-avatar">
-				<div class="sidebar__avatar-fallback" aria-hidden="true">
-					<svg lucideUser [size]="22" [strokeWidth]="2" ></svg>
-				</div>
+        <div class="sidebar__avatar-fallback" aria-hidden="true">
+          <svg lucideUser [size]="22" [strokeWidth]="2"></svg>
+        </div>
       </div>
 
       <div class="sidebar__profile-info">
@@ -70,12 +70,11 @@
         <!-- Dropdown Menu de opções do perfil -->
         @if (isUserMenuOpen()) {
           <div class="sidebar__dropdown" (click)="$event.stopPropagation()">
-            <button type="button" class="sidebar__dropdown-item" (click)="onProfileClick()">
-              <svg lucideUser [size]="16" [strokeWidth]="2"></svg>
-              <span>Meu Perfil</span>
-            </button>
-            <div class="sidebar__dropdown-divider"></div>
-            <button type="button" class="sidebar__dropdown-item sidebar__dropdown-item--danger" (click)="handleLogout()">
+            <button
+              type="button"
+              class="sidebar__dropdown-item sidebar__dropdown-item--danger"
+              (click)="handleLogout()"
+            >
               <svg lucideLogOut [size]="16" [strokeWidth]="2"></svg>
               <span>Sair do sistema</span>
             </button>

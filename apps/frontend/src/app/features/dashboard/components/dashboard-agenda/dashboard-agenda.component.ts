@@ -1,10 +1,11 @@
 import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import {
   LucideDynamicIcon,
   provideLucideIcons,
+  LucideCakeSlice,
+  LucideCandy,
   LucideClock,
+  LucideGift,
   LucideMapPin,
   LucidePhone,
   LucideFileText,
@@ -12,13 +13,17 @@ import {
   LucidePackage,
 } from '@lucide/angular';
 import { PedidoSimulado } from '../../dashboard.component';
+import { ButtonComponent } from '../../../../shared/components/button/button.component';
 
 @Component({
   selector: 'app-dashboard-agenda',
   standalone: true,
-  imports: [CommonModule, RouterLink, LucideDynamicIcon],
+  imports: [LucideDynamicIcon, ButtonComponent],
   providers: [
     provideLucideIcons(
+      LucideCakeSlice,
+      LucideCandy,
+      LucideGift,
       LucideClock,
       LucideMapPin,
       LucidePhone,
@@ -40,6 +45,27 @@ export class DashboardAgendaComponent {
   });
   readonly filtroCategoria = input<string>('todos');
   readonly dataSelecionada = input<string>('');
+
+  readonly abas: Array<{ valor: 'todos' | 'bolo' | 'doce' | 'kit'; rotulo: string }> = [
+    { valor: 'todos', rotulo: 'Todos' },
+    { valor: 'bolo', rotulo: 'Bolos' },
+    { valor: 'doce', rotulo: 'Doces' },
+    { valor: 'kit', rotulo: 'Kits' },
+  ];
+
+  readonly iconeCategoria: Record<string, string> = {
+    bolo: 'cake-slice',
+    doce: 'candy',
+    kit: 'gift',
+  };
+
+  // Mesmas cores de status usadas na tela de Pedidos (ver .badge em styles.scss).
+  readonly statusBadge: Record<string, string> = {
+    confirmado: 'badge--warning',
+    em_producao: 'badge--info',
+    pronto: 'badge--success',
+    entregue: 'badge--neutral',
+  };
 
   readonly filtroChanged = output<string>();
   readonly avancarStatusEvent = output<PedidoSimulado>();

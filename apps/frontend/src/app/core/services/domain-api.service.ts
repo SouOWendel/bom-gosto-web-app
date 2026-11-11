@@ -31,18 +31,6 @@ export class DomainApiService {
     return this.http.patch<Ingredient>(`/api/inventario/ingrediente/${id}/`, payload);
   }
 
-  moveIngredient(
-    id: number,
-    payload: {
-      tipo: 'entrada' | 'saida';
-      quantidade: string;
-      custo_unitario?: string | null;
-      data_validade?: string | null;
-    },
-  ): Observable<Ingredient> {
-    return this.http.post<Ingredient>(`/api/inventario/ingrediente/${id}/movimentar/`, payload);
-  }
-
   getProducts(): Observable<Product[]> {
     return this.list<Product>('/api/produtos/');
   }

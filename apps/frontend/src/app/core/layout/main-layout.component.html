@@ -1,16 +1,20 @@
 <div class="main-layout">
-  <!-- Menu Lateral -->
   <app-sidebar
     [items]="sidebarItems"
     [user]="userProfile()"
+    [mobileOpen]="menuOpen()"
     brandTitle="Bom Gosto"
     brandSubtitle="BOLOS & DOCES"
+    (itemClick)="closeMenu()"
     (logout)="onLogout()"
   />
 
-  <!-- Conteúdo Principal -->
+  @if (menuOpen()) {
+    <div class="main-layout__overlay" aria-hidden="true" (click)="closeMenu()"></div>
+  }
+
   <main class="main-layout__content">
-    <app-topbar />
+    <app-topbar [menuOpen]="menuOpen()" (menuToggle)="toggleMenu()" />
     <router-outlet />
   </main>
 </div>

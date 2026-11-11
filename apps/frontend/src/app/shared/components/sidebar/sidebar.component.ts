@@ -76,7 +76,9 @@ export class SidebarComponent {
   readonly profileClick = output<void>();
 
   readonly isUserMenuOpen = signal<boolean>(false);
-  readonly isMobileOpen = signal<boolean>(false);
+
+  /** Em telas até 1024px a sidebar vira um menu lateral aberto pela topbar. */
+  readonly mobileOpen = input<boolean>(false);
 
   /**
    * Converte apelidos amigáveis para os identificadores oficiais do Lucide
@@ -109,20 +111,11 @@ export class SidebarComponent {
   }
 
   onItemClick(item: NavItem): void {
-    this.closeMobile();
     this.itemClick.emit(item);
   }
 
   onProfileClick(): void {
     this.closeUserMenu();
     this.profileClick.emit();
-  }
-
-  toggleMobile(): void {
-    this.isMobileOpen.update((open) => !open);
-  }
-
-  closeMobile(): void {
-    this.isMobileOpen.set(false);
   }
 }

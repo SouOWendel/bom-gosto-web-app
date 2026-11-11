@@ -4,6 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import {
+  LucideCheck,
+  LucideDynamicIcon,
+  LucidePlus,
+  LucideTrash2,
+  provideLucideIcons,
+} from '@lucide/angular';
+import {
   Ingredient,
   Product,
   Recipe as ApiRecipe,
@@ -27,7 +34,14 @@ interface RecipeIngredientRow {
 @Component({
   selector: 'app-recipe-create',
   standalone: true,
-  imports: [FormsModule, InputTextComponent, ButtonComponent, PageGreetingComponent],
+  imports: [
+    FormsModule,
+    InputTextComponent,
+    ButtonComponent,
+    PageGreetingComponent,
+    LucideDynamicIcon,
+  ],
+  providers: [provideLucideIcons(LucideCheck, LucidePlus, LucideTrash2)],
   templateUrl: './recipe-create.component.html',
   styleUrls: ['./recipe-create.component.scss'],
 })
@@ -37,15 +51,17 @@ export class RecipeCreateComponent implements OnInit {
   private readonly router = inject(Router);
 
   recipeName = '';
-  category = 'Doces & Sobremesas';
   productId: number | null = null;
   yield = 0;
-  yieldUnit = 'Unidade (un)';
   preparation = '';
   ingredients: RecipeIngredientRow[] = [];
   errorMessage = '';
   isSaving = false;
   private recipeId: number | null = null;
+
+  get isEditing(): boolean {
+    return this.recipeId !== null;
+  }
   availableIngredients: Ingredient[] = [];
   availableProducts: Product[] = [];
 
@@ -53,15 +69,32 @@ export class RecipeCreateComponent implements OnInit {
     {
       label: 'Voltar para receitas',
       route: '/receitas',
+      icon: 'arrow-left',
       variant: 'outline-primary',
     },
   ];
 
+  // A quantidade é informada na mesma unidade do inventário, então o custo é direto.
   get totalCost(): number {
-    return this.ingredients.reduce((total, item) => {
-      const divisor = item.unit === 'un' ? 1 : 1000;
-      return total + (item.quantity / divisor) * item.unitCost;
-    }, 0);
+    return this.ingredients.reduce(
+      (total, item) => total + (Number(item.quantity) || 0) * item.unitCost,
+      0,
+    );
+  }
+
+  get unitCost(): number {
+    return this.yield > 0 ? this.totalCost / this.yield : 0;
+  }
+
+  formatCurrency(value: number): string {
+    return (Number.isFinite(value) ? value : 0).toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    });
+  }
+
+  cancel(): void {
+    void this.router.navigate(['/receitas']);
   }
 
   ngOnInit(): void {
@@ -125,7 +158,7 @@ export class RecipeCreateComponent implements OnInit {
         name: ingredient?.nome ?? '',
         code: ingredient ? String(ingredient.id_ingrediente) : '',
         quantity: 1,
-        unit: 'g',
+        unit: ingredient?.unidade_medida ?? 'un',
         unitCost: Number(ingredient?.custo_unitario) || 0,
       },
     ];
@@ -146,6 +179,7 @@ export class RecipeCreateComponent implements OnInit {
             id: ingredientId,
             name: ingredient?.nome ?? '',
             code: ingredient ? String(ingredient.id_ingrediente) : '',
+            unit: ingredient?.unidade_medida ?? 'un',
             unitCost: Number(ingredient?.custo_unitario) || 0,
           }
         : item,
@@ -211,7 +245,7 @@ export class RecipeCreateComponent implements OnInit {
         name: ingredient?.nome ?? `Ingrediente #${item.ingrediente}`,
         code: String(item.ingrediente),
         quantity: Number(item.quantidade_necessaria) || 0,
-        unit: 'g',
+        unit: ingredient?.unidade_medida ?? 'un',
         unitCost: Number(ingredient?.custo_unitario) || 0,
       };
     });
@@ -243,7 +277,6 @@ export class RecipeCreateComponent implements OnInit {
 
   private setError(detail: string): void {
     this.errorMessage = detail;
-    globalThis.alert(this.errorMessage);
   }
 
   private errorDetail(error: unknown): string {

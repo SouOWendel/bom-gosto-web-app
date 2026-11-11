@@ -63,6 +63,16 @@ docker compose exec backend python manage.py seed_desenvolvimento
 
 O seed carrega clientes, receitas, produtos, pedidos e itens adaptados de `database/insert_data.sql`. Pode ser executado novamente para atualizar esses exemplos.
 
+Ele também prepara o roteiro de demonstração: ingredientes com unidade e validades que cobrem os três níveis do semáforo, a composição de todas as receitas, lotes de vitrine e dois pedidos (Licilene Alves em `pedido_feito` e Carlos Menezes em `em_producao`). Sem opções, o seed só cria o que estiver faltando e preserva o andamento de um ensaio anterior.
+
+Para recomeçar o ensaio do zero:
+
+```bash
+docker compose exec backend python manage.py seed_desenvolvimento --resetar-demo
+```
+
+O `--resetar-demo` restaura saldos e validades dos ingredientes, recria os lotes dos produtos do seed, volta os pedidos da demonstração ao status inicial, apaga seus cancelamentos e remove produtos reaproveitados (produtos sem receita e sem pedidos, criados ao cancelar com destino Estoque). Use apenas em ambiente de desenvolvimento.
+
 `database/insert_data.sql` fica como referência histórica. Não execute esse arquivo no banco da aplicação junto com o seed.
 
 O usuário `confeiteira` é criado somente na primeira execução em que ainda não existe. Nessa criação, o terminal exibe uma senha temporária numérica de 6 dígitos. Isso simula a entrega inicial da senha a uma pessoa. O seed não troca nem exibe a senha novamente quando o usuário já existe. Guarde-a quando aparecer.

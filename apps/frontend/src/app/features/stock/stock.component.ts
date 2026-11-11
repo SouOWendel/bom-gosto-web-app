@@ -1,56 +1,37 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import {
-  LucideChevronDown,
-  LucideDynamicIcon,
-  LucidePlus,
-  LucideSearch,
-  LucidePackage,
-  LucideRefreshCw,
-  provideLucideIcons,
-} from '@lucide/angular';
+import { LucideDynamicIcon, LucidePlus, LucideSearch, provideLucideIcons } from '@lucide/angular';
 import { MetricCardsComponent } from '../../shared/components/metric-cards/metric-cards.component';
 import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
 import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
 import { StockProductCardComponent } from './components/stock-product-card/stock-product-card.component';
 import { StockProductCardItem } from './components/stock-product-card/stock-product-card.model';
+import { TablePaginationComponent } from '../../shared/components/table-pagination/table-pagination.component';
 import { StockLot } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
-
-type StockCategory = 'bolos' | 'doces' | 'sobremesas' | 'outros';
-
-interface StockItem extends StockProductCardItem {
-  category: StockCategory;
-}
 
 @Component({
   selector: 'app-stock',
   standalone: true,
   imports: [
-    CommonModule,
     LucideDynamicIcon,
     PageGreetingComponent,
     MetricCardsComponent,
     StockProductCardComponent,
+    TablePaginationComponent,
   ],
-  providers: [
-    provideLucideIcons(LucideChevronDown, LucidePackage, LucidePlus, LucideRefreshCw, LucideSearch),
-  ],
+  providers: [provideLucideIcons(LucidePlus, LucideSearch)],
   templateUrl: './stock.component.html',
   styleUrls: ['./stock.component.scss'],
 })
 export class StockComponent implements OnInit {
   private readonly domainApi = inject(DomainApiService);
-  private readonly router = inject(Router);
   readonly stockLots = signal<StockLot[]>([]);
 
   readonly loadError = signal<string | null>(null);
 
   readonly greetingActions: PageAction[] = [
-    { label: 'Atualizar Estoque', icon: 'refresh-cw', variant: 'secondary' },
-    { label: 'Nova Produção (Pedidos)', route: '/pedidos', icon: 'plus', variant: 'primary' },
+    { label: 'Nova produção (Pedidos)', route: '/pedidos', icon: 'plus', variant: 'primary' },
   ];
 
   get summaryCards(): MetricCardItem[] {
@@ -87,51 +68,25 @@ export class StockComponent implements OnInit {
     ];
   }
 
-  readonly selectedCategory = signal<'todos' | StockCategory>('todos');
   readonly searchTerm = signal('');
   readonly currentPage = signal(1);
-  readonly pageSize = 6;
+  readonly pageSize = 8;
 
-  readonly stockItems = computed<StockItem[]>(() =>
+  readonly stockItems = computed<StockProductCardItem[]>(() =>
     this.stockLots().map((lot) => this.toStockItem(lot)),
   );
 
   readonly filteredItems = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
-    const category = this.selectedCategory();
-
-    return this.stockItems().filter((item) => {
-      const matchesTerm =
-        !term ||
-        item.name.toLowerCase().includes(term) ||
-        item.id.toLowerCase().includes(term) ||
-        item.categoryLabel.toLowerCase().includes(term);
-      return matchesTerm && (category === 'todos' || item.category === category);
-    });
+    return this.stockItems().filter(
+      (item) => !term || item.name.toLowerCase().includes(term) || item.id.includes(term),
+    );
   });
   readonly paginatedItems = computed(() => {
     const start = (this.currentPage() - 1) * this.pageSize;
     return this.filteredItems().slice(start, start + this.pageSize);
   });
   readonly totalPages = computed(() => Math.ceil(this.filteredItems().length / this.pageSize));
-  readonly pageNumbers = computed(() =>
-    Array.from({ length: this.totalPages() }, (_, index) => index + 1),
-  );
-  readonly visibleRange = computed(() => {
-    const total = this.filteredItems().length;
-    if (total === 0) {
-      return { start: 0, end: 0 };
-    }
-    return {
-      start: (this.currentPage() - 1) * this.pageSize + 1,
-      end: Math.min(this.currentPage() * this.pageSize, total),
-    };
-  });
-
-  setCategory(category: 'todos' | StockCategory): void {
-    this.selectedCategory.set(category);
-    this.currentPage.set(1);
-  }
 
   onSearch(value: string): void {
     this.searchTerm.set(value);
@@ -147,7 +102,8 @@ export class StockComponent implements OnInit {
   ngOnInit(): void {
     this.domainApi.getStock().subscribe({
       next: (lots) => {
-        this.stockLots.set(lots);
+        // Lotes totalmente consumidos não têm o que vender; ficam fora da vitrine.
+        this.stockLots.set(lots.filter((lot) => this.toNumber(lot.quantidade_disponivel) > 0));
         this.loadError.set(null);
         this.currentPage.set(1);
       },
@@ -159,34 +115,25 @@ export class StockComponent implements OnInit {
     });
   }
 
-  onTechnicalSheet(): void {
-    void this.router.navigate(['/receitas']);
-  }
-
-  onViewProduct(): void {
-    void this.router.navigate(['/produtos']);
-  }
-
-  private toStockItem(lot: StockLot): StockItem {
+  private toStockItem(lot: StockLot): StockProductCardItem {
     const alertLevel = lot.alerta_validade?.nivel;
     const isCritical = lot.vencido || alertLevel === 'critico';
-    const status = isCritical ? 'critico' : alertLevel === 'atencao' ? 'atencao' : 'preventivo';
+    const status = isCritical
+      ? 'critico'
+      : alertLevel === 'atencao'
+        ? 'atencao'
+        : alertLevel === 'preventivo'
+          ? 'preventivo'
+          : 'normal';
     const productName = lot.produto_nome || `Produto #${lot.id_produto}`;
 
     return {
       id: String(lot.id_estoque),
       name: productName,
-      category: 'outros',
-      categoryLabel: lot.produto_nome ? 'Produto em Estoque' : 'Categoria não informada',
-      description: `Lote #${lot.id_estoque} • ${productName}`,
       quantity: this.toNumber(lot.quantidade_disponivel),
       unit: 'un.',
-      basePrice: lot.produto_preco_venda
-        ? this.formatCurrency(Number(lot.produto_preco_venda))
-        : this.formatCurrencyOrUnavailable(lot.custo),
-      priceUnit: 'un.',
-      margin: 'Produção',
-      sizes: [],
+      salePrice: this.formatCurrencyOrUnavailable(lot.produto_preco_venda ?? null),
+      lotCost: this.formatCurrencyOrUnavailable(lot.custo),
       expiry: this.formatDate(lot.data_validade),
       expiryDetail: this.expiryDetail(lot),
       status,

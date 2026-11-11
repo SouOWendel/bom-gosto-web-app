@@ -21,6 +21,7 @@ import {
 interface Ingredient {
   id: number;
   name: string;
+  unit: string;
   quantity: string;
   observation: string;
 }
@@ -29,7 +30,9 @@ export interface CancelProductionOrder {
   id: string;
   customer?: string;
   item: string;
+  reuseName?: string;
   analysis: ProductionAnalysis | null;
+  apiOrder?: { status: string };
 }
 
 @Component({
@@ -51,6 +54,12 @@ export interface CancelProductionOrder {
 })
 export class CancelProductionModalComponent implements OnInit {
   readonly order = input<CancelProductionOrder | null>(null);
+  readonly apiError = input<string | null>(null);
+  errorMessage = '';
+  // Produção concluída já baixou os insumos e gerou o lote: só resta mantê-lo no estoque.
+  productionCompleted = false;
+  // Pedido ainda em "Pedido feito": nada foi produzido, então o padrão é não reaproveitar.
+  notStarted = false;
   reuseProductName = '';
   reuseQuantity = '';
   reuseExpiration = '';
@@ -67,8 +76,16 @@ export class CancelProductionModalComponent implements OnInit {
 
   ngOnInit(): void {
     const order = this.order();
+    this.productionCompleted = order?.apiOrder?.status === 'producao_concluida';
+    this.notStarted = order?.apiOrder?.status === 'pedido_feito';
+    if (this.notStarted) {
+      this.selectedDestination = 'discard';
+    }
+    if (this.productionCompleted) {
+      return;
+    }
     if (!order?.analysis) {
-      console.error('Não há análise de produção disponível para cancelar este pedido.');
+      this.errorMessage = 'Não há análise de produção disponível para cancelar este pedido.';
       return;
     }
 
@@ -76,11 +93,20 @@ export class CancelProductionModalComponent implements OnInit {
       ...order.analysis.ingredientes.map((ingredient) => ({
         id: ingredient.id_ingrediente,
         name: ingredient.nome,
+        unit: ingredient.unidade_medida ?? '',
         quantity: '',
-        observation: `Previsto: ${ingredient.necessario} · Disponível: ${ingredient.disponivel}`,
+        observation:
+          `${this.formatNumber(ingredient.necessario)} / ${this.formatNumber(ingredient.disponivel)} ${ingredient.unidade_medida ?? ''}`.trim(),
       })),
     );
-    this.reuseProductName = order.item ? `${order.item} reaproveitado` : '';
+    this.reuseProductName = order.reuseName ?? (order.item ? `${order.item} reaproveitado` : '');
+  }
+
+  private formatNumber(value: string | number): string {
+    const number = Number(value);
+    return Number.isFinite(number)
+      ? number.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
+      : String(value);
   }
 
   @HostListener('document:keydown.escape')
@@ -93,15 +119,22 @@ export class CancelProductionModalComponent implements OnInit {
   }
 
   confirm(): void {
+    if (this.productionCompleted) {
+      this.errorMessage = '';
+      this.submittedPayload = { consumos: [], destino: 'estoque' };
+      this.confirmed.emit();
+      return;
+    }
+
     const consumos: ProductionConsumption[] = [];
     for (const ingredient of this.ingredients) {
       if (!ingredient.quantity.trim()) {
-        console.error(`Informe o consumo de ${ingredient.name}; use zero se não houve consumo.`);
+        this.errorMessage = `Informe o consumo de ${ingredient.name}; use zero se não houve consumo.`;
         return;
       }
       const quantity = Number(ingredient.quantity);
       if (!Number.isFinite(quantity) || quantity < 0) {
-        console.error(`Quantidade inválida para o ingrediente ${ingredient.name}.`);
+        this.errorMessage = `Quantidade inválida para o ingrediente ${ingredient.name}.`;
         return;
       }
       consumos.push({
@@ -129,7 +162,8 @@ export class CancelProductionModalComponent implements OnInit {
         salePrice === null ||
         Number(salePrice) < 0
       ) {
-        console.error('Preencha dados válidos do produto reaproveitado para enviá-lo ao estoque.');
+        this.errorMessage =
+          'Preencha dados válidos do produto reaproveitado para enviá-lo ao estoque.';
         return;
       }
       payload.produto_aproveitado = {
@@ -141,6 +175,7 @@ export class CancelProductionModalComponent implements OnInit {
       };
     }
 
+    this.errorMessage = '';
     this.submittedPayload = payload;
     this.confirmed.emit();
   }

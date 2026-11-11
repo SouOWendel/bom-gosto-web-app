@@ -9,6 +9,17 @@ from .models import Cancelamento, Cliente, ItemPedido, Pedido, Produto, status_o
 from producao.services import analisar_pedido
 
 
+# Reaproveita o cliente com o mesmo telefone em vez de duplicar o cadastro.
+def _cliente_por_contato(nome, telefone):
+    cliente = Cliente.objects.filter(telefone=telefone).order_by("id_cliente").first()
+    if cliente is None:
+        return Cliente.objects.create(nome=nome, telefone=telefone)
+    if cliente.nome != nome:
+        cliente.nome = nome
+        cliente.save(update_fields=["nome"])
+    return cliente
+
+
 # Serializador para consulta e cadastro de produtos comercializados.
 class ProdutoSerializer(serializers.ModelSerializer):
     receita_nome = serializers.CharField(source="receita.nome", read_only=True, allow_null=True)
@@ -35,6 +46,8 @@ class CancelamentoRegistroSerializer(serializers.ModelSerializer):
 # Valida os dados de cada item e apresenta sua disponibilidade em Estoque.
 class ItemPedidoSerializer(serializers.ModelSerializer):
     verificacao_estoque = serializers.SerializerMethodField()
+    produto_nome = serializers.CharField(source="produto.nome", read_only=True, default=None)
+    receita_nome = serializers.CharField(source="receita.nome", read_only=True, default=None)
 
     class Meta:
         model = ItemPedido
@@ -49,8 +62,10 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
             "quantidade_peso",
             "decoracao",
             "verificacao_estoque",
+            "produto_nome",
+            "receita_nome",
         )
-        read_only_fields = ("id_item_pedido", "verificacao_estoque")
+        read_only_fields = ("id_item_pedido", "verificacao_estoque", "produto_nome", "receita_nome")
 
     # Confere o saldo do produto pronto e sinaliza quando o item precisa de Produção.
     def get_verificacao_estoque(self, item):
@@ -136,12 +151,16 @@ class PedidoSerializer(serializers.ModelSerializer):
     contato_nome = serializers.CharField(write_only=True, required=False, allow_blank=False, max_length=100)
     contato_telefone = serializers.CharField(write_only=True, required=False, allow_blank=False, max_length=20)
     analise = serializers.SerializerMethodField()
+    cliente_nome = serializers.CharField(source="cliente.nome", read_only=True, default=None)
+    cliente_telefone = serializers.CharField(source="cliente.telefone", read_only=True, default=None)
 
     class Meta:
         model = Pedido
         fields = (
             "id_pedido",
             "cliente",
+            "cliente_nome",
+            "cliente_telefone",
             "tipo",
             "subtipo",
             "status",
@@ -156,7 +175,7 @@ class PedidoSerializer(serializers.ModelSerializer):
             "contato_nome",
             "contato_telefone",
         )
-        read_only_fields = ("id_pedido", "status", "analise")
+        read_only_fields = ("id_pedido", "status", "analise", "cliente_nome", "cliente_telefone")
 
     # Aplica as regras de tipo, contato, subtipo, itens e valores do pedido.
     def validate(self, attrs):
@@ -267,7 +286,7 @@ class PedidoSerializer(serializers.ModelSerializer):
         nome = validated_data.pop("contato_nome", None)
         telefone = validated_data.pop("contato_telefone", None)
         if not validated_data.get("cliente") and nome and telefone:
-            validated_data["cliente"] = Cliente.objects.create(nome=nome, telefone=telefone)
+            validated_data["cliente"] = _cliente_por_contato(nome, telefone)
         itens_data = validated_data.pop("itens", [])
         pedido = Pedido.objects.create(**validated_data)
 
@@ -282,7 +301,7 @@ class PedidoSerializer(serializers.ModelSerializer):
         nome = validated_data.pop("contato_nome", None)
         telefone = validated_data.pop("contato_telefone", None)
         if not validated_data.get("cliente") and nome and telefone:
-            validated_data["cliente"] = Cliente.objects.create(nome=nome, telefone=telefone)
+            validated_data["cliente"] = _cliente_por_contato(nome, telefone)
         itens_data = validated_data.pop("itens", None)
 
         for campo, valor in validated_data.items():
