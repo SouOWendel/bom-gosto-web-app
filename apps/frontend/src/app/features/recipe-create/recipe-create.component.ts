@@ -216,9 +216,14 @@ export class RecipeCreateComponent implements OnInit {
               this.isSaving = false;
               void this.router.navigate(['/receitas']);
             },
-            error: () => {
+            // A receita já foi salva: fica na tela, avisa e passa a editar essa mesma
+            // receita, para que tentar de novo não crie uma duplicata.
+            error: (error: unknown) => {
               this.isSaving = false;
-              void this.router.navigate(['/receitas']);
+              this.recipeId = savedRecipe.id_receita;
+              this.setError(
+                `A receita foi salva, mas não foi possível vinculá-la ao produto. ${this.errorDetail(error)}`,
+              );
             },
           });
         } else {
