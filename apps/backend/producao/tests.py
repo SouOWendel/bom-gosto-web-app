@@ -5,8 +5,11 @@ from unittest.mock import Mock, patch
 from django.db.transaction import Atomic
 from django.test import SimpleTestCase
 from rest_framework.exceptions import ValidationError
+from rest_framework.test import APITestCase
 
+from inventario.models import Ingrediente
 from pedido.models import Pedido
+from usuario.models import Usuario
 from .services import cancelar_pedido, concluir_producao
 
 
@@ -70,3 +73,24 @@ class SaldoCompartilhadoTests(SimpleTestCase):
             self.assertEqual(_saldo_restante(7, Decimal("2"), reservado), Decimal("2"))
             self.assertEqual(_saldo_restante(7, Decimal("2"), reservado), Decimal("1"))
             self.assertEqual(_saldo_restante(7, Decimal("2"), reservado), Decimal("0"))
+
+
+class CustoReceitaApiTests(APITestCase):
+    def setUp(self):
+        usuario = Usuario.objects.create_user(login="teste-receitas", password="senha-de-teste-123", primeiro_acesso=False)
+        self.client.force_authenticate(user=usuario)
+        self.farinha = Ingrediente.objects.create(nome="Farinha", unidade_medida="kg", custo_unitario=Decimal("6.00"))
+
+    # o custo da receita e gravado ao salvar e acompanha mudancas no custo do insumo
+    def test_custo_da_receita_e_calculado_e_atualizado(self):
+        resposta = self.client.post(
+            "/api/producao/receitas/",
+            {"nome": "Massa", "rendimento_quantidade": "1.00", "ingredientes": [{"ingrediente": self.farinha.pk, "quantidade_necessaria": "0.50"}]},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, 201)
+        self.assertEqual(resposta.data["custo_calculado"], "3.00")
+
+        self.client.patch(f"/api/inventario/ingrediente/{self.farinha.pk}/", {"custo_unitario": "8.00"}, format="json")
+        receita = self.client.get(f"/api/producao/receitas/{resposta.data['id_receita']}/")
+        self.assertEqual(receita.data["custo_calculado"], "4.00")

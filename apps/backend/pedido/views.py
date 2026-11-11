@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -12,13 +14,18 @@ from core.permissions import SenhaInicialAlterada
 from .models import Cancelamento, Pedido, Produto, status_operacional
 from .serializers import CancelamentoRegistroSerializer, PedidoSerializer, ProdutoSerializer
 from estoque.services import baixar_lotes
+from producao.services import produto_do_item
 from producao.serializers import CancelamentoSerializer
 
 
 
 # Oferece o CRUD de pedidos e as ações operacionais de consumo, conclusão e cancelamento.
 class PedidoViewSet(ModelViewSet):
-    queryset = Pedido.objects.all().order_by("-id_pedido")
+    queryset = (
+        Pedido.objects.select_related("cliente")
+        .prefetch_related("itens__produto", "itens__receita")
+        .order_by("-id_pedido")
+    )
     serializer_class = PedidoSerializer
     permission_classes = [IsAuthenticated, SenhaInicialAlterada]
     http_method_names = ["get", "post", "put", "patch", "head", "options"]
@@ -37,19 +44,8 @@ class PedidoViewSet(ModelViewSet):
             return Response({"tipo": "A baixa por consumo é reservada a pedidos externos; a produção interna gera reposição."}, status=status.HTTP_400_BAD_REQUEST)
         if pedido.status not in (Pedido.Status.PEDIDO_FEITO, Pedido.Status.PRODUCAO_CONCLUIDA):
             return Response({"status": "Somente pedidos feitos ou com produção concluída podem consumir estoque."}, status=status.HTTP_400_BAD_REQUEST)
-        if pedido.status == Pedido.Status.CONCLUIDO:
-            return Response({"status": "O consumo deste pedido já foi confirmado."}, status=status.HTTP_400_BAD_REQUEST)
-        from decimal import Decimal
-        from producao.services import _receita_item
-        from pedido.models import ReceitaProduto
         for item in pedido.itens.select_related("produto", "receita"):
-            produto = item.produto
-            receita = _receita_item(item)
-            if produto is None and receita:
-                produto = receita.produtos.order_by("id_produto").first()
-                if produto is None:
-                    relacao = ReceitaProduto.objects.filter(receita=receita).select_related("produto").first()
-                    produto = relacao.produto if relacao else None
+            produto = produto_do_item(item)
             if produto is None:
                 raise ValidationError({"itens": "Não há produto pronto associado a um dos itens."})
             quantidade = Decimal(item.quantidade or item.quantidade_peso or 0)

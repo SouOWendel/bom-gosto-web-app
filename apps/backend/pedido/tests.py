@@ -31,12 +31,6 @@ class PedidoApiTests(APITestCase):
 			preco_venda="12.50",
 		)
 		self.client.force_authenticate(user=self.usuario)
-		self.analise_patch = patch(
-			"pedido.serializers.analisar_pedido",
-			return_value={"estoque": [], "receitas_sugeridas": [], "ausencias": [], "ingredientes_insuficientes": [], "ingredientes": [], "encaminhar_para_producao": False},
-		)
-		self.analise_patch.start()
-		self.addCleanup(self.analise_patch.stop)
 		self.estoque_patch = patch(
 			"pedido.serializers.Estoque.objects.verificar_disponibilidade",
 			return_value={"quantidade_solicitada": 1, "quantidade_disponivel": Decimal("0"), "disponivel": False, "encaminhar_para_producao": True},
@@ -75,6 +69,8 @@ class PedidoApiTests(APITestCase):
 		listagem = self.client.get("/api/pedido/")
 		self.assertEqual(listagem.status_code, status.HTTP_200_OK)
 		self.assertEqual(len(listagem.data), 1)
+		# a analise de producao fica no endpoint /validar/, fora da listagem
+		self.assertNotIn("analise", listagem.data[0])
 
 		atualizacao = self.client.patch(
 			f"/api/pedido/{pedido_id}/",
@@ -106,6 +102,28 @@ class PedidoApiTests(APITestCase):
 		)
 		self.assertEqual(atualizacao.status_code, status.HTTP_200_OK)
 		self.assertEqual(Cliente.objects.count(), 1)
+
+	# pedido que passa de externo para interno deixa de ter cliente vinculado
+	def test_pedido_que_vira_interno_perde_o_cliente(self):
+		resposta = self.client.post(
+			"/api/pedido/",
+			{
+				"tipo": "externo",
+				"subtipo": "personalizado",
+				"cliente": self.cliente.id_cliente,
+				"valor_total": "12.50",
+				"valor_sinal": "0.00",
+				"itens": [{"produto": self.produto.id_produto, "quantidade": 1, "preco_unitario": "12.50"}],
+			},
+			format="json",
+		)
+		atualizacao = self.client.patch(
+			f"/api/pedido/{resposta.data['id_pedido']}/",
+			{"tipo": "interno", "subtipo": None, "valor_sinal": "0.00"},
+			format="json",
+		)
+		self.assertEqual(atualizacao.status_code, status.HTTP_200_OK)
+		self.assertIsNone(atualizacao.data["cliente"])
 
 	# acoes em pedido inexistente devolvem 404 em vez de erro interno
 	def test_acao_em_pedido_inexistente_retorna_404(self):
