@@ -85,6 +85,9 @@ export class OrderCreateModalComponent implements OnInit {
     this.paymentMethod = order.forma_pagamento ?? 'pix';
     this.total = order.valor_total ?? '';
     this.deposit = order.valor_sinal ?? '0';
+    // O contato fica editável para corrigir nome ou telefone digitados errado.
+    this.contactName = order.cliente_nome ?? '';
+    this.contactPhone = order.cliente_telefone ?? '';
 
     if (order.itens && order.itens.length > 0) {
       this.items = order.itens.map((item): OrderItemForm => {
@@ -194,12 +197,11 @@ export class OrderCreateModalComponent implements OnInit {
   }
 
   private validate(): string | null {
-    if (
-      this.tipo === 'externo' &&
-      !this.orderToEdit() &&
-      (!this.contactName.trim() || !this.contactPhone.trim())
-    ) {
+    if (this.tipo === 'externo' && (!this.contactName.trim() || !this.contactPhone.trim())) {
       return 'Informe o nome e o telefone do cliente.';
+    }
+    if (this.tipo === 'externo' && this.contactPhone.replace(/\D/g, '').length < 10) {
+      return 'Informe o telefone com DDD.';
     }
     if (
       this.tipo === 'externo' &&

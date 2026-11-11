@@ -42,25 +42,23 @@
             >
           </div>
           @if (tipo === 'externo') {
-            @if (!orderToEdit()) {
-              <div class="form-grid">
-                <app-input-text
-                  label="Nome do cliente"
-                  inputId="order-contact-name"
-                  icon="user"
-                  [(ngModel)]="contactName"
-                  name="contactName"
-                />
-                <app-input-text
-                  label="Telefone"
-                  inputId="order-contact-phone"
-                  icon="phone"
-                  mask="phone"
-                  [(ngModel)]="contactPhone"
-                  name="contactPhone"
-                />
-              </div>
-            }
+            <div class="form-grid">
+              <app-input-text
+                label="Nome do cliente"
+                inputId="order-contact-name"
+                icon="user"
+                [(ngModel)]="contactName"
+                name="contactName"
+              />
+              <app-input-text
+                label="Telefone"
+                inputId="order-contact-phone"
+                icon="phone"
+                mask="phone"
+                [(ngModel)]="contactPhone"
+                name="contactPhone"
+              />
+            </div>
             <label class="form-field order-modal__half">
               <span class="form-field__label">Modalidade</span>
               <select class="form-control" name="subtipo" [(ngModel)]="subtipo">
