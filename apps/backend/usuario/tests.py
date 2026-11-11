@@ -116,3 +116,9 @@ class LoginThrottleTests(TestCase):
             self.assertEqual(resposta.status_code, 401)
         bloqueada = client.post("/api/auth/login/", {"login": "limite-teste", "senha": "senha-correta-123"}, format="json")
         self.assertEqual(bloqueada.status_code, 429)
+
+
+class AdminDesligadoTests(TestCase):
+    # o /admin/ do Django nao fica exposto por padrao
+    def test_admin_nao_responde_por_padrao(self):
+        self.assertEqual(self.client.get("/admin/").status_code, 404)

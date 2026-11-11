@@ -154,19 +154,28 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Origens do frontend autorizadas, separadas por vírgula (padrão: dev local).
+FRONTEND_ORIGINS = [
+    origem.strip()
+    for origem in os.getenv(
+        "DJANGO_FRONTEND_ORIGINS",
+        "http://localhost:4200,http://127.0.0.1:4200",
+    ).split(",")
+    if origem.strip()
+]
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:4200",
-    "http://127.0.0.1:4200",
-]
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:4200",
-    "http://127.0.0.1:4200",
-]
+CORS_ALLOWED_ORIGINS = FRONTEND_ORIGINS
+CSRF_TRUSTED_ORIGINS = FRONTEND_ORIGINS
 
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 30
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_HTTPONLY = True
+# Fora do desenvolvimento, cookies de sessão e CSRF só trafegam por HTTPS.
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+
+# O /admin/ do Django fica desligado: a gestão é feita pela aplicação.
+DJANGO_ADMIN_ENABLED = os.getenv("DJANGO_ADMIN_ENABLED", "0").lower() in {"1", "true", "yes"}
 
 # Toda view nova nasce protegida; rotas públicas declaram AllowAny explicitamente.
 REST_FRAMEWORK = {
