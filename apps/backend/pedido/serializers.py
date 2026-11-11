@@ -297,6 +297,9 @@ class PedidoSerializer(serializers.ModelSerializer):
         telefone = validated_data.pop("contato_telefone", None)
         if not validated_data.get("cliente") and nome and telefone:
             validated_data["cliente"] = _cliente_por_contato(nome, telefone)
+        # Reposição interna não tem cliente (RN18): ao virar interno, solta o vínculo.
+        if validated_data.get("tipo", instance.tipo) == Pedido.Tipo.INTERNO:
+            validated_data["cliente"] = None
         itens_data = validated_data.pop("itens", None)
 
         for campo, valor in validated_data.items():
