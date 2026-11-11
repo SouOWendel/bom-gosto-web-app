@@ -18,7 +18,11 @@ from producao.serializers import CancelamentoSerializer
 
 # Oferece o CRUD de pedidos e as ações operacionais de consumo, conclusão e cancelamento.
 class PedidoViewSet(ModelViewSet):
-    queryset = Pedido.objects.all().order_by("-id_pedido")
+    queryset = (
+        Pedido.objects.select_related("cliente")
+        .prefetch_related("itens__produto", "itens__receita")
+        .order_by("-id_pedido")
+    )
     serializer_class = PedidoSerializer
     permission_classes = [IsAuthenticated, SenhaInicialAlterada]
     http_method_names = ["get", "post", "put", "patch", "head", "options"]

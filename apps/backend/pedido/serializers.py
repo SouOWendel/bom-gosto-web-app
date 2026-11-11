@@ -6,7 +6,6 @@ from rest_framework import serializers
 from estoque.models import Estoque
 
 from .models import Cancelamento, Cliente, ItemPedido, Pedido, Produto, status_operacional
-from producao.services import analisar_pedido
 
 
 # Reaproveita o cliente com o mesmo telefone em vez de duplicar o cadastro.
@@ -145,12 +144,13 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
         return attrs
 
 
-# Valida e grava pedidos com seus itens, contato e análise operacional integrada.
+# Valida e grava pedidos com seus itens e contato.
+# A análise de produção fica em /producao/pedidos/<id>/validar/: calculá-la aqui
+# pesava cada listagem e, se falhasse, devolvia erro com o pedido já gravado.
 class PedidoSerializer(serializers.ModelSerializer):
     itens = ItemPedidoSerializer(many=True, required=False)
     contato_nome = serializers.CharField(write_only=True, required=False, allow_blank=False, max_length=100)
     contato_telefone = serializers.CharField(write_only=True, required=False, allow_blank=False, max_length=20)
-    analise = serializers.SerializerMethodField()
     cliente_nome = serializers.CharField(source="cliente.nome", read_only=True, default=None)
     cliente_telefone = serializers.CharField(source="cliente.telefone", read_only=True, default=None)
 
@@ -171,11 +171,10 @@ class PedidoSerializer(serializers.ModelSerializer):
             "endereco_entrega",
             "forma_pagamento",
             "itens",
-            "analise",
             "contato_nome",
             "contato_telefone",
         )
-        read_only_fields = ("id_pedido", "status", "analise", "cliente_nome", "cliente_telefone")
+        read_only_fields = ("id_pedido", "status", "cliente_nome", "cliente_telefone")
 
     # Aplica as regras de tipo, contato, subtipo, itens e valores do pedido.
     def validate(self, attrs):
@@ -275,10 +274,6 @@ class PedidoSerializer(serializers.ModelSerializer):
                 )
 
         return attrs
-
-    # Reúne disponibilidade, receitas aplicáveis e faltas no Inventário.
-    def get_analise(self, pedido):
-        return analisar_pedido(pedido)
 
     # Cria o pedido e seus itens dentro de uma única transação.
     @transaction.atomic

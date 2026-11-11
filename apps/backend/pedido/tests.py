@@ -31,12 +31,6 @@ class PedidoApiTests(APITestCase):
 			preco_venda="12.50",
 		)
 		self.client.force_authenticate(user=self.usuario)
-		self.analise_patch = patch(
-			"pedido.serializers.analisar_pedido",
-			return_value={"estoque": [], "receitas_sugeridas": [], "ausencias": [], "ingredientes_insuficientes": [], "ingredientes": [], "encaminhar_para_producao": False},
-		)
-		self.analise_patch.start()
-		self.addCleanup(self.analise_patch.stop)
 		self.estoque_patch = patch(
 			"pedido.serializers.Estoque.objects.verificar_disponibilidade",
 			return_value={"quantidade_solicitada": 1, "quantidade_disponivel": Decimal("0"), "disponivel": False, "encaminhar_para_producao": True},
@@ -75,6 +69,8 @@ class PedidoApiTests(APITestCase):
 		listagem = self.client.get("/api/pedido/")
 		self.assertEqual(listagem.status_code, status.HTTP_200_OK)
 		self.assertEqual(len(listagem.data), 1)
+		# a analise de producao fica no endpoint /validar/, fora da listagem
+		self.assertNotIn("analise", listagem.data[0])
 
 		atualizacao = self.client.patch(
 			f"/api/pedido/{pedido_id}/",
