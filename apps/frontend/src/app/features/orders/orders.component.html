@@ -139,7 +139,29 @@
   @if (createError()) {
     <div class="alert alert--danger" role="alert">{{ createError() }}</div>
   }
-  @if (actionError() && !pendingStart()) {
+  @if (pendingFinish(); as finishing) {
+    <app-confirm-dialog
+      [title]="
+        finishing.apiOrder.tipo === 'externo'
+          ? 'Entregar o pedido ' + finishing.id + ' pelo estoque?'
+          : 'Concluir a reposição ' + finishing.id + '?'
+      "
+      [message]="
+        finishing.apiOrder.tipo === 'externo'
+          ? 'Os lotes do produto pronto serão baixados agora e o pedido ficará como Concluído. Esta ação não pode ser desfeita.'
+          : 'O pedido interno ficará como Concluído; os lotes produzidos continuam no estoque. Esta ação não pode ser desfeita.'
+      "
+      [confirmLabel]="
+        finishing.apiOrder.tipo === 'externo' ? 'Baixar estoque e concluir' : 'Concluir pedido'
+      "
+      [busy]="operationInProgress()"
+      [error]="actionError()"
+      (closed)="closeFinishDialog()"
+      (confirmed)="confirmFinish()"
+    />
+  }
+
+  @if (actionError() && !pendingStart() && !pendingFinish()) {
     <div class="alert alert--danger" role="alert">{{ actionError() }}</div>
   }
 

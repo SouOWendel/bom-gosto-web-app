@@ -98,6 +98,7 @@ export class OrdersComponent implements OnInit {
   readonly operationInProgress = signal(false);
   readonly products = signal<Product[]>([]);
   readonly pendingStart = signal<PendingStart | null>(null);
+  readonly pendingFinish = signal<OrderRow | null>(null);
   readonly currentPage = signal(1);
   readonly pageSize = 6;
   @ViewChild(CancelProductionModalComponent)
@@ -309,11 +310,9 @@ export class OrdersComponent implements OnInit {
         this.validateAndStartOrder(order);
         return;
       case 'producao_concluida':
-        if (order.apiOrder.tipo === 'externo') {
-          this.consumeOrderStock(order);
-        } else {
-          this.finishInternalOrder(order);
-        }
+        // Baixa de estoque e conclusão são definitivas: pede confirmação (RNF04).
+        this.actionError.set(null);
+        this.pendingFinish.set(order);
         return;
       default:
         this.actionError.set('Esta ação não está disponível para o status atual do pedido.');
@@ -541,6 +540,26 @@ export class OrdersComponent implements OnInit {
     });
   }
 
+  confirmFinish(): void {
+    const order = this.pendingFinish();
+    if (!order || this.operationInProgress()) {
+      return;
+    }
+    if (order.apiOrder.tipo === 'externo') {
+      this.consumeOrderStock(order);
+    } else {
+      this.finishInternalOrder(order);
+    }
+  }
+
+  closeFinishDialog(): void {
+    if (this.operationInProgress()) {
+      return;
+    }
+    this.pendingFinish.set(null);
+    this.actionError.set(null);
+  }
+
   closeStartDialog(): void {
     if (this.operationInProgress()) {
       return;
@@ -595,6 +614,7 @@ export class OrdersComponent implements OnInit {
   }
 
   private finishActionWithOrder(order: ApiOrder): void {
+    this.pendingFinish.set(null);
     this.replaceOrder(order);
     this.operationInProgress.set(false);
     this.actionError.set(null);
