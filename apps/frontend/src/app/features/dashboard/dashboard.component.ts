@@ -15,6 +15,7 @@ import { DashboardAgendaComponent } from './components/dashboard-agenda/dashboar
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { Order } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
+import { ORDER_STATUS_LABELS } from '../../core/models/order-status';
 
 export interface ResumoCard {
   titulo: string;
@@ -109,7 +110,7 @@ export class DashboardComponent implements OnInit {
         value: `${scheduled.length} pedidos`,
         icon: 'receipt',
         variant: 'pedidos',
-        subtext: `${orders.filter((order) => order.status === 'producao_concluida').length} prontos • ${orders.filter((order) => order.status === 'em_producao').length} em produção • ${orders.filter((order) => order.status === 'pedido_feito').length} confirmados`,
+        subtext: `${orders.filter((order) => order.status === 'producao_concluida').length} prontos • ${orders.filter((order) => order.status === 'em_producao').length} em produção • ${orders.filter((order) => order.status === 'pedido_feito').length} pendentes`,
       },
     ];
   }
@@ -275,12 +276,12 @@ export class DashboardComponent implements OnInit {
   }
 
   private toDashboardOrder(order: Order): PedidoSimulado {
-    const statusMap: Record<Order['status'], { status: StatusPedido; label: string }> = {
-      pedido_feito: { status: 'confirmado', label: 'Confirmado' },
-      em_producao: { status: 'em_producao', label: 'Em Produção' },
-      producao_concluida: { status: 'pronto', label: 'Produção Concluída' },
-      concluido: { status: 'entregue', label: 'Concluído' },
-      cancelado: { status: 'entregue', label: 'Cancelado' },
+    const statusMap: Record<Order['status'], StatusPedido> = {
+      pedido_feito: 'confirmado',
+      em_producao: 'em_producao',
+      producao_concluida: 'pronto',
+      concluido: 'entregue',
+      cancelado: 'entregue',
     };
     const status = statusMap[order.status];
     const subtotal = Number(order.valor_total);
@@ -293,8 +294,8 @@ export class DashboardComponent implements OnInit {
       titulo: `Pedido #${order.id_pedido}`,
       descricao: `${order.itens.length} item(ns)`,
       categoria: null,
-      status: status.status,
-      statusLabel: status.label,
+      status,
+      statusLabel: ORDER_STATUS_LABELS[order.status],
       cliente: order.cliente ? `Cliente #${order.cliente}` : 'Cliente não informado',
       telefone: '',
       endereco: order.endereco_entrega ?? undefined,

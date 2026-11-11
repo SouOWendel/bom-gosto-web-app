@@ -30,6 +30,7 @@ import {
 import { DomainApiService } from '../../core/services/domain-api.service';
 import { TablePaginationComponent } from '../../shared/components/table-pagination/table-pagination.component';
 import { apiErrorMessage } from '../../core/utils/api-error';
+import { ORDER_STATUS_LABELS } from '../../core/models/order-status';
 
 type OrderStatus = 'retirada' | 'producao' | 'pendente' | 'cancelado';
 type OrderCategory = 'bolos' | 'doces' | 'kits';
@@ -683,7 +684,7 @@ export class OrdersComponent implements OnInit {
       total: this.formatCurrency(total),
       payment: this.paymentLabel(order),
       status,
-      statusLabel: this.statusLabel(status),
+      statusLabel: ORDER_STATUS_LABELS[order.status],
       schedule: this.formatSchedule(order.data_entrega, order.horario_entrega),
       modality: order.endereco_entrega ? 'Entrega' : 'Retirada',
       detail:
@@ -744,16 +745,6 @@ export class OrdersComponent implements OnInit {
       case 'cancelado':
         return 'cancelado';
     }
-  }
-
-  private statusLabel(status: OrderStatus): string {
-    const labels: Record<OrderStatus, string> = {
-      retirada: 'Pronto / concluído',
-      producao: 'Em produção',
-      pendente: 'Pendente',
-      cancelado: 'Cancelado',
-    };
-    return labels[status];
   }
 
   private actionLabel(order: ApiOrder): string {
