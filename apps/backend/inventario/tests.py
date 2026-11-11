@@ -194,3 +194,379 @@ class IngredienteApiTests(APITestCase):
         resposta = self.client.get("/api/inventario/ingrediente/")
 
         self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+
+# testes complementares do modulo Inventario: validacoes do serializer e campos calculados
+class IngredienteSerializerTests(SimpleTestCase):
+    def test_aceita_ingrediente_apenas_com_nome(self):
+        serializer = IngredienteSerializer(data={"nome": "Sal"})
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_exige_nome(self):
+        serializer = IngredienteSerializer(data={"quantidade_disponivel": "1.00"})
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("nome", serializer.errors)
+
+    def test_rejeita_nome_maior_que_cem_caracteres(self):
+        serializer = IngredienteSerializer(data={"nome": "a" * 101})
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("nome", serializer.errors)
+
+    def test_rejeita_custo_unitario_negativo(self):
+        serializer = IngredienteSerializer(
+            data={"nome": "Açúcar", "custo_unitario": "-0.01"}
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("custo_unitario", serializer.errors)
+
+    def test_rejeita_quantidade_minima_negativa(self):
+        serializer = IngredienteSerializer(
+            data={"nome": "Açúcar", "quantidade_minima": "-1.00"}
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("quantidade_minima", serializer.errors)
+
+    def test_aceita_valores_zerados(self):
+        serializer = IngredienteSerializer(
+            data={
+                "nome": "Sal",
+                "quantidade_disponivel": "0.00",
+                "custo_unitario": "0.00",
+                "quantidade_minima": "0.00",
+            }
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_abaixo_do_minimo_compara_saldo_e_minimo(self):
+        serializer = IngredienteSerializer()
+        abaixo = Ingrediente(
+            quantidade_disponivel=Decimal("4.99"), quantidade_minima=Decimal("5.00")
+        )
+        igual = Ingrediente(
+            quantidade_disponivel=Decimal("5.00"), quantidade_minima=Decimal("5.00")
+        )
+        acima = Ingrediente(
+            quantidade_disponivel=Decimal("6.00"), quantidade_minima=Decimal("5.00")
+        )
+
+        self.assertIs(serializer.get_abaixo_do_minimo(abaixo), True)
+        self.assertIs(serializer.get_abaixo_do_minimo(igual), False)
+        self.assertIs(serializer.get_abaixo_do_minimo(acima), False)
+
+    def test_abaixo_do_minimo_e_nulo_sem_saldo_ou_sem_minimo(self):
+        serializer = IngredienteSerializer()
+        sem_saldo = Ingrediente(quantidade_minima=Decimal("5.00"))
+        sem_minimo = Ingrediente(quantidade_disponivel=Decimal("1.00"))
+
+        self.assertIsNone(serializer.get_abaixo_do_minimo(sem_saldo))
+        self.assertIsNone(serializer.get_abaixo_do_minimo(sem_minimo))
+
+    def test_alerta_de_validade_nas_fronteiras_das_faixas(self):
+        serializer = IngredienteSerializer()
+        hoje = date(2026, 1, 1)
+        casos = [
+            (-3, "critico"),
+            (0, "critico"),
+            (1, "atencao"),
+            (7, "atencao"),
+            (8, "preventivo"),
+            (15, "preventivo"),
+            (16, None),
+        ]
+
+        with patch("inventario.serializers.timezone.localdate", return_value=hoje):
+            for dias, nivel in casos:
+                with self.subTest(dias=dias):
+                    alerta = serializer.get_alerta_validade(
+                        Ingrediente(data_validade=hoje + timedelta(days=dias))
+                    )
+                    if nivel is None:
+                        self.assertIsNone(alerta)
+                    else:
+                        self.assertEqual(alerta["nivel"], nivel)
+                        self.assertEqual(alerta["dias_para_vencer"], dias)
+
+    def test_sem_data_de_validade_nao_ha_alerta(self):
+        serializer = IngredienteSerializer()
+
+        self.assertIsNone(serializer.get_alerta_validade(Ingrediente()))
+
+
+# testes complementares da acao /movimentar/ (entrada e saida de saldo)
+class IngredienteMovimentacaoApiTests(APITestCase):
+    URL = "/api/inventario/ingrediente/1/movimentar/"
+    CAMPOS_SALVOS = ["quantidade_disponivel", "custo_unitario", "data_validade"]
+
+    def setUp(self):
+        self.client = APIClient()
+        self.client.force_authenticate(
+            user=SimpleNamespace(is_authenticated=True, primeiro_acesso=False)
+        )
+
+    # metodo auxiliar que envia a movimentacao sem acessar o banco (get_object e save simulados)
+    def _movimentar(self, ingrediente, dados):
+        with (
+            patch.object(IngredienteViewSet, "get_object", return_value=ingrediente),
+            patch.object(ingrediente, "save") as salvar,
+        ):
+            resposta = self.client.post(self.URL, dados, format="json")
+        return resposta, salvar
+
+    @staticmethod
+    def _ingrediente(saldo="4.00", **extras):
+        valor = None if saldo is None else Decimal(saldo)
+        return Ingrediente(id_ingrediente=1, nome="Farinha", quantidade_disponivel=valor, **extras)
+
+    def test_entrada_soma_ao_saldo_e_salva_somente_os_campos_esperados(self):
+        ingrediente = self._ingrediente("4.00")
+
+        resposta, salvar = self._movimentar(
+            ingrediente, {"tipo": "entrada", "quantidade": "2.50"}
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(resposta.data["quantidade_disponivel"], "6.50")
+        salvar.assert_called_once_with(update_fields=self.CAMPOS_SALVOS)
+
+    def test_entrada_sem_custo_e_validade_preserva_os_valores_atuais(self):
+        ingrediente = self._ingrediente(
+            "4.00", custo_unitario=Decimal("3.00"), data_validade=date(2027, 1, 31)
+        )
+
+        resposta, _ = self._movimentar(
+            ingrediente, {"tipo": "entrada", "quantidade": "1.00"}
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(ingrediente.custo_unitario, Decimal("3.00"))
+        self.assertEqual(ingrediente.data_validade, date(2027, 1, 31))
+
+    def test_entrada_em_ingrediente_sem_saldo_registrado(self):
+        ingrediente = self._ingrediente(saldo=None)
+
+        resposta, _ = self._movimentar(
+            ingrediente, {"tipo": "entrada", "quantidade": "2.00"}
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(ingrediente.quantidade_disponivel, Decimal("2.00"))
+
+    def test_entrada_com_custo_e_validade_vazios_limpa_os_campos(self):
+        ingrediente = self._ingrediente(
+            "4.00", custo_unitario=Decimal("3.00"), data_validade=date(2027, 1, 31)
+        )
+
+        resposta, _ = self._movimentar(
+            ingrediente,
+            {
+                "tipo": "entrada",
+                "quantidade": "1.00",
+                "custo_unitario": "",
+                "data_validade": "",
+            },
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertIsNone(ingrediente.custo_unitario)
+        self.assertIsNone(ingrediente.data_validade)
+
+    def test_entrada_rejeita_custo_negativo(self):
+        ingrediente = self._ingrediente("4.00")
+
+        resposta, salvar = self._movimentar(
+            ingrediente,
+            {"tipo": "entrada", "quantidade": "1.00", "custo_unitario": "-1.00"},
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("custo_unitario", resposta.data)
+        salvar.assert_not_called()
+
+    def test_entrada_rejeita_custo_que_nao_e_numero(self):
+        ingrediente = self._ingrediente("4.00")
+
+        resposta, salvar = self._movimentar(
+            ingrediente,
+            {"tipo": "entrada", "quantidade": "1.00", "custo_unitario": "abc"},
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("custo_unitario", resposta.data)
+        salvar.assert_not_called()
+
+    def test_entrada_rejeita_data_de_validade_invalida(self):
+        ingrediente = self._ingrediente("4.00")
+
+        resposta, salvar = self._movimentar(
+            ingrediente,
+            {"tipo": "entrada", "quantidade": "1.00", "data_validade": "31/01/2027"},
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("data_validade", resposta.data)
+        salvar.assert_not_called()
+
+    def test_saida_igual_ao_saldo_zera_o_estoque(self):
+        ingrediente = self._ingrediente("4.00")
+
+        resposta, _ = self._movimentar(
+            ingrediente, {"tipo": "saida", "quantidade": "4.00"}
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(ingrediente.quantidade_disponivel, Decimal("0.00"))
+
+    def test_saida_sem_saldo_registrado_e_rejeitada(self):
+        ingrediente = self._ingrediente(saldo=None)
+
+        resposta, salvar = self._movimentar(
+            ingrediente, {"tipo": "saida", "quantidade": "1.00"}
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("quantidade", resposta.data)
+        salvar.assert_not_called()
+
+    def test_saida_maior_que_o_saldo_nao_altera_o_estoque(self):
+        ingrediente = self._ingrediente("4.00")
+
+        resposta, salvar = self._movimentar(
+            ingrediente, {"tipo": "saida", "quantidade": "4.01"}
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(ingrediente.quantidade_disponivel, Decimal("4.00"))
+        salvar.assert_not_called()
+
+    def test_saida_ignora_custo_e_validade_enviados(self):
+        ingrediente = self._ingrediente(
+            "4.00", custo_unitario=Decimal("3.00"), data_validade=date(2027, 1, 31)
+        )
+
+        resposta, _ = self._movimentar(
+            ingrediente,
+            {
+                "tipo": "saida",
+                "quantidade": "1.00",
+                "custo_unitario": "99.00",
+                "data_validade": "2030-12-31",
+            },
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(ingrediente.custo_unitario, Decimal("3.00"))
+        self.assertEqual(ingrediente.data_validade, date(2027, 1, 31))
+
+    def test_rejeita_quantidade_invalida_zero_ou_negativa(self):
+        for quantidade in ("", "abc", "0", "0.00", "-1.00"):
+            with self.subTest(quantidade=quantidade):
+                ingrediente = self._ingrediente("4.00")
+
+                resposta, salvar = self._movimentar(
+                    ingrediente, {"tipo": "entrada", "quantidade": quantidade}
+                )
+
+                self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertIn("quantidade", resposta.data)
+                self.assertEqual(ingrediente.quantidade_disponivel, Decimal("4.00"))
+                salvar.assert_not_called()
+
+    def test_rejeita_quantidade_ausente(self):
+        ingrediente = self._ingrediente("4.00")
+
+        resposta, salvar = self._movimentar(ingrediente, {"tipo": "entrada"})
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("quantidade", resposta.data)
+        salvar.assert_not_called()
+
+    def test_rejeita_tipo_invalido_ou_ausente(self):
+        for dados in (
+            {"tipo": "ajuste", "quantidade": "1.00"},
+            {"quantidade": "1.00"},
+        ):
+            with self.subTest(dados=dados):
+                ingrediente = self._ingrediente("4.00")
+
+                resposta, salvar = self._movimentar(ingrediente, dados)
+
+                self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertIn("tipo", resposta.data)
+                salvar.assert_not_called()
+
+    def test_retorna_nao_encontrado_para_ingrediente_inexistente(self):
+        with patch.object(IngredienteViewSet, "get_object", side_effect=Http404):
+            resposta = self.client.post(
+                "/api/inventario/ingrediente/999/movimentar/",
+                {"tipo": "entrada", "quantidade": "1.00"},
+                format="json",
+            )
+
+        self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND)
+
+
+# testes complementares de acesso e de metodos aceitos pela API de ingredientes
+class IngredienteAcessoApiTests(APITestCase):
+    def test_usuario_sem_login_nao_acessa_a_listagem(self):
+        resposta = APIClient().get("/api/inventario/ingrediente/")
+
+        self.assertIn(
+            resposta.status_code,
+            (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN),
+        )
+
+    def test_usuario_sem_login_nao_movimenta_estoque(self):
+        resposta = APIClient().post(
+            "/api/inventario/ingrediente/1/movimentar/",
+            {"tipo": "entrada", "quantidade": "1.00"},
+            format="json",
+        )
+
+        self.assertIn(
+            resposta.status_code,
+            (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN),
+        )
+
+    def test_movimentar_exige_troca_da_senha_inicial(self):
+        cliente = APIClient()
+        cliente.force_authenticate(
+            user=SimpleNamespace(is_authenticated=True, primeiro_acesso=True)
+        )
+
+        resposta = cliente.post(
+            "/api/inventario/ingrediente/1/movimentar/",
+            {"tipo": "entrada", "quantidade": "1.00"},
+            format="json",
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_movimentar_aceita_apenas_post(self):
+        cliente = APIClient()
+        cliente.force_authenticate(
+            user=SimpleNamespace(is_authenticated=True, primeiro_acesso=False)
+        )
+
+        resposta = cliente.get("/api/inventario/ingrediente/1/movimentar/")
+
+        self.assertEqual(resposta.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_cadastro_sem_nome_retorna_erro_de_validacao(self):
+        cliente = APIClient()
+        cliente.force_authenticate(
+            user=SimpleNamespace(is_authenticated=True, primeiro_acesso=False)
+        )
+
+        resposta = cliente.post(
+            "/api/inventario/ingrediente/",
+            {"quantidade_disponivel": "1.00"},
+            format="json",
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("nome", resposta.data)
