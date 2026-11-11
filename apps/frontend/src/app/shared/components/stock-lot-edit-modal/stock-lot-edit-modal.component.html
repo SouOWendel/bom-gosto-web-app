@@ -1,0 +1,62 @@
+<div class="modal-backdrop" role="presentation" (click)="close()">
+  <section
+    class="modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="stock-lot-modal-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="modal__header">
+      <div class="modal__heading">
+        <p class="modal__eyebrow">Estoque · Lote #{{ lot().id_estoque }}</p>
+        <h2 id="stock-lot-modal-title" class="modal__title">Editar lote</h2>
+        <p class="modal__subtitle">{{ lot().produto_nome }}</p>
+      </div>
+      <button type="button" class="modal__close" aria-label="Fechar" (click)="close()">
+        <svg [lucideIcon]="'x'" [size]="18"></svg>
+      </button>
+    </header>
+
+    <form class="stock-lot-modal__form" (ngSubmit)="submit()">
+      <div class="modal__body">
+        <div class="form-grid">
+          <app-input-text
+            label="Quantidade disponível *"
+            inputId="stock-lot-quantity"
+            icon="package"
+            [(ngModel)]="quantity"
+            name="quantity"
+          />
+          <app-input-text
+            label="Validade"
+            inputId="stock-lot-expiration"
+            type="date"
+            icon="calendar"
+            [(ngModel)]="expiration"
+            name="expiration"
+          />
+          <app-input-text
+            label="Custo do lote (R$)"
+            inputId="stock-lot-cost"
+            icon="banknote"
+            placeholder="0,00"
+            [(ngModel)]="cost"
+            name="cost"
+          />
+        </div>
+      </div>
+
+      <footer class="modal__footer">
+        @if (apiError() || errorMessage) {
+          <p class="modal__error" role="alert">{{ apiError() || errorMessage }}</p>
+        }
+        <div class="modal__actions">
+          <app-button type="button" variant="outline" (click)="close()">Cancelar</app-button>
+          <app-button type="submit" variant="primary" [disabled]="busy()">
+            Salvar alterações
+          </app-button>
+        </div>
+      </footer>
+    </form>
+  </section>
+</div>
