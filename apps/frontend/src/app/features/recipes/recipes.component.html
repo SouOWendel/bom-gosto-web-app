@@ -39,6 +39,7 @@
             <th class="is-numeric">Rendimento</th>
             <th class="is-numeric">Custo dos ingredientes</th>
             <th class="is-numeric">Custo por unidade</th>
+            <th class="is-actions">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -58,10 +59,16 @@
               <td class="is-numeric">
                 <strong class="data-table__primary">{{ formatCurrency(recipe.unitCost) }}</strong>
               </td>
+              <td class="is-actions">
+                <app-button size="small" variant="outline" (click)="editRecipe(recipe.id)">
+                  <svg [lucideIcon]="'pencil'" [size]="14"></svg>
+                  Editar
+                </app-button>
+              </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="5" class="data-table__empty">
+              <td colspan="6" class="data-table__empty">
                 Nenhuma receita encontrada com os filtros selecionados.
               </td>
             </tr>
