@@ -47,6 +47,12 @@ docker compose exec backend python manage.py migrate
 
 O `migrate --noinput` é automático ao iniciar o backend. O `makemigrations` não é automático: os arquivos gerados devem ser revisados e versionados.
 
+O `migrate` automático só roda quando o container do backend inicia. Depois de `git pull` ou de trocar de branch com os containers já em execução, aplique as migrations novas:
+
+```powershell
+docker compose exec backend python manage.py migrate
+```
+
 ## Banco de dados
 
 Verificar a conexão e os usuários:
@@ -61,11 +67,11 @@ docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT id
 Exemplos de queries para confirmar que as alterações foram gravadas no PostgreSQL:
 
 ```powershell
-docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT * FROM pedido ORDER BY id_pedido DESC LIMIT 10;"  
+docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT * FROM pedido ORDER BY id_pedido DESC LIMIT 10;"
 
-docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT * FROM receita ORDER BY id_receita DESC LIMIT 10;"  
+docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT * FROM receita ORDER BY id_receita DESC LIMIT 10;"
 
-docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT * FROM ingrediente ORDER BY id_ingrediente DESC LIMIT 10;"  
+docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT * FROM ingrediente ORDER BY id_ingrediente DESC LIMIT 10;"
 
 docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT * FROM estoque ORDER BY id_estoque DESC LIMIT 10;"
 ```
@@ -94,6 +100,7 @@ docker compose logs -f postgres backend frontend
 Erros comuns:
 
 - `connection refused` em `localhost`: confira se o Django está sendo executado dentro do container e se `POSTGRES_HOST=postgres` está configurado.
+- `column ... does not exist` (erro 500 nas telas) depois de atualizar o código: há migration nova ainda não aplicada. Rode `docker compose exec backend python manage.py migrate`.
 - `relation "usuario" does not exist`: confira os logs do backend e o estado das migrations. Não execute `database/create_schema.sql` nem remova o volume como procedimento de recuperação do banco ativo.
 - `ECONNREFUSED 127.0.0.1:8000` no frontend: o proxy deve usar `http://backend:8000`, pois `127.0.0.1` dentro do frontend aponta para o próprio container.
 - `DisallowedHost`: confirme que `backend` está em `ALLOWED_HOSTS` no Django.
