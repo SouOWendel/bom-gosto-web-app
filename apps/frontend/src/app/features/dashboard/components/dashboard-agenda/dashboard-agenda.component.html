@@ -95,15 +95,18 @@
           </div>
 
           <div class="order-card__actions">
-            <app-button
-              variant="outline"
-              size="small"
-              ariaLabel="Conversar com o cliente no WhatsApp"
-              (click)="abrirWhatsApp(pedido.telefone, pedido.cliente)"
-            >
-              <svg [lucideIcon]="'phone'" [size]="14" [strokeWidth]="2"></svg>
-              WhatsApp
-            </app-button>
+            <!-- Sem telefone (ex.: reposição interna) não há com quem conversar. -->
+            @if (pedido.telefone) {
+              <app-button
+                variant="outline"
+                size="small"
+                ariaLabel="Conversar com o cliente no WhatsApp"
+                (click)="abrirWhatsApp(pedido.telefone, pedido.cliente)"
+              >
+                <svg [lucideIcon]="'phone'" [size]="14" [strokeWidth]="2"></svg>
+                WhatsApp
+              </app-button>
+            }
             @if (pedido.status === 'pronto') {
               <app-button route="/pedidos" variant="outline" size="small">
                 <svg [lucideIcon]="'file-text'" [size]="14" [strokeWidth]="2"></svg>

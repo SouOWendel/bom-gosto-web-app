@@ -16,6 +16,7 @@ import { ButtonComponent } from '../../shared/components/button/button.component
 import { Order } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
 import { ORDER_STATUS_LABELS } from '../../core/models/order-status';
+import { OrderCategory, orderCategory, orderItemName } from '../../core/utils/order-category';
 
 export interface ResumoCard {
   titulo: string;
@@ -26,7 +27,7 @@ export interface ResumoCard {
   icone: string;
 }
 
-export type CategoriaPedido = 'bolo' | 'doce' | 'kit';
+export type CategoriaPedido = OrderCategory;
 export type StatusPedido = 'confirmado' | 'em_producao' | 'pronto' | 'entregue';
 
 export interface PedidoSimulado {
@@ -292,12 +293,18 @@ export class DashboardComponent implements OnInit {
       horario: order.horario_entrega?.slice(0, 5) ?? '—',
       modalidade: order.endereco_entrega ? 'DELIVERY' : 'RETIRADA',
       titulo: `Pedido #${order.id_pedido}`,
-      descricao: `${order.itens.length} item(ns)`,
-      categoria: null,
+      descricao:
+        order.itens
+          .map((item) => orderItemName(item))
+          .filter(Boolean)
+          .join(', ') || `${order.itens.length} item(ns)`,
+      categoria: orderCategory(order.itens),
       status,
       statusLabel: ORDER_STATUS_LABELS[order.status],
-      cliente: order.cliente ? `Cliente #${order.cliente}` : 'Cliente não informado',
-      telefone: '',
+      cliente:
+        order.cliente_nome ??
+        (order.tipo === 'interno' ? 'Reposição interna' : 'Cliente não informado'),
+      telefone: order.cliente_telefone ?? '',
       endereco: order.endereco_entrega ?? undefined,
       pagamentoInfo: `Total: ${this.formatCurrency(subtotal)} • Sinal: ${this.formatCurrency(Number(order.valor_sinal))}`,
       botaoAcao: order.status === 'pedido_feito' ? 'Iniciar Preparo' : undefined,
