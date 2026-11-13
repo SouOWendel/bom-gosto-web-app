@@ -1,7 +1,6 @@
 
 \chapter{Projeto do Sistema}
 
-\section{Arquitetura do Sistema}
 A arquitetura do Sistema Web Administrativo da Confeitaria Bom Gosto foi planejada de forma modular, com o objetivo de organizar as funcionalidades e facilitar a comunicação entre as diferentes áreas da aplicação. A estrutura está dividida em dois grandes módulos: o Mega-Componente Administrativo e o Mega-Componente Fábrica.
 
 O Mega-Componente Administrativo reúne as funcionalidades relacionadas ao gerenciamento dos pedidos, à organização das entregas e retiradas, ao controle financeiro e à autenticação do usuário. Já o Mega-Componente Fábrica concentra as operações relacionadas à produção dos produtos, ao controle de ingredientes, ao estoque e à geração de relatórios.
@@ -194,7 +193,7 @@ A segurança e o controle de acesso são aspectos importantes para um sistema qu
 
 O projeto prevê o acesso administrativo por uma pessoa autorizada, de acordo com as regras estabelecidas para a aplicação. Dessa forma, os mecanismos de controle de acesso devem ser compatíveis com as funcionalidades disponibilizadas e com o tipo de informação armazenada.
 
-Entre os aspectos que precisam ser considerados estão a autenticação do usuário por meio de palavra-chave, a restrição de acesso às áreas administrativas e a proteção das informações utilizadas pelo sistema, são utilizadas para impedir o uso indevido das funcionalidades. Além do controle de acesso, o sistema deve considerar a integridade dos registros. Por exemplo, a exclusão de um pedido deve exigir uma confirmação antes de ser concluída, conforme o requisito definido para o projeto. Essa medida busca reduzir a possibilidade de remoções acidentais de informações importantes.
+Entre os aspectos que precisam ser considerados estão a autenticação do usuário por meio de palavra-chave, a restrição de acesso às áreas administrativas e a proteção das informações utilizadas pelo sistema, são utilizadas para impedir o uso indevido das funcionalidades. Além do controle de acesso, o sistema deve considerar a integridade dos registros. Por exemplo, o cancelamento de um pedido deve exigir uma confirmação antes de ser concluída, conforme o requisito definido para o projeto. Essa medida busca reduzir a possibilidade de remoções acidentais de informações importantes.
 
 É importante diferenciar as medidas previstas das que já estão implementadas. A presença de uma tela de \textit{login}, por exemplo, não comprova isoladamente que todas as áreas estejam protegidas ou que as sessões sejam tratadas de maneira segura. Por isso, a descrição final deve ser conferida com o código e com os testes realizados na aplicação.
 
