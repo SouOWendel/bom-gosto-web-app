@@ -7,16 +7,19 @@ import {
   LucidePlus,
   LucidePencil,
   LucideSearch,
+  LucideTrash2,
   provideLucideIcons,
 } from '@lucide/angular';
 import { DomainApiService } from '../../core/services/domain-api.service';
 import { Product, Recipe } from '../../core/models/api.model';
+import { apiErrorMessage } from '../../core/utils/api-error';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
 import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
 import { MetricCardsComponent } from '../../shared/components/metric-cards/metric-cards.component';
 import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
 import { ProductCreateModalComponent } from '../../shared/components/product-create-modal/product-create-modal.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-products',
@@ -29,8 +32,11 @@ import { ButtonComponent } from '../../shared/components/button/button.component
     MetricCardsComponent,
     ProductCreateModalComponent,
     ButtonComponent,
+    ConfirmDialogComponent,
   ],
-  providers: [provideLucideIcons(LucidePackage, LucidePlus, LucidePencil, LucideSearch)],
+  providers: [
+    provideLucideIcons(LucidePackage, LucidePlus, LucidePencil, LucideSearch, LucideTrash2),
+  ],
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.scss'],
 })
@@ -43,6 +49,9 @@ export class ProductsComponent implements OnInit {
   readonly productToEdit = signal<Product | null>(null);
   readonly apiError = signal<string | null>(null);
   readonly searchTerm = signal('');
+  readonly productToDelete = signal<Product | null>(null);
+  readonly isDeleting = signal(false);
+  readonly deleteError = signal<string | null>(null);
 
   readonly greetingActions: PageAction[] = [
     { label: 'Novo produto', icon: 'plus', variant: 'primary' },
@@ -151,6 +160,39 @@ export class ProductsComponent implements OnInit {
         },
       });
     }
+  }
+
+  openDeleteDialog(product: Product): void {
+    this.deleteError.set(null);
+    this.productToDelete.set(product);
+  }
+
+  closeDeleteDialog(): void {
+    this.productToDelete.set(null);
+    this.deleteError.set(null);
+  }
+
+  // Produtos com lotes ou pedidos são recusados pela API; a mensagem fica no diálogo.
+  confirmDelete(): void {
+    const product = this.productToDelete();
+    if (!product) {
+      return;
+    }
+    this.isDeleting.set(true);
+    this.deleteError.set(null);
+    this.domainApi.deleteProduct(product.id_produto).subscribe({
+      next: () => {
+        this.isDeleting.set(false);
+        this.products.update((list) =>
+          list.filter((item) => item.id_produto !== product.id_produto),
+        );
+        this.closeDeleteDialog();
+      },
+      error: (error: unknown) => {
+        this.isDeleting.set(false);
+        this.deleteError.set(apiErrorMessage(error));
+      },
+    });
   }
 
   formatCurrency(value: number): string {

@@ -31,6 +31,11 @@ export class DomainApiService {
     return this.http.patch<Ingredient>(`/api/inventario/ingrediente/${id}/`, payload);
   }
 
+  // o backend recusa com 400 quando o ingrediente esta na composicao de alguma receita
+  deleteIngredient(id: number): Observable<void> {
+    return this.http.delete<void>(`/api/inventario/ingrediente/${id}/`);
+  }
+
   getProducts(): Observable<Product[]> {
     return this.list<Product>('/api/produtos/');
   }
@@ -41,6 +46,11 @@ export class DomainApiService {
 
   updateProduct(id: number, payload: Partial<Product>): Observable<Product> {
     return this.http.patch<Product>(`/api/produtos/${id}/`, payload);
+  }
+
+  // o backend recusa com 400 quando o produto tem lotes no estoque ou pedidos vinculados
+  deleteProduct(id: number): Observable<void> {
+    return this.http.delete<void>(`/api/produtos/${id}/`);
   }
 
   getStock(): Observable<StockLot[]> {
@@ -66,6 +76,11 @@ export class DomainApiService {
 
   updateRecipe(id: number, payload: Partial<Recipe>): Observable<Recipe> {
     return this.http.patch<Recipe>(`/api/producao/receitas/${id}/`, payload);
+  }
+
+  // o backend recusa com 400 quando a receita esta em itens de pedido
+  deleteRecipe(id: number): Observable<void> {
+    return this.http.delete<void>(`/api/producao/receitas/${id}/`);
   }
 
   getOrders(): Observable<Order[]> {

@@ -60,10 +60,16 @@
                 <strong class="data-table__primary">{{ formatCurrency(recipe.unitCost) }}</strong>
               </td>
               <td class="is-actions">
-                <app-button size="small" variant="outline" (click)="editRecipe(recipe.id)">
-                  <svg [lucideIcon]="'pencil'" [size]="14"></svg>
-                  Editar
-                </app-button>
+                <div class="data-table__actions">
+                  <app-button size="small" variant="outline" (click)="editRecipe(recipe.id)">
+                    <svg [lucideIcon]="'pencil'" [size]="14"></svg>
+                    Editar
+                  </app-button>
+                  <app-button size="small" variant="outline" (click)="openDeleteDialog(recipe)">
+                    <svg [lucideIcon]="'trash-2'" [size]="14"></svg>
+                    Excluir
+                  </app-button>
+                </div>
               </td>
             </tr>
           } @empty {
@@ -89,4 +95,26 @@
       (pageChange)="goToPage($event)"
     />
   </section>
+
+  @if (recipeToDelete(); as recipe) {
+    <app-confirm-dialog
+      [title]="'Excluir a receita ' + recipe.name + '?'"
+      message="A ficha técnica e a lista de ingredientes serão apagadas. Esta ação não pode ser desfeita."
+      confirmLabel="Excluir receita"
+      variant="danger"
+      [busy]="isDeleting()"
+      [error]="deleteError()"
+      (closed)="closeDeleteDialog()"
+      (confirmed)="confirmDelete()"
+    >
+      @if (recipe.productCount > 0) {
+        <p class="modal__text">
+          {{ recipe.productCount === 1 ? 'O produto' : 'Os produtos' }}
+          <strong>{{ recipe.product }}</strong>
+          {{ recipe.productCount === 1 ? 'ficará' : 'ficarão' }} sem receita vinculada.
+        </p>
+      }
+      <p class="modal__text">Receitas já usadas em pedidos não podem ser excluídas.</p>
+    </app-confirm-dialog>
+  }
 </div>

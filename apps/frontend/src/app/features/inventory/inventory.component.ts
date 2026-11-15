@@ -1,12 +1,20 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { LucideDynamicIcon, LucidePencil, LucideSearch, provideLucideIcons } from '@lucide/angular';
+import {
+  LucideDynamicIcon,
+  LucidePencil,
+  LucideSearch,
+  LucideTrash2,
+  provideLucideIcons,
+} from '@lucide/angular';
 import { ButtonComponent } from '../../shared/components/button/button.component';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { MetricCardsComponent } from '../../shared/components/metric-cards/metric-cards.component';
 import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
 import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
 import { Ingredient } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
+import { apiErrorMessage } from '../../core/utils/api-error';
 import {
   IngredientCreateModalComponent,
   IngredientCreationPayload,
@@ -40,9 +48,10 @@ interface InventoryItem {
     MetricCardsComponent,
     IngredientCreateModalComponent,
     ButtonComponent,
+    ConfirmDialogComponent,
     LucideDynamicIcon,
   ],
-  providers: [provideLucideIcons(LucidePencil, LucideSearch)],
+  providers: [provideLucideIcons(LucidePencil, LucideSearch, LucideTrash2)],
   templateUrl: './inventory.component.html',
   styleUrls: ['./inventory.component.scss'],
 })
@@ -55,6 +64,9 @@ export class InventoryComponent implements OnInit {
   readonly createError = signal<string | null>(null);
   readonly ingredientToEdit = signal<Ingredient | null>(null);
   readonly searchTerm = signal('');
+  readonly ingredientToDelete = signal<InventoryItem | null>(null);
+  readonly isDeleting = signal(false);
+  readonly deleteError = signal<string | null>(null);
   readonly alertOnly = signal(false);
   readonly currentPage = signal(1);
   readonly pageSize = 5;
@@ -196,6 +208,41 @@ export class InventoryComponent implements OnInit {
     this.ingredientToEdit.set(item.raw);
     this.createError.set(null);
     this.isCreateModalOpen.set(true);
+  }
+
+  openDeleteDialog(item: InventoryItem): void {
+    this.deleteError.set(null);
+    this.ingredientToDelete.set(item);
+  }
+
+  closeDeleteDialog(): void {
+    this.ingredientToDelete.set(null);
+    this.deleteError.set(null);
+  }
+
+  // Ingredientes usados em receitas são recusados pela API; a mensagem fica no diálogo.
+  confirmDelete(): void {
+    const item = this.ingredientToDelete();
+    if (!item) {
+      return;
+    }
+    const id = item.raw.id_ingrediente;
+    this.isDeleting.set(true);
+    this.deleteError.set(null);
+    this.domainApi.deleteIngredient(id).subscribe({
+      next: () => {
+        this.isDeleting.set(false);
+        this.ingredients.update((items) => items.filter((it) => it.id_ingrediente !== id));
+        if (this.currentPage() > this.totalPages()) {
+          this.currentPage.set(Math.max(this.totalPages(), 1));
+        }
+        this.closeDeleteDialog();
+      },
+      error: (error: unknown) => {
+        this.isDeleting.set(false);
+        this.deleteError.set(apiErrorMessage(error));
+      },
+    });
   }
 
   closeCreateModal(): void {
