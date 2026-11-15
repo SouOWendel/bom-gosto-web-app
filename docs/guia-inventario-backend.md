@@ -6,7 +6,7 @@ Este guia descreve como iniciar o projeto com Docker e testar manualmente a API 
 
 ## Escopo e persistência
 
-O módulo expõe operações de criação, consulta e atualização de ingredientes. A exclusão não está disponível.
+O módulo expõe operações de criação, consulta, atualização e exclusão de ingredientes. Ingredientes usados em receitas não podem ser excluídos.
 
 O model Django mapeia a tabela `ingrediente`. As migrations Django criam e controlam as 11 tabelas ativas de aplicação, incluindo essa tabela. A API usa o PostgreSQL configurado no Docker Compose para ler e gravar ingredientes.
 
@@ -189,7 +189,7 @@ Invoke-RestMethod -Method Put `
 
 Como a quantidade voltou a ficar abaixo de `5.00`, a resposta deve mostrar `abaixo_do_minimo = true`.
 
-## 9. Conferir validação e ausência de exclusão
+## 9. Conferir validação e exclusão
 
 Uma quantidade negativa deve retornar `400 Bad Request`:
 
@@ -209,7 +209,8 @@ try {
 }
 ```
 
-O método `DELETE` não faz parte do CRUD e deve retornar `405 Method Not Allowed`:
+O método `DELETE` exclui ingredientes que não estão em nenhuma receita e responde `204 No Content`.
+Se o ingrediente fizer parte de alguma receita, a exclusão é recusada com `400 Bad Request`:
 
 ```powershell
 try {
@@ -221,8 +222,11 @@ try {
 }
 ```
 
-<<<<<<< HEAD
-O registro não é removido pelo teste. Confirme o estado final com `GET` ou com a consulta SQL da etapa 2. A limpeza de registros de teste deve ser feita de acordo com o procedimento de manutenção do banco do projeto.
+Confirme o estado final com `GET` ou consulte diretamente o PostgreSQL pelo Docker, substituindo `1` pelo ID do ingrediente testado:
+
+```powershell
+docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT * FROM ingrediente WHERE id_ingrediente = 1;"
+```
 
 ## 10. Movimentação simples do MVP
 
@@ -256,10 +260,3 @@ Invoke-RestMethod -Method Post `
 ```
 
 O MVP não mantém histórico de movimentações.
-=======
-O registro não é removido pelo teste. Confirme o estado final com `GET` ou consulte diretamente o PostgreSQL pelo Docker, substituindo `1` pelo ID do ingrediente testado:
-
-```powershell
-docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT * FROM ingrediente WHERE id_ingrediente = 1;"
-```
->>>>>>> origin/dev

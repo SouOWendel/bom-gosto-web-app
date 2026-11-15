@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
+from django.db.models.deletion import ProtectedError
 
 from core.permissions import SenhaInicialAlterada
 from producao.services import recalcular_receitas_do_ingrediente
@@ -14,13 +15,21 @@ from .models import Ingrediente
 from .serializers import IngredienteSerializer
 
 
-# Permite cadastrar, consultar e editar os ingredientes do Inventário.
+# Permite cadastrar, consultar, editar e excluir os ingredientes do Inventário.
 class IngredienteViewSet(ModelViewSet):
     queryset = Ingrediente.objects.all().order_by("id_ingrediente")
     serializer_class = IngredienteSerializer
     permission_classes = [IsAuthenticated, SenhaInicialAlterada]
-    # nao expor o metodo DELETE.
-    http_method_names = ["get", "post", "put", "patch", "head", "options"]
+    http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
+
+    # Ingredientes usados em receitas ficam protegidos pelo banco (PROTECT).
+    def perform_destroy(self, instance):
+        try:
+            instance.delete()
+        except ProtectedError as erro:
+            raise ValidationError(
+                "O ingrediente está em uma ou mais receitas e não pode ser excluído."
+            ) from erro
 
     # Um novo custo unitário muda o custo das receitas que usam o insumo.
     def perform_update(self, serializer):

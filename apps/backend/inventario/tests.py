@@ -8,6 +8,9 @@ from django.test import SimpleTestCase
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
+from pedido.models import Receita
+from producao.models import IngredienteReceita
+
 from .models import Ingrediente
 from .serializers import IngredienteSerializer
 from .views import IngredienteViewSet
@@ -176,11 +179,22 @@ class IngredienteApiTests(APITestCase):
 
         self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND)
 
-    # testa que a API nao permite a exclusao de ingredientes, retornando um status 405 Method Not Allowed, garantindo que a operação de DELETE nao esteja habilitada para o endpoint de ingredientes
-    def test_nao_disponibiliza_exclusao(self):
-        resposta = self.client.delete("/api/inventario/ingrediente/1/")
+    # exclui ingredientes fora de receitas e recusa com 400 os que estao na composicao de alguma receita
+    def test_exclui_somente_ingrediente_fora_de_receitas(self):
+        livre = Ingrediente.objects.create(nome="Fermento")
+        em_uso = Ingrediente.objects.create(nome="Farinha")
+        receita = Receita.objects.create(nome="Massa", rendimento_quantidade=Decimal("1"))
+        IngredienteReceita.objects.create(
+            receita=receita, ingrediente=em_uso, quantidade_necessaria=Decimal("1")
+        )
 
-        self.assertEqual(resposta.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        resposta = self.client.delete(f"/api/inventario/ingrediente/{livre.pk}/")
+        self.assertEqual(resposta.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Ingrediente.objects.filter(pk=livre.pk).exists())
+
+        resposta = self.client.delete(f"/api/inventario/ingrediente/{em_uso.pk}/")
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(Ingrediente.objects.filter(pk=em_uso.pk).exists())
 
     # testa que a API exige que o usuario troque a senha inicial no primeiro acesso, retornando um status 403 Forbidden, garantindo que a politica de seguranca para novos usuarios seja aplicada corretamente
     def test_exige_troca_da_senha_inicial(self):
