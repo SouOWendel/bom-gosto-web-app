@@ -1,7 +1,5 @@
 \chapter{Análise do Sistema}
 
-\section{Visão Geral do Sistema}
-
 O projeto consiste no desenvolvimento de um Sistema Web Administrativo para a confeitaria Bom Gosto. O objetivo é facilitar a organização das atividades do negócio, reunindo em um só lugar as informações sobre pedidos, produtos, ingredientes, estoque e produção.
 
 Atualmente, parte do controle da confeitaria é realizada por meio de ferramentas como o WhatsApp e planilhas. Com o sistema, pretende-se tornar esse processo mais organizado, facilitando o acesso às informações e o acompanhamento das tarefas do dia a dia.
@@ -34,28 +32,63 @@ O sistema será utilizado principalmente pela proprietária da confeitaria, que 
 Os clientes não serão usuários diretos do sistema, pois não está prevista uma área de acesso destinada a eles. Seus dados serão registrados pela proprietária durante o cadastro dos pedidos.
 
 
-\section{Diagrama de Casos de Uso}
-
-O diagrama de casos de uso apresenta as principais funcionalidades do sistema e a forma como a proprietária interage com elas. Como o acesso será restrito, a proprietária será a principal usuária representada no diagrama.
-
-Entre as principais ações previstas estão:
-
-\begin{itemize}
-    \item realizar login e alterar a senha;
-    \item cadastrar, consultar e editar pedidos;
-    \item atualizar o status dos pedidos;
-    \item consultar e organizar a agenda;
-    \item registrar pagamentos e consultar informações financeiras;
-    \item cadastrar produtos e acompanhar o estoque;
-    \item registrar ingredientes e consultar o inventário;
-    \item cadastrar receitas e acompanhar a produção;
-    \item consultar relatórios sobre vendas, custos e rendimento da produção.
-\end{itemize}
+\section{Fluxograma do Sistema}
+A Figura~\ref{fig:fluxograma} apresenta o fluxograma do sistema, que representa, em alto nível, o percurso de um pedido desde o seu registro até a conclusão ou o cancelamento. Enquanto o Diagrama de Atividades organiza o processo por áreas de responsabilidade, o fluxograma concentra-se na sequência de decisões e nas atualizações de status do pedido, em conformidade com a Regra de Negócio RN02, que define o pedido como entidade central do sistema.
 
 \begin{figure}[H]
     \centering
-    \caption{\label{fig:casos_uso}Diagrama de casos de uso do sistema Bom Gosto}
-    \includegraphics[width=\textwidth]{imagens/diagrama_casos_uso.png}
+    \caption{\label{fig:fluxograma}Fluxograma da confeitaria Bom Gosto}
+    \includegraphics[width=\textwidth]{imagens/fluxograma.png}
+    \legend{Fonte: Elaborado pelos autores (2026).}
+\end{figure}
+
+\section{Diagrama de Casos de Uso}
+O Diagrama de Casos de Uso descreve as funcionalidades do sistema sob a perspectiva do usuário, representando as interações entre o ator e o sistema sem detalhar a forma como serão implementadas. Como o acesso é exclusivo da proprietária cadastrada, o sistema possui um único ator, a Proprietária/Confeiteira. Os clientes não interagem diretamente com o sistema, pois seus dados são registrados pela própria proprietária durante o cadastro dos pedidos.
+
+Como forma de ajudar a entender os 31 casos de uso, eles foram organizados em cinco figuras, agrupados em pacotes que correspondem aos componentes do sistema. Cada caso de uso é identificado pelo código UC e pode ser identificado até os requisitos funcionais que eles representam. Nos diagramas, as linhas contínuas representam a associação entre o ator e o caso de uso. O relacionamento \textit{«include»} indica uma funcionalidade que é sempre executada como parte de outra, e o relacionamento \textit{«extend»} indica uma funcionalidade opcional que só é executada quando a condição indicada é satisfeita.
+
+A Figura~\ref{fig:casos_uso_autenticacao} apresenta os casos de uso de acesso ao sistema e a relação de segurança.
+
+\begin{figure}[H]
+    \centering
+    \caption{\label{fig:casos_uso_autenticacao}Diagrama de casos de uso - Autenticação e Segurança}
+    \includegraphics[width=\textwidth]{imagens/casos_uso_autenticacao.png}
+    \legend{Fonte: Elaborado pelos autores (2026).}
+\end{figure}
+
+A Figura~\ref{fig:casos_uso_pedido} apresenta o pacote central do sistema (RN02), no caso o Pedido.
+
+\begin{figure}[H]
+    \centering
+    \caption{\label{fig:casos_uso_pedido}Diagrama de casos de uso - Pedido}
+    \includegraphics[width=\textwidth]{imagens/casos_uso_pedido.png}
+    \legend{Fonte: Elaborado pelos autores (2026).}
+\end{figure}
+
+A Figura~\ref{fig:casos_uso_agenda} reúne os dois pacotes de apoio administrativo para agendamento e o financeiro.
+
+\begin{figure}[H]
+    \centering
+    \caption{\label{fig:casos_uso_agenda}Diagrama de casos de uso - Agenda e Finanças}
+    \includegraphics[width=\textwidth]{imagens/casos_uso_agenda.png}
+    \legend{Fonte: Elaborado pelos autores (2026).}
+\end{figure}
+
+A Figura~\ref{fig:casos_uso_estoque} apresenta o controle de produtos prontos e de matérias-primas.
+
+\begin{figure}[H]
+    \centering
+    \caption{\label{fig:casos_uso_estoque}Diagrama de casos de uso - Estoque e Inventário}
+    \includegraphics[width=\textwidth]{imagens/casos_uso_estoque.png}
+    \legend{Fonte: Elaborado pelos autores (2026).}
+\end{figure}
+
+A Figura~\ref{fig:casos_uso_producao} apresenta o processo de fabricação e a análise de seus resultados.
+
+\begin{figure}[H]
+    \centering
+    \caption{\label{fig:casos_uso_producao}Diagrama de casos de uso - Produção e Relatório}
+    \includegraphics[width=\textwidth]{imagens/casos_uso_producao.png}
     \legend{Fonte: Elaborado pelos autores (2026).}
 \end{figure}
 
@@ -108,10 +141,9 @@ Essas entidades foram definidas para organizar as informações do sistema e per
 
 \section{Requisitos Funcionais}
 
-Os requisitos funcionais descrevem as ações que o sistema deverá permitir. Eles foram organizados de acordo com as principais áreas do Bom Gosto: pedidos, estoque, inventário, produção, agenda, finanças, relatórios e usuários.
+Os requisitos funcionais descrevem as ações que o sistema deverá permitir. Eles foram organizados de acordo com as principais áreas do Bom Gosto: pedidos, estoque, inventário, produção, agenda, finanças, relatórios e usuários e foram destrinchados em funcionalidades específicas para cada área.
 
-
-\subsection{Pedido}
+A criação do componente 'Pedido' foi motivada pela necessidade de organizar e padronizar o registro dos pedidos, considerando que diferentes tipos de solicitações possuem informações e necessidades específicas. A distinção entre pedidos internos, destinados à vitrine, e externos, realizados por clientes, permite estabelecer fluxos adequados para cada situação. Além disso, a possibilidade de registrar as especificações das encomendas, editar informações e acompanhar as alterações de status contribui para reduzir falhas de comunicação e evitar a perda de informações durante o processo. Também foi considerada a necessidade de estabelecer um procedimento para o reaproveitamento ou descarte de insumos quando um pedido em produção é cancelado.
 
 \begin{quadro}
     \centering
@@ -145,8 +177,7 @@ Os requisitos funcionais descrevem as ações que o sistema deverá permitir. El
     \fonte{Elaborado pelos autores (2026).}
 \end{quadro}
 
-
-\subsection{Estoque}
+Em relação ao 'Estoque', a inclusão deste componente surgiu da necessidade de controlar a disponibilidade dos produtos acabados e evitar a produção desnecessária de itens que já estejam disponíveis para comercialização. Durante o atendimento de um pedido, é importante verificar se o produto ou seus componentes já estão prontos e podem ser utilizados. Também foi identificada a necessidade de registrar itens parciais provenientes de sobras de produção ou pedidos cancelados, possibilitando seu reaproveitamento e reduzindo desperdícios.
 
 \begin{quadro}
     \centering
@@ -174,8 +205,8 @@ Os requisitos funcionais descrevem as ações que o sistema deverá permitir. El
     \fonte{Elaborado pelos autores (2026).}
 \end{quadro}
 
+Para o componente 'Produção' foi definido considerando a necessidade de organizar e padronizar o processo de fabricação dos produtos. A utilização de receitas cadastradas permite estabelecer proporções de ingredientes e calcular os custos envolvidos em cada produção. Além disso, a verificação da disponibilidade de insumos antes da fabricação busca evitar interrupções no processo por falta de ingredientes. A baixa automática dos materiais utilizados e o encaminhamento dos produtos fabricados ao estoque também foram considerados importantes para manter os registros atualizados e garantir maior controle sobre a produção.
 
-\subsection{Produção}
 
 \begin{quadro}
     \centering
@@ -218,8 +249,7 @@ Os requisitos funcionais descrevem as ações que o sistema deverá permitir. El
     \fonte{Elaborado pelos autores (2026).}
 \end{quadro}
 
-
-\subsection{Inventário}
+A criação do componente 'Inventário' foi motivada pela necessidade de acompanhar as matérias-primas utilizadas na fabricação dos produtos, considerando que a falta de ingredientes ou o vencimento de insumos podem comprometer o funcionamento da confeitaria. Por esse motivo, foram previstos registros de entrada, quantidades, custos de aquisição e datas de validade. A definição de alertas para produtos próximos do vencimento ou abaixo da quantidade mínima também busca facilitar o planejamento das compras e evitar perdas financeiras.
 
 \begin{quadro}
     \centering
@@ -242,7 +272,7 @@ Os requisitos funcionais descrevem as ações que o sistema deverá permitir. El
 \end{quadro}
 
 
-\subsection{Agenda}
+A partir da necessidade de facilitar o planejamento das atividades e evitar conflitos entre os prazos de entrega e retirada dos pedidos surgiu o componente 'Agenda'. Como a confeitaria trabalha com encomendas que possuem datas e horários específicos, tornou-se importante disponibilizar uma visualização organizada dos compromissos. A possibilidade de consultar os pedidos por data, verificar seus detalhes e registrar lembretes também busca auxiliar no acompanhamento das tarefas e na organização da rotina de trabalho.
 
 \begin{quadro}
     \centering
@@ -267,7 +297,8 @@ Os requisitos funcionais descrevem as ações que o sistema deverá permitir. El
 \end{quadro}
 
 
-\subsection{Finanças}
+Para 'Finanças' foi definido a partir da necessidade de acompanhar os valores recebidos e as movimentações financeiras relacionadas às atividades da confeitaria. Considerando que os pedidos podem envolver pagamentos parciais e quitações posteriores, identificou-se a importância de registrar essas movimentações individualmente. Também foi considerada a necessidade de acompanhar as entradas e saídas financeiras e relacionar os custos de produção aos valores cobrados pelos produtos, permitindo uma análise mais precisa dos resultados obtidos.
+
 
 \begin{quadro}
     \centering
@@ -289,12 +320,11 @@ Os requisitos funcionais descrevem as ações que o sistema deverá permitir. El
     \fonte{Elaborado pelos autores (2026).}
 \end{quadro}
 
-
-\subsection{Relatório}
+O componente 'Relatório' surgiu da necessidade de transformar os dados registrados nos demais módulos em informações que auxiliem na tomada de decisões. A identificação dos custos de produção e do rendimento das receitas permite compreender melhor o consumo de matérias-primas e os resultados de cada fabricação. Também foi considerada a necessidade de fornecer informações que auxiliem na definição dos preços de venda, contribuindo para um controle mais adequado dos custos e da rentabilidade dos produtos.
 
 \begin{quadro}
     \centering
-    \tituloquadro{Requisitos funcionais de relatórios}
+    \tituloquadro{Requisitos funcionais de Relatório}
     \label{quadro:rf_relatorios}
 
     \begin{tabular}{|p{3cm}|p{11cm}|}
@@ -311,7 +341,8 @@ Os requisitos funcionais descrevem as ações que o sistema deverá permitir. El
 \end{quadro}
 
 
-\subsection{Usuário}
+Por fim, a criação do componente 'Usuário' foi pensada pela necessidade de restringir o acesso às informações administrativas e financeiras da confeitaria. Como o sistema reúne dados sobre clientes, pedidos, custos e movimentações financeiras, tornou-se necessário estabelecer mecanismos de autenticação e proteção do acesso. Também foram previstas funcionalidades para alteração de senha e gerenciamento de sessão, buscando proporcionar maior segurança e praticidade durante a utilização do sistema.
+
 
 \begin{quadro}
     \centering

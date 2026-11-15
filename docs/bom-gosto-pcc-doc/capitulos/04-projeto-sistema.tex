@@ -1,10 +1,9 @@
 
 \chapter{Projeto do Sistema}
 
-\section{Arquitetura do Sistema}
-A arquitetura do Sistema Web Administrativo da Confeitaria Bom Gosto foi planejada de forma modular, com o objetivo de organizar as funcionalidades e facilitar a comunicação entre as diferentes áreas da aplicação. A estrutura está dividida em dois grandes módulos: o Mega-Componente Administrativo e o Mega-Componente Fábrica.
+A arquitetura do Sistema Web Administrativo da Confeitaria Bom Gosto foi planejada de forma modular, com o objetivo de organizar as funcionalidades e facilitar a comunicação entre as diferentes áreas da aplicação. A estrutura está dividida em dois grandes módulos: o Componente Administrativo e o Componente Fábrica.
 
-O Mega-Componente Administrativo reúne as funcionalidades relacionadas ao gerenciamento dos pedidos, à organização das entregas e retiradas, ao controle financeiro e à autenticação do usuário. Já o Mega-Componente Fábrica concentra as operações relacionadas à produção dos produtos, ao controle de ingredientes, ao estoque e à geração de relatórios.
+O Componente Administrativo reúne as funcionalidades relacionadas ao gerenciamento dos pedidos, à organização das entregas e retiradas, ao controle financeiro e à autenticação do usuário. Já o Componente Fábrica concentra as operações relacionadas à produção dos produtos, ao controle de ingredientes, ao estoque e à geração de relatórios.
 
 A divisão permite separar as atividades administrativas das atividades operacionais de produção, mantendo a comunicação entre os módulos sempre que uma funcionalidade depende de informações de outra área.
 
@@ -20,7 +19,7 @@ A Figura~\ref{fig:arquitetura_componentes} apresenta a organização dos compone
 \end{figure}
 
 
-\subsection{Mega-Componente Fábrica}
+\subsection{Componente Fábrica}
 
 \begin{itemize}
     \item \textbf{Componentes internos:} RELATÓRIO, INVENTÁRIO, PRODUÇÃO e ESTOQUE.
@@ -32,7 +31,7 @@ A Figura~\ref{fig:arquitetura_componentes} apresenta a organização dos compone
     \end{itemize}
 \end{itemize}
 
-\subsection*{Mega-Componente Administrativo}
+\subsection*{Componente Administrativo}
 
 \begin{itemize}
     \item \textbf{Componentes internos:} AGENDA, PEDIDO, FINANÇAS e USUÁRIO.
@@ -52,9 +51,9 @@ A Figura~\ref{fig:arquitetura_componentes} apresenta a organização dos compone
 
 O projeto dos componentes define a responsabilidade de cada módulo e a maneira como suas funcionalidades contribuem para o funcionamento do sistema. Para facilitar a compreensão da estrutura, os componentes foram agrupados de acordo com suas responsabilidades administrativas e operacionais.
 
-\subsection{Mega-Componente Administrativo}
+\subsection{Componente Administrativo}
 
-O Mega-Componente Administrativo reúne as funcionalidades utilizadas no gerenciamento cotidiano da confeitaria, abrangendo o registro de encomendas, a organização dos compromissos, o acompanhamento financeiro e o controle de acesso.
+O Componente Administrativo reúne as funcionalidades utilizadas no gerenciamento cotidiano da confeitaria, abrangendo o registro de encomendas, a organização dos compromissos, o acompanhamento financeiro e o controle de acesso.
 
 \subsubsection{Componente Pedido}
 
@@ -82,9 +81,9 @@ O componente Usuário é responsável pela autenticação e pelo controle de ace
 
 Esse componente está relacionado à validação das credenciais e à proteção das funcionalidades administrativas, de acordo com os mecanismos de segurança efetivamente implementados.
 
-\subsection{Mega-Componente Fábrica}
+\subsection{Componente Fábrica}
 
-O Mega-Componente Fábrica reúne as funcionalidades relacionadas à produção, ao gerenciamento de matérias-primas, ao controle de produtos disponíveis e à análise dos dados operacionais.
+O Componente Fábrica reúne as funcionalidades relacionadas à produção, ao gerenciamento de matérias-primas, ao controle de produtos disponíveis e à análise dos dados operacionais.
 
 \subsubsection{Componente Estoque}
 
@@ -194,7 +193,7 @@ A segurança e o controle de acesso são aspectos importantes para um sistema qu
 
 O projeto prevê o acesso administrativo por uma pessoa autorizada, de acordo com as regras estabelecidas para a aplicação. Dessa forma, os mecanismos de controle de acesso devem ser compatíveis com as funcionalidades disponibilizadas e com o tipo de informação armazenada.
 
-Entre os aspectos que precisam ser considerados estão a autenticação do usuário por meio de palavra-chave, a restrição de acesso às áreas administrativas e a proteção das informações utilizadas pelo sistema, são utilizadas para impedir o uso indevido das funcionalidades. Além do controle de acesso, o sistema deve considerar a integridade dos registros. Por exemplo, a exclusão de um pedido deve exigir uma confirmação antes de ser concluída, conforme o requisito definido para o projeto. Essa medida busca reduzir a possibilidade de remoções acidentais de informações importantes.
+Entre os aspectos que precisam ser considerados estão a autenticação do usuário por meio de palavra-chave, a restrição de acesso às áreas administrativas e a proteção das informações utilizadas pelo sistema, são utilizadas para impedir o uso indevido das funcionalidades. Além do controle de acesso, o sistema deve considerar a integridade dos registros. Por exemplo, o cancelamento de um pedido deve exigir uma confirmação antes de ser concluída, conforme o requisito definido para o projeto. Essa medida busca reduzir a possibilidade de remoções acidentais de informações importantes.
 
 É importante diferenciar as medidas previstas das que já estão implementadas. A presença de uma tela de \textit{login}, por exemplo, não comprova isoladamente que todas as áreas estejam protegidas ou que as sessões sejam tratadas de maneira segura. Por isso, a descrição final deve ser conferida com o código e com os testes realizados na aplicação.
 
