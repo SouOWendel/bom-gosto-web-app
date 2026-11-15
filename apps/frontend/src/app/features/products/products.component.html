@@ -54,10 +54,16 @@
                 <strong class="data-table__primary">{{ formatPrice(prod.preco_venda) }}</strong>
               </td>
               <td class="is-actions">
-                <app-button size="small" variant="outline" (click)="openEditModal(prod)">
-                  <svg [lucideIcon]="'pencil'" [size]="14"></svg>
-                  Editar
-                </app-button>
+                <div class="data-table__actions">
+                  <app-button size="small" variant="outline" (click)="openEditModal(prod)">
+                    <svg [lucideIcon]="'pencil'" [size]="14"></svg>
+                    Editar
+                  </app-button>
+                  <app-button size="small" variant="outline" (click)="openDeleteDialog(prod)">
+                    <svg [lucideIcon]="'trash-2'" [size]="14"></svg>
+                    Excluir
+                  </app-button>
+                </div>
               </td>
             </tr>
           } @empty {
@@ -80,5 +86,22 @@
       (closed)="closeModal()"
       (submitted)="handleProductSubmit($event)"
     />
+  }
+
+  @if (productToDelete(); as product) {
+    <app-confirm-dialog
+      [title]="'Excluir o produto ' + product.nome + '?'"
+      message="O produto sairá do catálogo. Esta ação não pode ser desfeita."
+      confirmLabel="Excluir produto"
+      variant="danger"
+      [busy]="isDeleting()"
+      [error]="deleteError()"
+      (closed)="closeDeleteDialog()"
+      (confirmed)="confirmDelete()"
+    >
+      <p class="modal__text">
+        Produtos com lotes no estoque ou já usados em pedidos não podem ser excluídos.
+      </p>
+    </app-confirm-dialog>
   }
 </div>

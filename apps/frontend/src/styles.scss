@@ -822,6 +822,13 @@ textarea.form-control {
     font-size: var(--text-xs);
   }
 
+  // parágrafo simples no corpo do modal (ex.: avisos de confirmação)
+  &__text {
+    margin: 0;
+    color: var(--color-text);
+    font-size: var(--text-sm);
+  }
+
   &__footer {
     display: flex;
     flex-wrap: wrap;

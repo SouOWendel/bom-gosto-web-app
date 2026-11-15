@@ -6,12 +6,15 @@ import {
   LucidePencil,
   LucidePlus,
   LucideSearch,
+  LucideTrash2,
   provideLucideIcons,
 } from '@lucide/angular';
 import { Router } from '@angular/router';
 import { DomainApiService } from '../../core/services/domain-api.service';
 import { Product, Recipe as ApiRecipe } from '../../core/models/api.model';
+import { apiErrorMessage } from '../../core/utils/api-error';
 import { ButtonComponent } from '../../shared/components/button/button.component';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
 import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
 import { TablePaginationComponent } from '../../shared/components/table-pagination/table-pagination.component';
@@ -22,6 +25,7 @@ interface RecipeRow {
   code: string;
   ingredients: number;
   product: string;
+  productCount: number;
   yield: string;
   totalCost: number;
   unitCost: number;
@@ -30,8 +34,14 @@ interface RecipeRow {
 @Component({
   selector: 'app-recipes',
   standalone: true,
-  imports: [TablePaginationComponent, PageGreetingComponent, ButtonComponent, LucideDynamicIcon],
-  providers: [provideLucideIcons(LucidePencil, LucidePlus, LucideSearch)],
+  imports: [
+    TablePaginationComponent,
+    PageGreetingComponent,
+    ButtonComponent,
+    ConfirmDialogComponent,
+    LucideDynamicIcon,
+  ],
+  providers: [provideLucideIcons(LucidePencil, LucidePlus, LucideSearch, LucideTrash2)],
   templateUrl: './recipes.component.html',
   styleUrls: ['./recipes.component.scss'],
 })
@@ -44,6 +54,9 @@ export class RecipesComponent implements OnInit {
   readonly errorMessage = signal('');
   readonly currentPage = signal(1);
   readonly pageSize = 6;
+  readonly recipeToDelete = signal<RecipeRow | null>(null);
+  readonly isDeleting = signal(false);
+  readonly deleteError = signal<string | null>(null);
 
   readonly greetingActions: PageAction[] = [
     {
@@ -88,6 +101,38 @@ export class RecipesComponent implements OnInit {
     void this.router.navigate(['/receitas/nova-receita'], { queryParams: { id } });
   }
 
+  openDeleteDialog(recipe: RecipeRow): void {
+    this.deleteError.set(null);
+    this.recipeToDelete.set(recipe);
+  }
+
+  closeDeleteDialog(): void {
+    this.recipeToDelete.set(null);
+    this.deleteError.set(null);
+  }
+
+  // Receitas usadas em pedidos são recusadas pela API; a mensagem fica no diálogo.
+  confirmDelete(): void {
+    const recipe = this.recipeToDelete();
+    if (!recipe) {
+      return;
+    }
+    this.isDeleting.set(true);
+    this.deleteError.set(null);
+    this.api.deleteRecipe(recipe.id).subscribe({
+      next: () => {
+        this.isDeleting.set(false);
+        this.recipes.update((list) => list.filter((item) => item.id !== recipe.id));
+        this.goToPage(Math.min(this.currentPage(), Math.max(this.totalPages(), 1)));
+        this.closeDeleteDialog();
+      },
+      error: (error: unknown) => {
+        this.isDeleting.set(false);
+        this.deleteError.set(apiErrorMessage(error));
+      },
+    });
+  }
+
   onSearch(value: string): void {
     this.searchTerm.set(value);
     this.currentPage.set(1);
@@ -126,6 +171,7 @@ export class RecipesComponent implements OnInit {
       code: `#${recipe.id_receita}`,
       ingredients: recipe.ingredientes?.length ?? 0,
       product: productNames.join(', ') || 'Sem produto associado',
+      productCount: productNames.length,
       yield:
         yieldQuantity > 0
           ? yieldQuantity.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
