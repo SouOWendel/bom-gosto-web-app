@@ -9,7 +9,7 @@ from rest_framework.test import APITestCase
 
 from usuario.models import Usuario
 
-from .models import Cliente, Pedido, Produto
+from .models import Cliente, Pedido, Produto, Receita
 from .serializers import ItemPedidoSerializer, PedidoSerializer
 
 # testes de integracao da API de pedidos e da regra de acesso
@@ -147,6 +147,42 @@ class PedidoApiTests(APITestCase):
 		)
 		resposta = self.client.delete(f"/api/produtos/{self.produto.id_produto}/")
 		self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+	# item por receita sem produto vinculado nao pode virar pedido, pois a producao nao conclui
+	def test_receita_sem_produto_nao_pode_ser_pedida(self):
+		receita = Receita.objects.create(nome="Receita sem produto", rendimento_quantidade="1")
+		pedido = {
+			"tipo": "externo",
+			"subtipo": "personalizado",
+			"cliente": self.cliente.id_cliente,
+			"valor_total": "10.00",
+			"valor_sinal": "0.00",
+			"itens": [{"receita": receita.id_receita, "quantidade": 1, "preco_unitario": "10.00"}],
+		}
+		resposta = self.client.post("/api/pedido/", pedido, format="json")
+		self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+		self.assertIn("não tem produto vinculado", str(resposta.data))
+
+		self.produto.receita = receita
+		self.produto.save(update_fields=["receita"])
+		resposta = self.client.post("/api/pedido/", pedido, format="json")
+		self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+
+	# sinal de pedido externo aceita a metade arredondada para cima nos centavos
+	def test_sinal_aceita_metade_arredondada(self):
+		resposta = self.client.post(
+			"/api/pedido/",
+			{
+				"tipo": "externo",
+				"subtipo": "personalizado",
+				"cliente": self.cliente.id_cliente,
+				"valor_total": "55.75",
+				"valor_sinal": "27.88",
+				"itens": [{"produto": self.produto.id_produto, "quantidade": 1, "preco_unitario": "55.75"}],
+			},
+			format="json",
+		)
+		self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
 
 	# usuario que ainda precisa trocar a senha recebe HTTP 403
 	def test_usuario_no_primeiro_acesso_nao_acessa_pedidos(self):

@@ -134,7 +134,7 @@
                 >
                   <option [ngValue]="null">Selecione</option>
                   @if (item.kind === 'receita') {
-                    @for (recipe of recipes(); track recipe.id_receita) {
+                    @for (recipe of orderableRecipes; track recipe.id_receita) {
                       <option [ngValue]="recipe.id_receita">{{ recipe.nome }}</option>
                     }
                   } @else {

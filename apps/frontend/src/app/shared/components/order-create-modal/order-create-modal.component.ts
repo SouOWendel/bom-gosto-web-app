@@ -98,6 +98,34 @@ export class OrderCreateModalComponent {
     }
   }
 
+  // Receitas que têm produto pronto (pela ficha do produto ou pela relação receita-produto).
+  // Sem produto, a produção não consegue ser concluída, então elas não aparecem para novos itens.
+  private get recipeIdsWithProduct(): Set<number> {
+    const ids = new Set<number>();
+    for (const product of this.productsList()) {
+      if (product.receita !== null) {
+        ids.add(product.receita);
+      }
+    }
+    for (const recipe of this.recipes()) {
+      if ((recipe.produtos ?? []).length > 0) {
+        ids.add(recipe.id_receita);
+      }
+    }
+    return ids;
+  }
+
+  // Mantém visível a receita já escolhida em um pedido antigo, para a validação explicar o problema.
+  get orderableRecipes(): Recipe[] {
+    const withProduct = this.recipeIdsWithProduct;
+    const selected = new Set(
+      this.items.filter((item) => item.kind === 'receita').map((item) => item.referenceId),
+    );
+    return this.recipes().filter(
+      (recipe) => withProduct.has(recipe.id_receita) || selected.has(recipe.id_receita),
+    );
+  }
+
   get products(): Array<{ id: number; label: string }> {
     const list = this.productsList();
     if (list && list.length > 0) {
@@ -236,6 +264,19 @@ export class OrderCreateModalComponent {
     if (this.items.some((item) => item.referenceId === null)) {
       return 'Selecione a receita ou o produto de cada item.';
     }
+    const withProduct = this.recipeIdsWithProduct;
+    const recipeWithoutProduct = this.items.find(
+      (item) =>
+        item.kind === 'receita' &&
+        item.referenceId !== null &&
+        !withProduct.has(item.referenceId),
+    );
+    if (recipeWithoutProduct) {
+      const name =
+        this.recipes().find((recipe) => recipe.id_receita === recipeWithoutProduct.referenceId)
+          ?.nome ?? 'escolhida';
+      return `A receita ${name} não tem produto vinculado; vincule-a a um produto em Produtos.`;
+    }
     for (const item of this.items) {
       const quantity = item.quantity.trim();
       const weight = parseDecimal(item.weight);
@@ -268,8 +309,10 @@ export class OrderCreateModalComponent {
     if (!Number.isFinite(deposit) || deposit < 0 || deposit > total) {
       return 'O sinal deve estar entre zero e o valor total.';
     }
-    if (this.tipo === 'externo' && deposit !== 0 && Math.abs(deposit - total / 2) > 0.001) {
-      return 'Para pedidos externos, o sinal deve ser zero ou metade do total.';
+    // Mesmo arredondamento do backend: metade do total em centavos, arredondada para cima.
+    const halfInCents = Math.ceil(Math.round(total * 100) / 2);
+    if (this.tipo === 'externo' && deposit !== 0 && Math.round(deposit * 100) !== halfInCents) {
+      return `Para pedidos externos, o sinal deve ser zero ou metade do total (${formatCurrency(halfInCents / 100)}).`;
     }
     return null;
   }
