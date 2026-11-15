@@ -148,6 +148,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Em produção o Django fica atrás do CloudFront e do Nginx, que terminam o HTTPS.
+# O Nginx informa o protocolo original no X-Forwarded-Proto.
+if os.getenv("DJANGO_BEHIND_PROXY", "0").lower() in {"1", "true", "yes"}:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -187,4 +193,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "login": os.getenv("LOGIN_THROTTLE_RATE", "5/min"),
     },
+    # Quantos proxies confiáveis ficam na frente do Django (CloudFront + Nginx = 2).
+    # Sem isso, todo acesso pareceria vir do IP do Nginx e dividiria o mesmo limite de login.
+    "NUM_PROXIES": int(os.getenv("DRF_NUM_PROXIES")) if os.getenv("DRF_NUM_PROXIES") else None,
 }
