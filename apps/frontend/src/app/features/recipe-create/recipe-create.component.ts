@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -17,7 +17,7 @@ import {
 } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
-import { formatCurrency } from '../../core/utils/format';
+import { formatCurrency, parseDecimal } from '../../core/utils/format';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { InputTextComponent } from '../../shared/components/input-text/input-text.component';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
@@ -50,10 +50,13 @@ export class RecipeCreateComponent implements OnInit {
   private readonly api = inject(DomainApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  // O app é zoneless: respostas assíncronas da API precisam pedir nova renderização.
+  private readonly cdr = inject(ChangeDetectorRef);
 
   recipeName = '';
   productId: number | null = null;
-  yield = 0;
+  // Texto digitado no campo (o input compartilhado emite string); use yieldValue para cálculos.
+  yield = '';
   preparation = '';
   ingredients: RecipeIngredientRow[] = [];
   errorMessage = '';
@@ -83,8 +86,13 @@ export class RecipeCreateComponent implements OnInit {
     );
   }
 
+  get yieldValue(): number {
+    const value = Number(parseDecimal(String(this.yield ?? '')));
+    return Number.isFinite(value) ? value : 0;
+  }
+
   get unitCost(): number {
-    return this.yield > 0 ? this.totalCost / this.yield : 0;
+    return this.yieldValue > 0 ? this.totalCost / this.yieldValue : 0;
   }
 
   readonly formatCurrency = formatCurrency;
@@ -105,7 +113,10 @@ export class RecipeCreateComponent implements OnInit {
     }
 
     this.api.getProducts().subscribe({
-      next: (products) => (this.availableProducts = products),
+      next: (products) => {
+        this.availableProducts = products;
+        this.cdr.markForCheck();
+      },
       error: (err) => console.error('Erro ao carregar produtos', err),
     });
 
@@ -113,6 +124,7 @@ export class RecipeCreateComponent implements OnInit {
       this.api.getIngredients().subscribe({
         next: (ingredients) => {
           this.availableIngredients = ingredients;
+          this.cdr.markForCheck();
         },
         error: (error: unknown) =>
           this.setError(`Não foi possível carregar os ingredientes. ${apiErrorMessage(error)}`),
@@ -132,6 +144,7 @@ export class RecipeCreateComponent implements OnInit {
           return;
         }
         this.populateRecipe(recipe);
+        this.cdr.markForCheck();
       },
       error: (error: unknown) =>
         this.setError(
@@ -191,7 +204,7 @@ export class RecipeCreateComponent implements OnInit {
 
     const payload: Partial<ApiRecipe> & { ingredientes: RecipeIngredient[] } = {
       nome: this.recipeName.trim(),
-      rendimento_quantidade: String(this.yield),
+      rendimento_quantidade: String(this.yieldValue),
       ingredientes: this.ingredients.map((item) => ({
         ingrediente: this.resolveIngredientId(item) as number,
         quantidade_necessaria: String(item.quantity),
@@ -236,7 +249,7 @@ export class RecipeCreateComponent implements OnInit {
 
   private populateRecipe(recipe: ApiRecipe): void {
     this.recipeName = recipe.nome;
-    this.yield = Number(recipe.rendimento_quantidade) || 0;
+    this.yield = String(Number(recipe.rendimento_quantidade) || '');
     this.ingredients = (recipe.ingredientes ?? []).map((item) => {
       const ingredient = this.availableIngredients.find(
         (available) => available.id_ingrediente === item.ingrediente,
@@ -256,7 +269,7 @@ export class RecipeCreateComponent implements OnInit {
     if (!this.recipeName.trim()) {
       return 'Informe o nome da receita.';
     }
-    if (!Number.isFinite(this.yield) || this.yield <= 0) {
+    if (this.yieldValue <= 0) {
       return 'O rendimento deve ser maior que zero.';
     }
     if (this.ingredients.some((item) => this.resolveIngredientId(item) === null)) {
@@ -278,5 +291,6 @@ export class RecipeCreateComponent implements OnInit {
 
   private setError(detail: string): void {
     this.errorMessage = detail;
+    this.cdr.markForCheck();
   }
 }

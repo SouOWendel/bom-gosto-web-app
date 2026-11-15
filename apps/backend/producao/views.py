@@ -52,6 +52,11 @@ class IniciarProducaoView(APIView):
         pedido.status = status_operacional(pedido.status)
         if pedido.status != Pedido.Status.PEDIDO_FEITO:
             return Response({"status": "A produção só pode ser iniciada para pedidos feitos."}, status=status.HTTP_400_BAD_REQUEST)
+        from .services import produto_do_item
+        for item in pedido.itens.select_related("produto", "receita"):
+            if produto_do_item(item) is None:
+                nome = item.receita.nome if item.receita_id else "do item"
+                return Response({"itens": f"A receita {nome} não tem produto vinculado; vincule-a a um produto em Produtos."}, status=status.HTTP_400_BAD_REQUEST)
         pedido.status = Pedido.Status.EM_PRODUCAO
         pedido.save(update_fields=["status"])
         return Response(PedidoSerializer(pedido, context={"request": request}).data)

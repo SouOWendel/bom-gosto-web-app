@@ -88,6 +88,9 @@ def _ingredientes_previstos(pedido):
         if receita is None:
             ausencias.append({"item_pedido": item.pk, "tipo": "receita", "motivo": "O item não possui receita aplicável."})
             continue
+        if produto_do_item(item) is None:
+            ausencias.append({"item_pedido": item.pk, "tipo": "produto", "motivo": f"A receita {receita.nome} não tem produto vinculado; vincule-a a um produto em Produtos."})
+            continue
         if not receita.rendimento_quantidade or receita.rendimento_quantidade <= 0:
             ausencias.append({"item_pedido": item.pk, "tipo": "rendimento", "motivo": "A receita não tem rendimento válido."})
             continue
