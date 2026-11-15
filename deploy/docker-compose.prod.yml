@@ -1,0 +1,61 @@
+# Stack de produção que roda no servidor EC2.
+# As imagens e os segredos chegam pelo script deploy.sh (variáveis do arquivo .env).
+name: bom-gosto
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: db_confeitaria
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d db_confeitaria']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging: *logging
+
+  backend:
+    image: ${BACKEND_IMAGE:?defina BACKEND_IMAGE}
+    restart: unless-stopped
+    environment:
+      DEBUG: '0'
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?defina DJANGO_SECRET_KEY}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:?defina DJANGO_ALLOWED_HOSTS}
+      DJANGO_FRONTEND_ORIGINS: ${DJANGO_FRONTEND_ORIGINS:?defina DJANGO_FRONTEND_ORIGINS}
+      DJANGO_BEHIND_PROXY: '1'
+      DRF_NUM_PROXIES: '2'
+      DB_ENGINE: django.db.backends.postgresql
+      DB_NAME: db_confeitaria
+      DB_USER: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_HOST: postgres
+      DB_PORT: '5432'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging: *logging
+
+  frontend:
+    image: ${FRONTEND_IMAGE:?defina FRONTEND_IMAGE}
+    restart: unless-stopped
+    environment:
+      ORIGIN_VERIFY_SECRET: ${ORIGIN_VERIFY_SECRET:?defina ORIGIN_VERIFY_SECRET}
+    ports:
+      - '80:80'
+    depends_on:
+      - backend
+    logging: *logging
+
+volumes:
+  postgres_data:

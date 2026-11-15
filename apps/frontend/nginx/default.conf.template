@@ -1,0 +1,59 @@
+# Servidor de produção: entrega o Angular e encaminha /api para o Django.
+# Só o CloudFront alcança esta máquina (security group). Ele envia o cabeçalho
+# secreto X-Origin-Verify, que bloqueia acessos vindos de outras distribuições.
+# A checagem fica dentro de cada location: um "if" no nível do server rodaria
+# antes de todas elas e bloquearia também o /healthz.
+server {
+    listen 80 default_server;
+    server_name _;
+    server_tokens off;
+
+    root /usr/share/nginx/html;
+    client_max_body_size 5m;
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    add_header X-Frame-Options DENY always;
+
+    # Teste de saúde usado pelo deploy, de dentro do próprio container.
+    location = /healthz {
+        allow 127.0.0.1;
+        deny all;
+        access_log off;
+        return 200 "ok\n";
+    }
+
+    location /api/ {
+        if ($http_x_origin_verify != "${ORIGIN_VERIFY_SECRET}") {
+            return 403;
+        }
+        proxy_pass http://backend:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # O CloudFront redireciona todo acesso HTTP para HTTPS.
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 60s;
+    }
+
+    # Arquivos com hash no nome nunca mudam: podem ficar em cache por um ano.
+    location ~* \.(?:js|css|woff2?|ttf|svg|png|jpg|jpeg|gif|ico|webp)$ {
+        if ($http_x_origin_verify != "${ORIGIN_VERIFY_SECRET}") {
+            return 403;
+        }
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        add_header X-Content-Type-Options nosniff always;
+        try_files $uri =404;
+    }
+
+    # index.html sempre revalidado, para cada deploy aparecer na hora.
+    location / {
+        if ($http_x_origin_verify != "${ORIGIN_VERIFY_SECRET}") {
+            return 403;
+        }
+        add_header Cache-Control "no-cache";
+        add_header X-Content-Type-Options nosniff always;
+        add_header Referrer-Policy strict-origin-when-cross-origin always;
+        add_header X-Frame-Options DENY always;
+        try_files $uri $uri/ /index.html;
+    }
+}

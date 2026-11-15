@@ -1,0 +1,339 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Bom Gosto - produção. Um servidor EC2 (Docker Compose com Nginx, Django e
+  PostgreSQL) atrás de um CloudFront com HTTPS, imagens no ECR e um usuário IAM
+  com permissão mínima para o deploy contínuo pelo GitHub Actions.
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC padrão do projeto.
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: Subnet pública da VPC padrão.
+  InstanceType:
+    Type: String
+    Default: t4g.small
+    AllowedValues: [t4g.micro, t4g.small, t4g.medium]
+    Description: Instância Graviton (ARM64). t4g.small = 2 vCPU e 2 GiB.
+  AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64
+    Description: Amazon Linux 2023 ARM64 mais recente.
+  CloudFrontPrefixListId:
+    Type: String
+    Default: pl-b6a144df
+    Description: Lista gerenciada com os IPs do CloudFront voltados à origem (com.amazonaws.global.cloudfront.origin-facing).
+  OriginVerifySecret:
+    Type: String
+    NoEcho: true
+    MinLength: 32
+    Description: Valor secreto que o CloudFront envia no cabeçalho X-Origin-Verify.
+
+Resources:
+  # ---------- Rede ----------
+  OriginSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Bom Gosto - HTTP apenas a partir do CloudFront
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourcePrefixListId: !Ref CloudFrontPrefixListId
+          Description: CloudFront (origin-facing)
+      Tags:
+        - { Key: Name, Value: bom-gosto-origin-sg }
+        - { Key: Project, Value: bom-gosto }
+
+  # ---------- Permissões do servidor ----------
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: bom-gosto-ec2-role
+      Description: Servidor do Bom Gosto - SSM, leitura do ECR e dos parametros de producao
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+      Policies:
+        - PolicyName: ler-parametros-producao
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ssm:GetParametersByPath
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/bom-gosto/prod
+      Tags:
+        - { Key: Project, Value: bom-gosto }
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: bom-gosto-ec2-profile
+      Roles: [!Ref InstanceRole]
+
+  # ---------- Servidor ----------
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: bom-gosto
+      LaunchTemplateData:
+        MetadataOptions:
+          HttpTokens: required
+          HttpPutResponseHopLimit: 2
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs:
+              VolumeType: gp3
+              VolumeSize: 20
+              Encrypted: true
+              DeleteOnTermination: true
+        TagSpecifications:
+          - ResourceType: volume
+            Tags:
+              - { Key: Name, Value: bom-gosto-root }
+              - { Key: Project, Value: bom-gosto }
+
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiId
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref SubnetId
+      SecurityGroupIds: [!Ref OriginSecurityGroup]
+      IamInstanceProfile: !Ref InstanceProfile
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !GetAtt LaunchTemplate.LatestVersionNumber
+      Tags:
+        - { Key: Name, Value: bom-gosto-prod }
+        - { Key: Project, Value: bom-gosto }
+        - { Key: Backup, Value: bom-gosto }
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          set -euxo pipefail
+          # Docker e plugin do Compose
+          dnf install -y docker
+          systemctl enable --now docker
+          COMPOSE_VERSION=v2.29.7
+          mkdir -p /usr/local/lib/docker/cli-plugins
+          cd /usr/local/lib/docker/cli-plugins
+          curl -fsSLo docker-compose "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-linux-aarch64"
+          curl -fsSLo docker-compose.sha256 "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-linux-aarch64.sha256"
+          echo "$(cut -d' ' -f1 docker-compose.sha256)  docker-compose" | sha256sum -c -
+          chmod +x docker-compose
+          rm docker-compose.sha256
+          # 1 GiB de swap para picos de memória (migrations, builds do Postgres)
+          if [ ! -f /swapfile ]; then
+            dd if=/dev/zero of=/swapfile bs=1M count=1024
+            chmod 600 /swapfile
+            mkswap /swapfile
+            swapon /swapfile
+            echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
+          fi
+          mkdir -p /opt/bom-gosto
+          chmod 700 /opt/bom-gosto
+
+  ElasticIp:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref Instance
+      Tags:
+        - { Key: Name, Value: bom-gosto-prod }
+        - { Key: Project, Value: bom-gosto }
+
+  # ---------- Backups diários do disco ----------
+  BackupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: bom-gosto-dlm-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: dlm.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSDataLifecycleManagerServiceRole
+      Tags:
+        - { Key: Project, Value: bom-gosto }
+
+  BackupPolicy:
+    Type: AWS::DLM::LifecyclePolicy
+    Properties:
+      Description: Bom Gosto - snapshot diario do servidor - mantem 7
+      State: ENABLED
+      ExecutionRoleArn: !GetAtt BackupRole.Arn
+      PolicyDetails:
+        PolicyType: EBS_SNAPSHOT_MANAGEMENT
+        ResourceTypes: [INSTANCE]
+        TargetTags:
+          - { Key: Backup, Value: bom-gosto }
+        Schedules:
+          - Name: diario
+            CopyTags: true
+            CreateRule:
+              Interval: 24
+              IntervalUnit: HOURS
+              Times: ['06:00']
+            RetainRule:
+              Count: 7
+            TagsToAdd:
+              - { Key: Project, Value: bom-gosto }
+      Tags:
+        - { Key: Project, Value: bom-gosto }
+
+  # ---------- Imagens ----------
+  BackendRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: bom-gosto/backend
+      EmptyOnDelete: true
+      ImageScanningConfiguration: { ScanOnPush: true }
+      LifecyclePolicy:
+        LifecyclePolicyText: >-
+          {"rules":[{"rulePriority":1,"description":"Mantém as 10 imagens mais recentes",
+          "selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},
+          "action":{"type":"expire"}}]}
+      Tags:
+        - { Key: Project, Value: bom-gosto }
+
+  FrontendRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: bom-gosto/frontend
+      EmptyOnDelete: true
+      ImageScanningConfiguration: { ScanOnPush: true }
+      LifecyclePolicy:
+        LifecyclePolicyText: >-
+          {"rules":[{"rulePriority":1,"description":"Mantém as 10 imagens mais recentes",
+          "selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},
+          "action":{"type":"expire"}}]}
+      Tags:
+        - { Key: Project, Value: bom-gosto }
+
+  # ---------- HTTPS e cache na borda ----------
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: Bom Gosto - producao
+        Enabled: true
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        PriceClass: PriceClass_All
+        Origins:
+          - Id: ec2
+            DomainName: !Join
+              - ''
+              - - ec2-
+                - !Join ['-', !Split ['.', !Ref ElasticIp]]
+                - !Sub .${AWS::Region}.compute.amazonaws.com
+            CustomOriginConfig:
+              OriginProtocolPolicy: http-only
+              HTTPPort: 80
+            OriginCustomHeaders:
+              - HeaderName: X-Origin-Verify
+                HeaderValue: !Ref OriginVerifySecret
+        DefaultCacheBehavior:
+          TargetOriginId: ec2
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+          Compress: true
+          CachePolicyId: 83da9c7e-98b4-4e11-a168-04f0df8e2c65 # UseOriginCacheControlHeaders
+          OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AllViewer
+        CacheBehaviors:
+          - PathPattern: /api/*
+            TargetOriginId: ec2
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+            Compress: true
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # CachingDisabled
+            OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AllViewer
+      Tags:
+        - { Key: Project, Value: bom-gosto }
+
+  # ---------- Configuração não secreta lida pelo deploy ----------
+  AllowedHostsParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /bom-gosto/prod/DJANGO_ALLOWED_HOSTS
+      Type: String
+      Value: !GetAtt Distribution.DomainName
+
+  FrontendOriginsParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /bom-gosto/prod/DJANGO_FRONTEND_ORIGINS
+      Type: String
+      Value: !Sub https://${Distribution.DomainName}
+
+  # ---------- Usuário do deploy contínuo (GitHub Actions) ----------
+  # A chave de acesso NÃO é criada aqui: o dono do projeto gera no console do IAM
+  # e cadastra direto nos secrets do GitHub.
+  DeployUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: bom-gosto-github-deploy
+      Policies:
+        - PolicyName: deploy-minimo
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: LoginNoEcr
+                Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: '*'
+              - Sid: EnviarImagens
+                Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:CompleteLayerUpload
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:InitiateLayerUpload
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                Resource:
+                  - !GetAtt BackendRepository.Arn
+                  - !GetAtt FrontendRepository.Arn
+              - Sid: ExecutarDeployNoServidor
+                Effect: Allow
+                Action: ssm:SendCommand
+                Resource:
+                  - !Sub arn:aws:ssm:${AWS::Region}::document/AWS-RunShellScript
+                  - !Sub arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/${Instance}
+              - Sid: AcompanharDeploy
+                Effect: Allow
+                Action:
+                  - ssm:GetCommandInvocation
+                  - ssm:ListCommandInvocations
+                Resource: '*'
+              - Sid: LerSaidasDaStack
+                Effect: Allow
+                Action: cloudformation:DescribeStacks
+                Resource: !Ref AWS::StackId
+      Tags:
+        - { Key: Project, Value: bom-gosto }
+
+Outputs:
+  SiteUrl:
+    Description: Endereço público do sistema
+    Value: !Sub https://${Distribution.DomainName}
+  DistributionId:
+    Value: !Ref Distribution
+  InstanceId:
+    Value: !Ref Instance
+  EcrRegistry:
+    Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
+  DeployUserName:
+    Value: !Ref DeployUser
