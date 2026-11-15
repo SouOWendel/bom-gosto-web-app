@@ -1,9 +1,10 @@
-import { Component, OnInit, effect, input, output } from '@angular/core';
+import { Component, HostListener, effect, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideDynamicIcon, LucideX, provideLucideIcons } from '@lucide/angular';
 import { ButtonComponent } from '../button/button.component';
 import { InputTextComponent } from '../input-text/input-text.component';
 import { Ingredient } from '../../../core/models/api.model';
+import { parseDecimal } from '../../../core/utils/format';
 
 export interface IngredientCreationPayload {
   nome: string;
@@ -20,9 +21,8 @@ export interface IngredientCreationPayload {
   imports: [FormsModule, ButtonComponent, InputTextComponent, LucideDynamicIcon],
   providers: [provideLucideIcons(LucideX)],
   templateUrl: './ingredient-create-modal.component.html',
-  styleUrls: ['./ingredient-create-modal.component.scss'],
 })
-export class IngredientCreateModalComponent implements OnInit {
+export class IngredientCreateModalComponent {
   readonly closed = output<void>();
   readonly submitted = output<IngredientCreationPayload>();
   readonly apiError = input<string | null>(null);
@@ -46,13 +46,6 @@ export class IngredientCreateModalComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    const ing = this.ingredientToEdit();
-    if (ing) {
-      this.populate(ing);
-    }
-  }
-
   private populate(ing: Ingredient): void {
     this.name = ing.nome ?? '';
     this.unit = ing.unidade_medida || 'un';
@@ -61,6 +54,11 @@ export class IngredientCreateModalComponent implements OnInit {
     this.minimumQuantity = ing.quantidade_minima !== null ? String(ing.quantidade_minima) : '';
     this.expirationDate = ing.data_validade ?? '';
     this.unitCost = ing.custo_unitario !== null ? String(ing.custo_unitario) : '';
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.close();
   }
 
   close(): void {
@@ -96,7 +94,6 @@ export class IngredientCreateModalComponent implements OnInit {
   }
 
   private toDecimalOrNull(value: string): string | null {
-    const normalized = value.trim().replace(',', '.');
-    return normalized ? normalized : null;
+    return parseDecimal(value) || null;
   }
 }

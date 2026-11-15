@@ -69,23 +69,6 @@
     line-height: 1.1;
   }
 
-  &__trend {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-1);
-    margin: 0;
-    font-size: var(--text-xs);
-    font-weight: 600;
-
-    &--up {
-      color: var(--color-success);
-    }
-
-    &--down {
-      color: var(--color-danger);
-    }
-  }
-
   &__subtext {
     margin: 0;
     color: var(--color-text-muted);
@@ -94,7 +77,6 @@
 
   // Cada variante só troca o acento (rótulo e ícone); fundo e borda continuam iguais
   // para que os cartões tenham o mesmo peso visual em todas as telas.
-  &--vendas,
   &--destaque {
     .metric-card__label {
       color: var(--color-primary);

@@ -6,7 +6,7 @@
     (actionClick)="handleGreetingAction($event)"
   />
 
-  <app-metric-cards [items]="summaryCards" />
+  <app-metric-cards [items]="summaryCards()" />
 
   @if (isCancelModalOpen()) {
     <app-cancel-production-modal

@@ -787,6 +787,14 @@ textarea.form-control {
     }
   }
 
+  // <form> que envolve corpo e rodapé: mantém o corpo rolável dentro do modal.
+  &__form {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+  }
+
   // O corpo rola; cabeçalho e rodapé ficam fixos.
   &__body {
     display: flex;

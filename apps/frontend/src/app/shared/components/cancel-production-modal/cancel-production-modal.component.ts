@@ -17,6 +17,7 @@ import {
   ProductionAnalysis,
   ProductionConsumption,
 } from '../../../core/models/api.model';
+import { formatQuantity, parseDecimal } from '../../../core/utils/format';
 
 interface Ingredient {
   id: number;
@@ -96,17 +97,10 @@ export class CancelProductionModalComponent implements OnInit {
         unit: ingredient.unidade_medida ?? '',
         quantity: '',
         observation:
-          `${this.formatNumber(ingredient.necessario)} / ${this.formatNumber(ingredient.disponivel)} ${ingredient.unidade_medida ?? ''}`.trim(),
+          `${formatQuantity(ingredient.necessario)} / ${formatQuantity(ingredient.disponivel)} ${ingredient.unidade_medida ?? ''}`.trim(),
       })),
     );
     this.reuseProductName = order.reuseName ?? (order.item ? `${order.item} reaproveitado` : '');
-  }
-
-  private formatNumber(value: string | number): string {
-    const number = Number(value);
-    return Number.isFinite(number)
-      ? number.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
-      : String(value);
   }
 
   @HostListener('document:keydown.escape')
@@ -181,12 +175,7 @@ export class CancelProductionModalComponent implements OnInit {
   }
 
   private toDecimal(value: string): string | null {
-    const normalized = value.trim().includes(',')
-      ? value.trim().replace(/\./g, '').replace(',', '.')
-      : value.trim();
-    if (!normalized || !Number.isFinite(Number(normalized))) {
-      return null;
-    }
-    return normalized;
+    const normalized = parseDecimal(value);
+    return normalized && Number.isFinite(Number(normalized)) ? normalized : null;
   }
 }

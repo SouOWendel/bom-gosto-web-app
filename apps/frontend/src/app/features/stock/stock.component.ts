@@ -8,9 +8,16 @@ import { StockProductCardComponent } from './components/stock-product-card/stock
 import { StockProductCardItem } from './components/stock-product-card/stock-product-card.model';
 import { TablePaginationComponent } from '../../shared/components/table-pagination/table-pagination.component';
 import { StockLotEditModalComponent } from '../../shared/components/stock-lot-edit-modal/stock-lot-edit-modal.component';
-import { HttpErrorResponse } from '@angular/common/http';
 import { StockLot } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
+import { apiErrorMessage } from '../../core/utils/api-error';
+import {
+  expiryText,
+  formatCurrency,
+  formatCurrencyOrUnavailable,
+  formatDate,
+  toNumber,
+} from '../../core/utils/format';
 
 @Component({
   selector: 'app-stock',
@@ -47,7 +54,7 @@ export class StockComponent implements OnInit {
     ).length;
     const attention = lots.filter((lot) => lot.alerta_validade?.nivel === 'atencao').length;
     const preventive = lots.filter((lot) => lot.alerta_validade?.nivel === 'preventivo').length;
-    const totalCost = lots.reduce((total, lot) => total + this.toNumber(lot.custo), 0);
+    const totalCost = lots.reduce((total, lot) => total + toNumber(lot.custo), 0);
 
     return [
       {
@@ -59,7 +66,7 @@ export class StockComponent implements OnInit {
       },
       {
         label: 'Custo total em estoque',
-        value: this.formatCurrency(totalCost),
+        value: formatCurrency(totalCost),
         subtext: 'Soma do custo informado por lote',
         icon: 'banknote',
         variant: 'neutro',
@@ -126,12 +133,12 @@ export class StockComponent implements OnInit {
         this.stockLots.update((lots) =>
           lots
             .map((lot) => (lot.id_estoque === updated.id_estoque ? updated : lot))
-            .filter((lot) => this.toNumber(lot.quantidade_disponivel) > 0),
+            .filter((lot) => toNumber(lot.quantidade_disponivel) > 0),
         );
       },
       error: (error: unknown) => {
         this.saving.set(false);
-        this.editError.set(`Não foi possível salvar o lote. ${this.errorDetail(error)}`);
+        this.editError.set(`Não foi possível salvar o lote. ${apiErrorMessage(error)}`);
       },
     });
   }
@@ -140,12 +147,12 @@ export class StockComponent implements OnInit {
     this.domainApi.getStock().subscribe({
       next: (lots) => {
         // Lotes totalmente consumidos não têm o que vender; ficam fora da vitrine.
-        this.stockLots.set(lots.filter((lot) => this.toNumber(lot.quantidade_disponivel) > 0));
+        this.stockLots.set(lots.filter((lot) => toNumber(lot.quantidade_disponivel) > 0));
         this.loadError.set(null);
         this.currentPage.set(1);
       },
       error: (error: unknown) => {
-        const detail = this.errorDetail(error);
+        const detail = apiErrorMessage(error);
         this.loadError.set(detail);
         console.error('Falha ao carregar os lotes de estoque.', error);
       },
@@ -167,11 +174,11 @@ export class StockComponent implements OnInit {
     return {
       id: String(lot.id_estoque),
       name: productName,
-      quantity: this.toNumber(lot.quantidade_disponivel),
+      quantity: toNumber(lot.quantidade_disponivel),
       unit: 'un.',
-      salePrice: this.formatCurrencyOrUnavailable(lot.produto_preco_venda ?? null),
-      lotCost: this.formatCurrencyOrUnavailable(lot.custo),
-      expiry: this.formatDate(lot.data_validade),
+      salePrice: formatCurrencyOrUnavailable(lot.produto_preco_venda ?? null),
+      lotCost: formatCurrencyOrUnavailable(lot.custo),
+      expiry: formatDate(lot.data_validade),
       expiryDetail: this.expiryDetail(lot),
       status,
       statusLabel: isCritical
@@ -185,28 +192,6 @@ export class StockComponent implements OnInit {
     };
   }
 
-  private toNumber(value: string | null): number {
-    const number = Number(value);
-    return Number.isFinite(number) ? number : 0;
-  }
-
-  private formatCurrency(value: number): string {
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  }
-
-  private formatCurrencyOrUnavailable(value: string | null): string {
-    return value === null ? 'Não informado' : this.formatCurrency(this.toNumber(value));
-  }
-
-  private formatDate(value: string | null): string {
-    if (value === null) {
-      return 'Não informada';
-    }
-
-    const date = new Date(`${value}T00:00:00`);
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('pt-BR');
-  }
-
   private expiryDetail(lot: StockLot): string {
     const alert = lot.alerta_validade;
     if (lot.vencido && alert === null) {
@@ -215,22 +200,6 @@ export class StockComponent implements OnInit {
     if (alert === null) {
       return lot.data_validade === null ? 'Sem validade informada' : 'Sem alerta';
     }
-    if (alert.dias_para_vencer < 0) {
-      return `Vencido há ${Math.abs(alert.dias_para_vencer)} dia(s)`;
-    }
-    if (alert.dias_para_vencer === 0) {
-      return 'Vence hoje';
-    }
-    return `Vence em ${alert.dias_para_vencer} dia(s)`;
-  }
-
-  private errorDetail(error: unknown): string {
-    if (error instanceof HttpErrorResponse && error.error && typeof error.error === 'object') {
-      // Erros de validação do DRF: {campo: [mensagens]} -> primeira mensagem de cada campo.
-      return Object.values(error.error as Record<string, unknown>)
-        .map((value) => (Array.isArray(value) ? value[0] : value))
-        .join(' ');
-    }
-    return error instanceof Error ? error.message : 'Erro desconhecido ao consultar a API.';
+    return expiryText(alert.dias_para_vencer);
   }
 }

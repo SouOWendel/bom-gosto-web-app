@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -17,6 +16,8 @@ import {
   RecipeIngredient,
 } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
+import { apiErrorMessage } from '../../core/utils/api-error';
+import { formatCurrency } from '../../core/utils/format';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { InputTextComponent } from '../../shared/components/input-text/input-text.component';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
@@ -70,7 +71,7 @@ export class RecipeCreateComponent implements OnInit {
       label: 'Voltar para receitas',
       route: '/receitas',
       icon: 'arrow-left',
-      variant: 'outline-primary',
+      variant: 'outline',
     },
   ];
 
@@ -86,12 +87,7 @@ export class RecipeCreateComponent implements OnInit {
     return this.yield > 0 ? this.totalCost / this.yield : 0;
   }
 
-  formatCurrency(value: number): string {
-    return (Number.isFinite(value) ? value : 0).toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    });
-  }
+  readonly formatCurrency = formatCurrency;
 
   cancel(): void {
     void this.router.navigate(['/receitas']);
@@ -119,7 +115,7 @@ export class RecipeCreateComponent implements OnInit {
           this.availableIngredients = ingredients;
         },
         error: (error: unknown) =>
-          this.setError(`Não foi possível carregar os ingredientes. ${this.errorDetail(error)}`),
+          this.setError(`Não foi possível carregar os ingredientes. ${apiErrorMessage(error)}`),
       });
       return;
     }
@@ -139,7 +135,7 @@ export class RecipeCreateComponent implements OnInit {
       },
       error: (error: unknown) =>
         this.setError(
-          `Não foi possível carregar a receita ou os ingredientes. ${this.errorDetail(error)}`,
+          `Não foi possível carregar a receita ou os ingredientes. ${apiErrorMessage(error)}`,
         ),
     });
   }
@@ -222,7 +218,7 @@ export class RecipeCreateComponent implements OnInit {
               this.isSaving = false;
               this.recipeId = savedRecipe.id_receita;
               this.setError(
-                `A receita foi salva, mas não foi possível vinculá-la ao produto. ${this.errorDetail(error)}`,
+                `A receita foi salva, mas não foi possível vinculá-la ao produto. ${apiErrorMessage(error)}`,
               );
             },
           });
@@ -233,7 +229,7 @@ export class RecipeCreateComponent implements OnInit {
       },
       error: (error: unknown) => {
         this.isSaving = false;
-        this.setError(`Não foi possível salvar a receita. ${this.errorDetail(error)}`);
+        this.setError(`Não foi possível salvar a receita. ${apiErrorMessage(error)}`);
       },
     });
   }
@@ -282,24 +278,5 @@ export class RecipeCreateComponent implements OnInit {
 
   private setError(detail: string): void {
     this.errorMessage = detail;
-  }
-
-  private errorDetail(error: unknown): string {
-    if (error instanceof HttpErrorResponse) {
-      const body = error.error;
-      if (typeof body === 'string') {
-        return body;
-      }
-      if (body && typeof body === 'object') {
-        return Object.entries(body)
-          .map(
-            ([field, messages]) =>
-              `${field}: ${Array.isArray(messages) ? messages.join(', ') : String(messages)}`,
-          )
-          .join('; ');
-      }
-      return error.message;
-    }
-    return 'Ocorreu um erro inesperado.';
   }
 }

@@ -8,6 +8,7 @@ import {
   ProductionAnalysis,
   ProductionConsumption,
 } from '../../../core/models/api.model';
+import { formatQuantity } from '../../../core/utils/format';
 
 interface ProductionIngredient {
   id: number;
@@ -57,21 +58,14 @@ export class CompleteProductionModalComponent implements OnInit {
       ...analysis.ingredientes.map((ingredient) => ({
         id: ingredient.id_ingrediente,
         name: ingredient.nome,
-        lot: `Disponível: ${this.formatNumber(ingredient.disponivel)} ${ingredient.unidade_medida ?? ''}`.trim(),
+        lot: `Disponível: ${formatQuantity(ingredient.disponivel)} ${ingredient.unidade_medida ?? ''}`.trim(),
         theoreticalQuantity: String(ingredient.necessario),
-        theoreticalLabel: this.formatNumber(ingredient.necessario),
+        theoreticalLabel: formatQuantity(ingredient.necessario),
         quantity: '',
         availableQuantity: ingredient.disponivel,
         unit: ingredient.unidade_medida ?? '',
       })),
     );
-  }
-
-  private formatNumber(value: string | number): string {
-    const number = Number(value);
-    return Number.isFinite(number)
-      ? number.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
-      : String(value);
   }
 
   @HostListener('document:keydown.escape')
