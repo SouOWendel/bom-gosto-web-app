@@ -5,11 +5,12 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { InputTextComponent } from '../../../../shared/components/input-text/input-text.component';
 import { LoginHeaderComponent } from '../../components/login-header/login-header.component';
 import { LoginFooterComponent } from '../../components/login-footer/login-footer.component';
+import { LucideArrowRight } from '@lucide/angular';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, InputTextComponent, LoginHeaderComponent, LoginFooterComponent],
+  imports: [ReactiveFormsModule, InputTextComponent, LoginHeaderComponent, LoginFooterComponent, LucideArrowRight],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })
@@ -54,7 +55,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.authService.login(this.form.getRawValue()).subscribe({
       next: () =>
         this.router.navigate([
-          this.authService.user()?.primeiro_acesso ? '/auth/alterar-senha' : '/dashboard',
+          this.authService.user()?.primeiro_acesso ? '/auth/alterar-senha' : '/inicio',
         ]),
       error: (err) => {
         this.errorMessage.set(err.error?.detail || 'Não foi possível entrar.');

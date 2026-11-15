@@ -9,7 +9,7 @@ from rest_framework.test import APITestCase
 
 from usuario.models import Usuario
 
-from .models import Cliente, Pedido, Produto
+from .models import Cliente, Pedido, Produto, Receita
 from .serializers import ItemPedidoSerializer, PedidoSerializer
 
 # testes de integracao da API de pedidos e da regra de acesso
@@ -31,12 +31,6 @@ class PedidoApiTests(APITestCase):
 			preco_venda="12.50",
 		)
 		self.client.force_authenticate(user=self.usuario)
-		self.analise_patch = patch(
-			"pedido.serializers.analisar_pedido",
-			return_value={"estoque": [], "receitas_sugeridas": [], "ausencias": [], "ingredientes_insuficientes": [], "ingredientes": [], "encaminhar_para_producao": False},
-		)
-		self.analise_patch.start()
-		self.addCleanup(self.analise_patch.stop)
 		self.estoque_patch = patch(
 			"pedido.serializers.Estoque.objects.verificar_disponibilidade",
 			return_value={"quantidade_solicitada": 1, "quantidade_disponivel": Decimal("0"), "disponivel": False, "encaminhar_para_producao": True},
@@ -72,6 +66,12 @@ class PedidoApiTests(APITestCase):
 		self.assertEqual(consulta.status_code, status.HTTP_200_OK)
 		self.assertEqual(len(consulta.data["itens"]), 1)
 
+		listagem = self.client.get("/api/pedido/")
+		self.assertEqual(listagem.status_code, status.HTTP_200_OK)
+		self.assertEqual(len(listagem.data), 1)
+		# a analise de producao fica no endpoint /validar/, fora da listagem
+		self.assertNotIn("analise", listagem.data[0])
+
 		atualizacao = self.client.patch(
 			f"/api/pedido/{pedido_id}/",
 			{"forma_pagamento": "pix"},
@@ -79,6 +79,110 @@ class PedidoApiTests(APITestCase):
 		)
 		self.assertEqual(atualizacao.status_code, status.HTTP_200_OK)
 		self.assertEqual(atualizacao.data["forma_pagamento"], "pix")
+
+	# pedidos com o mesmo telefone reaproveitam o cliente existente
+	def test_contato_com_mesmo_telefone_reaproveita_cliente(self):
+		payload = {
+			"tipo": "externo",
+			"subtipo": "personalizado",
+			"contato_nome": "Maria",
+			"contato_telefone": self.cliente.telefone,
+			"valor_total": "12.50",
+			"valor_sinal": "0.00",
+			"itens": [{"produto": self.produto.id_produto, "quantidade": 1, "preco_unitario": "12.50"}],
+		}
+		resposta = self.client.post("/api/pedido/", payload, format="json")
+		self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+		self.assertEqual(resposta.data["cliente"], self.cliente.id_cliente)
+
+		atualizacao = self.client.patch(
+			f"/api/pedido/{resposta.data['id_pedido']}/",
+			{"contato_nome": "Maria", "contato_telefone": self.cliente.telefone},
+			format="json",
+		)
+		self.assertEqual(atualizacao.status_code, status.HTTP_200_OK)
+		self.assertEqual(Cliente.objects.count(), 1)
+
+	# pedido que passa de externo para interno deixa de ter cliente vinculado
+	def test_pedido_que_vira_interno_perde_o_cliente(self):
+		resposta = self.client.post(
+			"/api/pedido/",
+			{
+				"tipo": "externo",
+				"subtipo": "personalizado",
+				"cliente": self.cliente.id_cliente,
+				"valor_total": "12.50",
+				"valor_sinal": "0.00",
+				"itens": [{"produto": self.produto.id_produto, "quantidade": 1, "preco_unitario": "12.50"}],
+			},
+			format="json",
+		)
+		atualizacao = self.client.patch(
+			f"/api/pedido/{resposta.data['id_pedido']}/",
+			{"tipo": "interno", "subtipo": None, "valor_sinal": "0.00"},
+			format="json",
+		)
+		self.assertEqual(atualizacao.status_code, status.HTTP_200_OK)
+		self.assertIsNone(atualizacao.data["cliente"])
+
+	# acoes em pedido inexistente devolvem 404 em vez de erro interno
+	def test_acao_em_pedido_inexistente_retorna_404(self):
+		for acao in ("consumir-estoque", "concluir", "cancelar"):
+			resposta = self.client.post(f"/api/pedido/999999/{acao}/", {}, format="json")
+			self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND, acao)
+
+	# produto com pedido vinculado nao pode ser excluido e recebe 400
+	def test_excluir_produto_vinculado_retorna_400(self):
+		self.client.post(
+			"/api/pedido/",
+			{
+				"tipo": "externo",
+				"subtipo": "personalizado",
+				"cliente": self.cliente.id_cliente,
+				"valor_total": "12.50",
+				"valor_sinal": "0.00",
+				"itens": [{"produto": self.produto.id_produto, "quantidade": 1, "preco_unitario": "12.50"}],
+			},
+			format="json",
+		)
+		resposta = self.client.delete(f"/api/produtos/{self.produto.id_produto}/")
+		self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+	# item por receita sem produto vinculado nao pode virar pedido, pois a producao nao conclui
+	def test_receita_sem_produto_nao_pode_ser_pedida(self):
+		receita = Receita.objects.create(nome="Receita sem produto", rendimento_quantidade="1")
+		pedido = {
+			"tipo": "externo",
+			"subtipo": "personalizado",
+			"cliente": self.cliente.id_cliente,
+			"valor_total": "10.00",
+			"valor_sinal": "0.00",
+			"itens": [{"receita": receita.id_receita, "quantidade": 1, "preco_unitario": "10.00"}],
+		}
+		resposta = self.client.post("/api/pedido/", pedido, format="json")
+		self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+		self.assertIn("não tem produto vinculado", str(resposta.data))
+
+		self.produto.receita = receita
+		self.produto.save(update_fields=["receita"])
+		resposta = self.client.post("/api/pedido/", pedido, format="json")
+		self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+
+	# sinal de pedido externo aceita a metade arredondada para cima nos centavos
+	def test_sinal_aceita_metade_arredondada(self):
+		resposta = self.client.post(
+			"/api/pedido/",
+			{
+				"tipo": "externo",
+				"subtipo": "personalizado",
+				"cliente": self.cliente.id_cliente,
+				"valor_total": "55.75",
+				"valor_sinal": "27.88",
+				"itens": [{"produto": self.produto.id_produto, "quantidade": 1, "preco_unitario": "55.75"}],
+			},
+			format="json",
+		)
+		self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
 
 	# usuario que ainda precisa trocar a senha recebe HTTP 403
 	def test_usuario_no_primeiro_acesso_nao_acessa_pedidos(self):
@@ -99,15 +203,6 @@ class PedidoEstoqueIntegrationTests(SimpleTestCase):
         with self.assertRaises(serializers.ValidationError):
             serializer.validate({})
 
-    # cria um serializer de item de pedido com o pedido fornecido para simular a chamada do serializer de pedido
-    # o serializer é responsavel por transformar os dados do modelo em um formato que pode ser facilmente convertido em JSON e enviado para o cliente, alem de validar os dados recebidos do cliente antes de salvar no banco de dados
-    def make_item_serializer(self, pedido):
-        serializer = ItemPedidoSerializer()
-        serializer.parent = SimpleNamespace(
-            parent=SimpleNamespace(instance=pedido)
-        )
-        return serializer
-
     # verifica que um item de vitrine consulta a disponibilidade e encaminha para producao se o saldo for insuficiente
     def test_item_de_vitrine_consulta_servico_de_estoque(self):
         pedido = SimpleNamespace(
@@ -115,6 +210,7 @@ class PedidoEstoqueIntegrationTests(SimpleTestCase):
             subtipo=Pedido.Subtipo.VITRINE,
         )
         item = SimpleNamespace(
+            pedido=pedido,
             produto_id=12,
             quantidade=2,
             quantidade_peso=None,
@@ -130,9 +226,7 @@ class PedidoEstoqueIntegrationTests(SimpleTestCase):
             "estoque.models.Estoque.objects.verificar_disponibilidade",
             return_value=resultado,
         ) as verificar:
-            verificacao = self.make_item_serializer(pedido).get_verificacao_estoque(
-                item
-            )
+            verificacao = ItemPedidoSerializer().get_verificacao_estoque(item)
 
         verificar.assert_called_once_with(12, 2)
         self.assertEqual(verificacao["quantidade_disponivel"], Decimal("1.00"))
@@ -144,9 +238,9 @@ class PedidoEstoqueIntegrationTests(SimpleTestCase):
             tipo=Pedido.Tipo.EXTERNO,
             subtipo=Pedido.Subtipo.PERSONALIZADO,
         )
-        item = SimpleNamespace(produto_id=None)
+        item = SimpleNamespace(pedido=pedido, produto_id=None)
 
-        verificacao = self.make_item_serializer(pedido).get_verificacao_estoque(item)
+        verificacao = ItemPedidoSerializer().get_verificacao_estoque(item)
 
         self.assertFalse(verificacao["verificado"])
         self.assertTrue(verificacao["encaminhar_para_producao"])
@@ -157,9 +251,9 @@ class PedidoEstoqueIntegrationTests(SimpleTestCase):
             tipo=Pedido.Tipo.INTERNO,
             subtipo=None,
         )
-        item = SimpleNamespace(produto_id=12, quantidade=2)
+        item = SimpleNamespace(pedido=pedido, produto_id=12, quantidade=2)
 
-        verificacao = self.make_item_serializer(pedido).get_verificacao_estoque(item)
+        verificacao = ItemPedidoSerializer().get_verificacao_estoque(item)
 
         self.assertIsNone(verificacao)
 
@@ -176,3 +270,32 @@ class PedidoEstoqueIntegrationTests(SimpleTestCase):
                     "itens": [{"produto": None, "receita": object()}],
                 }
             )
+
+
+# garante que o seed prepara os dados do roteiro de demonstracao e pode ser repetido
+class SeedDemonstracaoTests(APITestCase):
+	def test_seed_prepara_roteiro_e_reset_restaura_os_pedidos(self):
+		from io import StringIO
+
+		from django.core.management import call_command
+
+		from producao.services import analisar_pedido
+
+		call_command("seed_desenvolvimento", stdout=StringIO())
+		call_command("seed_desenvolvimento", stdout=StringIO())
+
+		licilene = Pedido.objects.get(cliente__nome="Licilene Alves", status=Pedido.Status.PEDIDO_FEITO)
+		analise = analisar_pedido(licilene)
+		self.assertTrue(analise["encaminhar_para_producao"])
+		self.assertEqual(analise["ausencias"], [])
+		self.assertEqual(analise["ingredientes_insuficientes"], [])
+
+		carlos = Pedido.objects.get(cliente__nome="Carlos Menezes", status=Pedido.Status.EM_PRODUCAO)
+		self.assertTrue(analisar_pedido(carlos)["ingredientes"])
+
+		licilene.status = Pedido.Status.CONCLUIDO
+		licilene.save(update_fields=["status"])
+		call_command("seed_desenvolvimento", "--resetar-demo", stdout=StringIO())
+		licilene.refresh_from_db()
+		self.assertEqual(licilene.status, Pedido.Status.PEDIDO_FEITO)
+		self.assertEqual(Pedido.objects.filter(cliente__nome="Licilene Alves", status=Pedido.Status.PEDIDO_FEITO).count(), 1)

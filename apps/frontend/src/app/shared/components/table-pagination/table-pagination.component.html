@@ -1,0 +1,33 @@
+<footer class="table-pagination">
+  <span class="table-pagination__summary"
+    >Mostrando {{ range().start }}–{{ range().end }} de {{ total() }} {{ itemLabel() }}</span
+  >
+  <nav class="table-pagination__pages" aria-label="Paginação">
+    <button
+      type="button"
+      aria-label="Página anterior"
+      [disabled]="currentPage() <= 1"
+      (click)="goTo(currentPage() - 1)"
+    >
+      ‹
+    </button>
+    @for (page of pages(); track page) {
+      <button
+        type="button"
+        [class.is-current]="currentPage() === page"
+        [attr.aria-current]="currentPage() === page ? 'page' : null"
+        (click)="goTo(page)"
+      >
+        {{ page }}
+      </button>
+    }
+    <button
+      type="button"
+      aria-label="Próxima página"
+      [disabled]="currentPage() >= totalPages()"
+      (click)="goTo(currentPage() + 1)"
+    >
+      ›
+    </button>
+  </nav>
+</footer>

@@ -1,0 +1,319 @@
+import { Component, HostListener, effect, input, output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import {
+  LucideDynamicIcon,
+  LucidePlus,
+  LucideTrash2,
+  LucideX,
+  provideLucideIcons,
+} from '@lucide/angular';
+import {
+  Order,
+  OrderCreationItem,
+  OrderCreationPayload,
+  Product,
+  Recipe,
+} from '../../../core/models/api.model';
+import { ButtonComponent } from '../button/button.component';
+import { InputTextComponent } from '../input-text/input-text.component';
+import { formatCurrency, parseDecimal, toDisplayDecimal } from '../../../core/utils/format';
+
+interface OrderItemForm {
+  kind: 'produto' | 'receita';
+  referenceId: number | null;
+  // Quantidade (un) e peso (kg) podem vir juntos, ex.: 1 bolo de 1,5 kg.
+  quantity: string;
+  weight: string;
+  unitPrice: string;
+  filling: string;
+  decoration: string;
+  // Custo já gravado no item, reenviado na edição para não se perder.
+  unitCost: string | null;
+}
+
+@Component({
+  selector: 'app-order-create-modal',
+  standalone: true,
+  imports: [FormsModule, ButtonComponent, InputTextComponent, LucideDynamicIcon],
+  providers: [provideLucideIcons(LucidePlus, LucideTrash2, LucideX)],
+  templateUrl: './order-create-modal.component.html',
+  styleUrls: ['./order-create-modal.component.scss'],
+})
+export class OrderCreateModalComponent {
+  readonly recipes = input<Recipe[]>([]);
+  readonly productsList = input<Product[]>([]);
+  readonly orderToEdit = input<Order | null>(null);
+  readonly apiError = input<string | null>(null);
+  readonly closed = output<void>();
+  readonly submitted = output<OrderCreationPayload>();
+
+  tipo: 'interno' | 'externo' = 'externo';
+  subtipo: 'vitrine' | 'personalizado' = 'personalizado';
+  contactName = '';
+  contactPhone = '';
+  deliveryDate = '';
+  deliveryTime = '';
+  address = '';
+  paymentMethod = 'pix';
+  total = '';
+  deposit = '0';
+  errorMessage = '';
+  items: OrderItemForm[] = [this.newItem()];
+
+  constructor() {
+    effect(() => {
+      const order = this.orderToEdit();
+      if (order) {
+        this.populate(order);
+      }
+    });
+  }
+
+  private populate(order: Order): void {
+    this.tipo = order.tipo;
+    this.subtipo = order.subtipo ?? 'personalizado';
+    this.deliveryDate = order.data_entrega ?? '';
+    this.deliveryTime = order.horario_entrega ?? '';
+    this.address = order.endereco_entrega ?? '';
+    this.paymentMethod = order.forma_pagamento ?? 'pix';
+    this.total = order.valor_total ?? '';
+    this.deposit = order.valor_sinal ?? '0';
+    // O contato fica editável para corrigir nome ou telefone digitados errado.
+    this.contactName = order.cliente_nome ?? '';
+    this.contactPhone = order.cliente_telefone ?? '';
+
+    if (order.itens && order.itens.length > 0) {
+      this.items = order.itens.map((item): OrderItemForm => {
+        return {
+          kind: item.produto ? 'produto' : 'receita',
+          referenceId: item.produto ?? item.receita ?? null,
+          quantity: item.quantidade == null ? '' : String(item.quantidade),
+          weight: item.quantidade_peso ? toDisplayDecimal(item.quantidade_peso) : '',
+          unitPrice: String(item.preco_unitario ?? ''),
+          filling: item.recheio ?? '',
+          decoration: item.decoracao ?? '',
+          unitCost: item.custo_unitario ?? null,
+        };
+      });
+    }
+  }
+
+  // Receitas que têm produto pronto (pela ficha do produto ou pela relação receita-produto).
+  // Sem produto, a produção não consegue ser concluída, então elas não aparecem para novos itens.
+  private get recipeIdsWithProduct(): Set<number> {
+    const ids = new Set<number>();
+    for (const product of this.productsList()) {
+      if (product.receita !== null) {
+        ids.add(product.receita);
+      }
+    }
+    for (const recipe of this.recipes()) {
+      if ((recipe.produtos ?? []).length > 0) {
+        ids.add(recipe.id_receita);
+      }
+    }
+    return ids;
+  }
+
+  // Mantém visível a receita já escolhida em um pedido antigo, para a validação explicar o problema.
+  get orderableRecipes(): Recipe[] {
+    const withProduct = this.recipeIdsWithProduct;
+    const selected = new Set(
+      this.items.filter((item) => item.kind === 'receita').map((item) => item.referenceId),
+    );
+    return this.recipes().filter(
+      (recipe) => withProduct.has(recipe.id_receita) || selected.has(recipe.id_receita),
+    );
+  }
+
+  get products(): Array<{ id: number; label: string }> {
+    const list = this.productsList();
+    if (list && list.length > 0) {
+      return list.map((p) => ({
+        id: p.id_produto,
+        label: `${p.nome} (R$ ${p.preco_venda})`,
+      }));
+    }
+    const products = new Map<number, string>();
+    for (const recipe of this.recipes()) {
+      for (const product of recipe.produtos ?? []) {
+        products.set(product.produto, `Produto #${product.produto}`);
+      }
+    }
+    return [...products.entries()].map(([id, label]) => ({ id, label }));
+  }
+
+  // Soma preço x peso (quando informado) ou preço x quantidade de cada item.
+  get itemsTotal(): number {
+    return this.items.reduce((sum, item) => {
+      const price = Number(parseDecimal(item.unitPrice)) || 0;
+      const weight = Number(parseDecimal(item.weight)) || 0;
+      const quantity = Number(item.quantity) || 0;
+      return sum + price * (weight > 0 ? weight : quantity);
+    }, 0);
+  }
+
+  get totalDiffersFromItems(): boolean {
+    const total = Number(parseDecimal(this.total));
+    return (
+      Number.isFinite(total) &&
+      this.total.trim() !== '' &&
+      Math.abs(total - this.itemsTotal) > 0.004
+    );
+  }
+
+  readonly formatCurrency = formatCurrency;
+
+  useItemsTotal(): void {
+    this.total = this.itemsTotal.toFixed(2).replace('.', ',');
+  }
+
+  addItem(): void {
+    this.items = [...this.items, this.newItem()];
+  }
+
+  removeItem(index: number): void {
+    if (this.items.length === 1) {
+      return;
+    }
+    this.items = this.items.filter((_, itemIndex) => itemIndex !== index);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.close();
+  }
+
+  close(): void {
+    this.closed.emit();
+  }
+
+  submit(): void {
+    const validationError = this.validate();
+    if (validationError) {
+      this.errorMessage = validationError;
+      return;
+    }
+
+    const payload: OrderCreationPayload = {
+      tipo: this.tipo,
+      subtipo: this.tipo === 'externo' ? this.subtipo : null,
+      data_entrega: this.deliveryDate || null,
+      horario_entrega: this.deliveryTime || null,
+      valor_total: parseDecimal(this.total),
+      valor_sinal: parseDecimal(this.deposit),
+      endereco_entrega: this.address.trim() || null,
+      forma_pagamento: this.paymentMethod || null,
+      itens: this.items.map((item) => this.toApiItem(item)),
+    };
+
+    if (this.tipo === 'externo' && (this.contactName.trim() || this.contactPhone.trim())) {
+      payload.contato_nome = this.contactName.trim();
+      payload.contato_telefone = this.contactPhone.replace(/\D/g, '');
+    }
+
+    this.submitted.emit(payload);
+  }
+
+  private newItem(): OrderItemForm {
+    return {
+      kind: 'receita',
+      referenceId: null,
+      quantity: '1',
+      weight: '',
+      unitPrice: '',
+      filling: '',
+      decoration: '',
+      unitCost: null,
+    };
+  }
+
+  private toApiItem(item: OrderItemForm): OrderCreationItem {
+    const apiItem: OrderCreationItem = {
+      preco_unitario: parseDecimal(item.unitPrice),
+    };
+    apiItem[item.kind] = item.referenceId as number;
+    if (item.quantity.trim()) {
+      apiItem.quantidade = Number(item.quantity.trim());
+    }
+    if (item.weight.trim()) {
+      apiItem.quantidade_peso = parseDecimal(item.weight);
+    }
+    apiItem.recheio = item.filling.trim() || null;
+    apiItem.decoracao = item.decoration.trim() || null;
+    if (item.unitCost !== null) {
+      apiItem.custo_unitario = item.unitCost;
+    }
+    return apiItem;
+  }
+
+  private validate(): string | null {
+    if (this.tipo === 'externo' && (!this.contactName.trim() || !this.contactPhone.trim())) {
+      return 'Informe o nome e o telefone do cliente.';
+    }
+    if (this.tipo === 'externo' && this.contactPhone.replace(/\D/g, '').length < 10) {
+      return 'Informe o telefone com DDD.';
+    }
+    if (
+      this.tipo === 'externo' &&
+      this.subtipo === 'vitrine' &&
+      this.items.some((item) => item.kind !== 'produto')
+    ) {
+      return 'Pedidos de vitrine precisam usar produtos prontos.';
+    }
+    if (this.items.some((item) => item.referenceId === null)) {
+      return 'Selecione a receita ou o produto de cada item.';
+    }
+    const withProduct = this.recipeIdsWithProduct;
+    const recipeWithoutProduct = this.items.find(
+      (item) =>
+        item.kind === 'receita' &&
+        item.referenceId !== null &&
+        !withProduct.has(item.referenceId),
+    );
+    if (recipeWithoutProduct) {
+      const name =
+        this.recipes().find((recipe) => recipe.id_receita === recipeWithoutProduct.referenceId)
+          ?.nome ?? 'escolhida';
+      return `A receita ${name} não tem produto vinculado; vincule-a a um produto em Produtos.`;
+    }
+    for (const item of this.items) {
+      const quantity = item.quantity.trim();
+      const weight = parseDecimal(item.weight);
+      if (!quantity && !weight) {
+        return 'Informe a quantidade ou o peso de cada item.';
+      }
+      if (quantity && (!/^\d+$/.test(quantity) || Number(quantity) <= 0)) {
+        return 'A quantidade deve ser um número inteiro maior que zero.';
+      }
+      if (weight && (!/^\d+(\.\d{1,2})?$/.test(weight) || Number(weight) <= 0)) {
+        return 'Informe o peso em kg, maior que zero e com até duas casas decimais.';
+      }
+    }
+    if (this.items.some((item) => item.filling.length > 100 || item.decoration.length > 200)) {
+      return 'O recheio aceita até 100 caracteres e a decoração, até 200.';
+    }
+    if (
+      this.items.some((item) => {
+        const price = Number(parseDecimal(item.unitPrice));
+        return !Number.isFinite(price) || price < 0;
+      })
+    ) {
+      return 'Informe um preço unitário válido para cada item.';
+    }
+    const total = Number(parseDecimal(this.total));
+    const deposit = Number(parseDecimal(this.deposit));
+    if (!Number.isFinite(total) || total < 0) {
+      return 'Informe um valor total válido.';
+    }
+    if (!Number.isFinite(deposit) || deposit < 0 || deposit > total) {
+      return 'O sinal deve estar entre zero e o valor total.';
+    }
+    // Mesmo arredondamento do backend: metade do total em centavos, arredondada para cima.
+    const halfInCents = Math.ceil(Math.round(total * 100) / 2);
+    if (this.tipo === 'externo' && deposit !== 0 && Math.round(deposit * 100) !== halfInCents) {
+      return `Para pedidos externos, o sinal deve ser zero ou metade do total (${formatCurrency(halfInCents / 100)}).`;
+    }
+    return null;
+  }
+}

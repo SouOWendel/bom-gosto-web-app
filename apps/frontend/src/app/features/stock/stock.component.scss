@@ -1,0 +1,40 @@
+// Layout, painel, busca e legenda vêm dos estilos globais (styles.scss).
+:host {
+  display: block;
+}
+
+.stock-page__search {
+  max-width: 22rem;
+  margin-left: auto;
+}
+
+.stock-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--color-surface-muted);
+
+  &__empty {
+    grid-column: 1 / -1;
+  }
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .stock-page__search {
+    max-width: none;
+    margin-left: 0;
+  }
+}

@@ -12,6 +12,24 @@ from .models import IngredienteReceita
 CENTAVO = Decimal("0.01")
 
 
+# Soma quantidade x custo unitário dos ingredientes e grava o custo da receita.
+# As quantidades da receita usam a mesma unidade do insumo no inventário.
+def recalcular_custo_receita(receita):
+    custo = Decimal("0")
+    for linha in IngredienteReceita.objects.filter(receita_id=receita.pk).select_related("ingrediente"):
+        custo += linha.quantidade_necessaria * (linha.ingrediente.custo_unitario or Decimal("0"))
+    receita.custo_calculado = custo.quantize(CENTAVO, rounding=ROUND_HALF_UP)
+    receita.save(update_fields=["custo_calculado"])
+    return receita.custo_calculado
+
+
+# Atualiza o custo de todas as receitas que usam o ingrediente.
+def recalcular_receitas_do_ingrediente(ingrediente):
+    ids = IngredienteReceita.objects.filter(ingrediente_id=ingrediente.pk).values_list("receita_id", flat=True)
+    for receita in Receita.objects.filter(pk__in=ids):
+        recalcular_custo_receita(receita)
+
+
 # Obtém a quantidade usada para comparar o item com o Estoque e a receita.
 def _quantidade_item(item):
     return Decimal(item.quantidade or item.quantidade_peso or 0)
@@ -22,18 +40,41 @@ def _receita_item(item):
     return item.receita or (item.produto.receita if item.produto_id else None)
 
 
+# Descobre o produto pronto do item: o próprio produto ou o da receita usada.
+def produto_do_item(item):
+    if item.produto is not None:
+        return item.produto
+    receita = _receita_item(item)
+    if receita is None:
+        return None
+    produto = receita.produtos.order_by("id_produto").first()
+    if produto is None:
+        relacao = ReceitaProduto.objects.filter(receita_id=receita.pk).select_related("produto").first()
+        produto = relacao.produto if relacao else None
+    return produto
+
+
+# Desconta o saldo pronto já reservado por itens anteriores do mesmo produto.
+def _saldo_restante(produto_id, solicitado, reservado):
+    saldo = Estoque.objects.verificar_disponibilidade(produto_id, solicitado)["quantidade_disponivel"]
+    restante = max(Decimal("0"), saldo - reservado.get(produto_id, Decimal("0")))
+    usado = min(restante, solicitado)
+    reservado[produto_id] = reservado.get(produto_id, Decimal("0")) + usado
+    return usado
+
+
 # Calcula os ingredientes exigidos para a parte do pedido que precisa ser produzida.
 def _ingredientes_previstos(pedido):
     previstos = {}
     ausencias = []
     sugestoes = []
+    reservado = {}
     for item in pedido.itens.select_related("produto__receita", "receita"):
         quantidade = _quantidade_item(item)
         # Reposição interna produz toda a quantidade solicitada; não consome
         # o saldo de vitrine que já existe para clientes.
         if item.produto_id and pedido.tipo == Pedido.Tipo.EXTERNO:
-            saldo_pronto = Estoque.objects.verificar_disponibilidade(item.produto_id, quantidade)["quantidade_disponivel"]
-            quantidade = max(Decimal("0"), quantidade - saldo_pronto)
+            quantidade -= _saldo_restante(item.produto_id, quantidade, reservado)
             if quantidade == 0:
                 continue
         receita = _receita_item(item)
@@ -46,6 +87,9 @@ def _ingredientes_previstos(pedido):
             continue
         if receita is None:
             ausencias.append({"item_pedido": item.pk, "tipo": "receita", "motivo": "O item não possui receita aplicável."})
+            continue
+        if produto_do_item(item) is None:
+            ausencias.append({"item_pedido": item.pk, "tipo": "produto", "motivo": f"A receita {receita.nome} não tem produto vinculado; vincule-a a um produto em Produtos."})
             continue
         if not receita.rendimento_quantidade or receita.rendimento_quantidade <= 0:
             ausencias.append({"item_pedido": item.pk, "tipo": "rendimento", "motivo": "A receita não tem rendimento válido."})
@@ -93,7 +137,7 @@ def analisar_pedido(pedido):
             if nivel:
                 alerta_validade = {"nivel": nivel, "dias_para_vencer": dias}
         minimo = ingrediente.quantidade_minima
-        ingredientes.append({"id_ingrediente": ingrediente.pk, "nome": ingrediente.nome, "necessario": linha["necessario"], "disponivel": disponivel, "suficiente": disponivel >= linha["necessario"], "abaixo_do_minimo": (minimo is not None and disponivel < minimo), "data_validade": validade, "alerta_validade": alerta_validade})
+        ingredientes.append({"id_ingrediente": ingrediente.pk, "nome": ingrediente.nome, "unidade_medida": ingrediente.unidade_medida, "necessario": linha["necessario"], "disponivel": disponivel, "suficiente": disponivel >= linha["necessario"], "abaixo_do_minimo": (minimo is not None and disponivel < minimo), "data_validade": validade, "alerta_validade": alerta_validade})
     return {"estoque": itens, "receitas_sugeridas": sugestoes, "ausencias": ausencias, "ingredientes_insuficientes": [i for i in ingredientes if not i["suficiente"]], "ingredientes": ingredientes, "encaminhar_para_producao": any(not i["disponivel"] for i in itens)}
 
 
@@ -151,25 +195,20 @@ def concluir_producao(pedido, consumos, data_validade):
         ingrediente.save(update_fields=["quantidade_disponivel"])
 
     saidas = []
+    reservado = {}
     for item in pedido.itens.select_related("produto__receita", "receita"):
-        produto = item.produto
-        receita = _receita_item(item)
-        if produto is None and receita:
-            produto = receita.produtos.order_by("id_produto").first()
-            if produto is None:
-                relacao = ReceitaProduto.objects.filter(receita_id=receita.pk).select_related("produto").first()
-                produto = relacao.produto if relacao else None
+        produto = produto_do_item(item)
         if produto is None:
             raise ValidationError({"itens": "Associe um produto à receita antes de concluir a produção."})
         solicitado = _quantidade_item(item)
         # Pedidos internos repõem o estoque integralmente; externos aproveitam
         # o produto pronto disponível e produzem somente a diferença.
-        saldo = (
-            Estoque.objects.verificar_disponibilidade(produto.pk, solicitado)["quantidade_disponivel"]
+        aproveitado = (
+            _saldo_restante(produto.pk, solicitado, reservado)
             if pedido.tipo == Pedido.Tipo.EXTERNO
             else Decimal("0")
         )
-        quantidade_produzida = max(Decimal("0"), solicitado - saldo)
+        quantidade_produzida = solicitado - aproveitado
         if quantidade_produzida > 0:
             saidas.append((produto, quantidade_produzida))
     total_produzido = sum((quantidade for _, quantidade in saidas), Decimal("0"))

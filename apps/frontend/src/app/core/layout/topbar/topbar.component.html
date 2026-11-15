@@ -1,0 +1,15 @@
+<header class="topbar">
+  <button
+    type="button"
+    class="btn-icon topbar__menu"
+    [attr.aria-label]="menuOpen() ? 'Fechar menu' : 'Abrir menu'"
+    [attr.aria-expanded]="menuOpen()"
+    (click)="menuToggle.emit()"
+  >
+    <svg [lucideIcon]="menuOpen() ? 'x' : 'menu'" [size]="18"></svg>
+  </button>
+  <div class="topbar__date">
+    <svg [lucideIcon]="'calendar'" [size]="18" [strokeWidth]="2" class="topbar__icon"></svg>
+    <span>{{ dataAtual() }}</span>
+  </div>
+</header>

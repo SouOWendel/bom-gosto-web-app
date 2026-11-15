@@ -1,19 +1,14 @@
 from decimal import Decimal
 
 from rest_framework.decorators import action
-from rest_framework.permissions import BasePermission, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
+from core.permissions import SenhaInicialAlterada
 from .models import Estoque
 from .serializers import EstoqueSerializer, VerificarDisponibilidadeSerializer
 
-# classe que verifica se o usuario autenticado ja alterou a senha inicial, impedindo o acesso ao modulo Estoque (caso o usuario ainda esteja no estado de primeiro acesso), garantindo que a politica de segurança seja aplicada antes de permitir operacoes no estoque
-class SenhaInicialAlterada(BasePermission):
-    message = "Altere a senha inicial antes de acessar o estoque."
-
-    def has_permission(self, request, view):
-        return not getattr(request.user, "primeiro_acesso", True)
 
 # classe que implementa o viewset para o modelo Estoque, fornecendo endpoints RESTful para listar, criar, atualizar e verificar a disponibilidade de lotes de estoque, com permissoes de acesso baseadas na autenticacao do usuario e na alteracao da senha inicial
 # Lista e edita lotes existentes e calcula a disponibilidade por produto.

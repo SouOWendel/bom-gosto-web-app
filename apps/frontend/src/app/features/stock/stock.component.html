@@ -1,0 +1,67 @@
+<div class="page">
+  <app-page-greeting
+    title="Estoque de produtos prontos"
+    subtitle="Lotes armazenados para pronta-entrega, com custo e prazo de validade."
+    [actions]="greetingActions"
+  />
+
+  @if (loadError()) {
+    <div class="alert alert--danger" role="alert">
+      Não foi possível carregar o estoque. {{ loadError() }}
+    </div>
+  }
+
+  <app-metric-cards [items]="summaryCards" />
+
+  <section class="panel" aria-label="Lotes em estoque">
+    <div class="panel__toolbar">
+      <div class="legend" aria-label="Legenda do semáforo de validade">
+        <span class="legend__title">Validade</span>
+        <span class="legend__item"><i class="status-dot status-dot--critico"></i>Crítico</span>
+        <span class="legend__item"><i class="status-dot status-dot--atencao"></i>Atenção</span>
+        <span class="legend__item"
+          ><i class="status-dot status-dot--preventivo"></i>Preventivo</span
+        >
+        <span class="legend__item"><i class="status-dot status-dot--normal"></i>Sem alerta</span>
+      </div>
+      <label class="search-field stock-page__search">
+        <svg [lucideIcon]="'search'" [size]="16"></svg>
+        <input
+          type="search"
+          placeholder="Buscar por produto ou lote..."
+          aria-label="Buscar lotes"
+          [value]="searchTerm()"
+          (input)="onSearch($any($event.target).value)"
+        />
+      </label>
+    </div>
+
+    <div class="stock-grid">
+      @for (item of paginatedItems(); track item.id) {
+        <app-stock-product-card [product]="item" (edit)="openEdit(item.id)" />
+      } @empty {
+        <p class="data-table__empty stock-grid__empty">
+          Nenhum lote encontrado com os filtros selecionados.
+        </p>
+      }
+    </div>
+
+    <app-table-pagination
+      [total]="filteredItems().length"
+      [pageSize]="pageSize"
+      [currentPage]="currentPage()"
+      itemLabel="lotes"
+      (pageChange)="goToPage($event)"
+    />
+  </section>
+
+  @if (editingLot(); as lot) {
+    <app-stock-lot-edit-modal
+      [lot]="lot"
+      [apiError]="editError()"
+      [busy]="saving()"
+      (closed)="closeEdit()"
+      (submitted)="saveLot(lot.id_estoque, $event)"
+    />
+  }
+</div>

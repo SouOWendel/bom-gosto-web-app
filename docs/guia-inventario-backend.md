@@ -6,17 +6,17 @@ Este guia descreve como iniciar o projeto com Docker e testar manualmente a API 
 
 ## Escopo e persistência
 
-O módulo expõe operações de criação, consulta e atualização de ingredientes. A exclusão não está disponível.
+O módulo expõe operações de criação, consulta, atualização e exclusão de ingredientes. Ingredientes usados em receitas não podem ser excluídos.
 
-O model Django mapeia a tabela `ingrediente`, definida em `database/create_schema.sql`, com `managed = False`. A API usa o PostgreSQL configurado no Docker Compose para ler e gravar ingredientes, mas o Django não cria nem altera essa tabela por migrations. A tabela deve existir no banco antes de usar os endpoints.
+O model Django mapeia a tabela `ingrediente`. As migrations Django criam e controlam as 11 tabelas ativas de aplicação, incluindo essa tabela. A API usa o PostgreSQL configurado no Docker Compose para ler e gravar ingredientes.
 
-Em uma instalação nova, o Compose executa `database/create_schema.sql` quando cria o volume PostgreSQL. Os scripts de inicialização não são executados novamente em um volume já existente. Não execute `makemigrations` para o app `inventario` nem `database/create_schema.sql` completo contra um banco existente.
+O Compose não executa `database/create_schema.sql`. O arquivo `create_schema.sql` permanece somente como referência legada e não deve ser executado no banco da aplicação.
 
 ## Pré-requisitos
 
 - Docker Desktop em execução.
 - PowerShell aberto na raiz do repositório.
-- Tabela `ingrediente` presente no banco `db_confeitaria`.
+- Banco `db_confeitaria` disponível. As migrations do backend criam as tabelas ativas.
 
 ## 1. Iniciar o ambiente
 
@@ -25,7 +25,7 @@ docker compose up --build -d
 docker compose ps
 ```
 
-O backend executa as migrations dos outros apps já configurados e inicia o servidor. Até o momento, o app `inventario` não tem migration própria.
+O backend aplica as migrations com `python manage.py migrate --noinput` e inicia o servidor.
 
 Se algum serviço não iniciar, consulte os logs:
 
@@ -38,13 +38,13 @@ A API fica disponível em `http://127.0.0.1:8000/api`.
 
 ## 2. Confirmar que a tabela existe
 
-O model é `managed = False`, portanto não cria a tabela. Confirme que o schema inicial criou `ingrediente`:
+Confirme que as migrations criaram a tabela `ingrediente`:
 
 ```powershell
 docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'ingrediente'"
 ```
 
-O resultado deve conter `id_ingrediente`, `nome`, `quantidade_disponivel`, `custo_unitario`, `data_validade` e `quantidade_minima`. Se não houver linhas, pare aqui: o banco existente não recebeu o schema inicial. Não recrie o volume com `docker compose down -v` se precisar preservar os dados.
+O resultado deve conter `id_ingrediente`, `nome`, `quantidade_disponivel`, `custo_unitario`, `data_validade` e `quantidade_minima`. Se não houver linhas, confira os logs do backend e o estado das migrations. Não execute o schema SQL legado nem remova o volume para corrigir o banco ativo.
 
 ## 3. Criar um usuário temporário de teste
 
@@ -189,7 +189,7 @@ Invoke-RestMethod -Method Put `
 
 Como a quantidade voltou a ficar abaixo de `5.00`, a resposta deve mostrar `abaixo_do_minimo = true`.
 
-## 9. Conferir validação e ausência de exclusão
+## 9. Conferir validação e exclusão
 
 Uma quantidade negativa deve retornar `400 Bad Request`:
 
@@ -209,7 +209,8 @@ try {
 }
 ```
 
-O método `DELETE` não faz parte do CRUD e deve retornar `405 Method Not Allowed`:
+O método `DELETE` exclui ingredientes que não estão em nenhuma receita e responde `204 No Content`.
+Se o ingrediente fizer parte de alguma receita, a exclusão é recusada com `400 Bad Request`:
 
 ```powershell
 try {
@@ -221,4 +222,41 @@ try {
 }
 ```
 
-O registro não é removido pelo teste. Confirme o estado final com `GET` ou com a consulta SQL da etapa 2. A limpeza de registros de teste deve ser feita de acordo com o procedimento de manutenção do banco do projeto.
+Confirme o estado final com `GET` ou consulte diretamente o PostgreSQL pelo Docker, substituindo `1` pelo ID do ingrediente testado:
+
+```powershell
+docker compose exec -T postgres psql -U postgres -d db_confeitaria -c "SELECT * FROM ingrediente WHERE id_ingrediente = 1;"
+```
+
+## 10. Movimentação simples do MVP
+
+Para ajustar o saldo sem alterar o cadastro inteiro, use `POST /api/inventario/ingrediente/{id}/movimentar/`.
+O campo `tipo` aceita `entrada` ou `saida`, e `quantidade` deve ser maior que zero. Entradas podem
+informar opcionalmente `custo_unitario` e `data_validade`; esses campos passam a representar os dados
+mais recentes do insumo. Saídas maiores que o saldo disponível retornam `400 Bad Request`.
+
+```powershell
+$entradaBody = @{
+  tipo = "entrada"
+  quantidade = "2.50"
+  custo_unitario = "3.50"
+  data_validade = "2027-03-31"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method Post `
+  -Uri "$base/api/inventario/ingrediente/$idIngrediente/movimentar/" `
+  -WebSession $session -Headers $headers `
+  -ContentType "application/json" -Body $entradaBody
+
+$saidaBody = @{
+  tipo = "saida"
+  quantidade = "1.00"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method Post `
+  -Uri "$base/api/inventario/ingrediente/$idIngrediente/movimentar/" `
+  -WebSession $session -Headers $headers `
+  -ContentType "application/json" -Body $saidaBody
+```
+
+O MVP não mantém histórico de movimentações.

@@ -1,0 +1,107 @@
+<div class="page">
+  <app-page-greeting
+    title="Produtos comercializados"
+    subtitle="Catálogo de itens vendidos pela confeitaria e a receita de cada um."
+    [actions]="greetingActions"
+    (actionClick)="handleGreetingAction($event)"
+  />
+
+  <app-metric-cards [items]="summaryCards" />
+
+  <section class="panel" aria-label="Lista de produtos">
+    <div class="panel__toolbar">
+      <label class="search-field products-page__search">
+        <svg [lucideIcon]="'search'" [size]="16"></svg>
+        <input
+          type="search"
+          placeholder="Buscar por nome, código ou receita..."
+          aria-label="Buscar produtos"
+          [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)"
+        />
+      </label>
+      <span class="products-page__count">
+        {{ filteredProducts().length }}
+        {{ filteredProducts().length === 1 ? 'produto encontrado' : 'produtos encontrados' }}
+      </span>
+    </div>
+
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Receita vinculada</th>
+            <th class="is-numeric">Preço de venda</th>
+            <th class="is-actions">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (prod of filteredProducts(); track prod.id_produto) {
+            <tr>
+              <td>
+                <strong class="data-table__primary">{{ prod.nome }}</strong>
+                <small class="data-table__secondary">#{{ prod.id_produto }}</small>
+              </td>
+              <td>
+                @if (prod.receita_nome) {
+                  <span class="badge badge--brand">{{ prod.receita_nome }}</span>
+                } @else {
+                  <span class="data-table__secondary">Sem receita (revenda ou reaproveitado)</span>
+                }
+              </td>
+              <td class="is-numeric">
+                <strong class="data-table__primary">{{ formatPrice(prod.preco_venda) }}</strong>
+              </td>
+              <td class="is-actions">
+                <div class="data-table__actions">
+                  <app-button size="small" variant="outline" (click)="openEditModal(prod)">
+                    <svg [lucideIcon]="'pencil'" [size]="14"></svg>
+                    Editar
+                  </app-button>
+                  <app-button size="small" variant="outline" (click)="openDeleteDialog(prod)">
+                    <svg [lucideIcon]="'trash-2'" [size]="14"></svg>
+                    Excluir
+                  </app-button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="data-table__empty">
+                Nenhum produto encontrado. Use "Novo produto" para cadastrar.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  @if (isModalOpen()) {
+    <app-product-create-modal
+      [recipes]="recipes()"
+      [productToEdit]="productToEdit()"
+      [apiError]="apiError()"
+      (closed)="closeModal()"
+      (submitted)="handleProductSubmit($event)"
+    />
+  }
+
+  @if (productToDelete(); as product) {
+    <app-confirm-dialog
+      [title]="'Excluir o produto ' + product.nome + '?'"
+      message="O produto sairá do catálogo. Esta ação não pode ser desfeita."
+      confirmLabel="Excluir produto"
+      variant="danger"
+      [busy]="isDeleting()"
+      [error]="deleteError()"
+      (closed)="closeDeleteDialog()"
+      (confirmed)="confirmDelete()"
+    >
+      <p class="modal__text">
+        Produtos com lotes no estoque ou já usados em pedidos não podem ser excluídos.
+      </p>
+    </app-confirm-dialog>
+  }
+</div>

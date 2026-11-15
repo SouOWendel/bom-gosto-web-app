@@ -1,0 +1,120 @@
+<div class="page">
+  <app-page-greeting
+    title="Receitas"
+    subtitle="Fichas técnicas com rendimento e custo calculado a partir do inventário."
+    [actions]="greetingActions"
+  />
+
+  @if (errorMessage()) {
+    <div class="alert alert--danger" role="alert">{{ errorMessage() }}</div>
+  }
+
+  <section class="panel" aria-labelledby="recipes-table-title">
+    <header class="panel__header">
+      <div>
+        <h2 id="recipes-table-title" class="panel__title">Fichas técnicas</h2>
+        <p class="panel__subtitle">{{ totalRecipes() }} receitas encontradas</p>
+      </div>
+    </header>
+
+    <div class="panel__toolbar">
+      <label class="search-field recipes-page__search">
+        <svg [lucideIcon]="'search'" [size]="16"></svg>
+        <input
+          type="search"
+          placeholder="Buscar por receita, código ou produto..."
+          aria-label="Buscar receitas"
+          [value]="searchTerm()"
+          (input)="onSearch($any($event.target).value)"
+        />
+      </label>
+    </div>
+
+    <div class="data-table-wrap">
+      <table class="data-table recipes-page__table">
+        <thead>
+          <tr>
+            <th>Receita</th>
+            <th>Produtos associados</th>
+            <th class="is-numeric">Rendimento</th>
+            <th class="is-numeric">Custo dos ingredientes</th>
+            <th class="is-numeric">Custo por unidade</th>
+            <th class="is-actions">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (recipe of paginatedRecipes(); track recipe.code) {
+            <tr>
+              <td>
+                <strong class="data-table__primary">{{ recipe.name }}</strong>
+                <small class="data-table__secondary"
+                  >{{ recipe.code }} · {{ recipe.ingredients }} ingredientes</small
+                >
+              </td>
+              <td>{{ recipe.product }}</td>
+              <td class="is-numeric">{{ recipe.yield }}</td>
+              <td class="is-numeric">
+                <strong class="data-table__primary">{{ formatCurrency(recipe.totalCost) }}</strong>
+              </td>
+              <td class="is-numeric">
+                <strong class="data-table__primary">{{ formatCurrency(recipe.unitCost) }}</strong>
+              </td>
+              <td class="is-actions">
+                <div class="data-table__actions">
+                  <app-button size="small" variant="outline" (click)="editRecipe(recipe.id)">
+                    <svg [lucideIcon]="'pencil'" [size]="14"></svg>
+                    Editar
+                  </app-button>
+                  <app-button size="small" variant="outline" (click)="openDeleteDialog(recipe)">
+                    <svg [lucideIcon]="'trash-2'" [size]="14"></svg>
+                    Excluir
+                  </app-button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="data-table__empty">
+                Nenhuma receita encontrada com os filtros selecionados.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <p class="panel__note">
+      Custos calculados com os ingredientes do inventário. Custo por unidade = custo dos
+      ingredientes ÷ rendimento.
+    </p>
+    <app-table-pagination
+      [total]="totalRecipes()"
+      [pageSize]="pageSize"
+      [currentPage]="currentPage()"
+      itemLabel="receitas"
+      (pageChange)="goToPage($event)"
+    />
+  </section>
+
+  @if (recipeToDelete(); as recipe) {
+    <app-confirm-dialog
+      [title]="'Excluir a receita ' + recipe.name + '?'"
+      message="A ficha técnica e a lista de ingredientes serão apagadas. Esta ação não pode ser desfeita."
+      confirmLabel="Excluir receita"
+      variant="danger"
+      [busy]="isDeleting()"
+      [error]="deleteError()"
+      (closed)="closeDeleteDialog()"
+      (confirmed)="confirmDelete()"
+    >
+      @if (recipe.productCount > 0) {
+        <p class="modal__text">
+          {{ recipe.productCount === 1 ? 'O produto' : 'Os produtos' }}
+          <strong>{{ recipe.product }}</strong>
+          {{ recipe.productCount === 1 ? 'ficará' : 'ficarão' }} sem receita vinculada.
+        </p>
+      }
+      <p class="modal__text">Receitas já usadas em pedidos não podem ser excluídas.</p>
+    </app-confirm-dialog>
+  }
+</div>

@@ -1,10 +1,12 @@
 from django.db import models
 
 
-# Mantém saldo, custo, validade e nível mínimo de cada matéria-prima.
+# mantem saldo, custo, validade e nivel minimo de cada materia-prima
 class Ingrediente(models.Model):
     id_ingrediente = models.AutoField(primary_key=True)
     nome = models.CharField(max_length=100)
+    # unidade usada no saldo, no minimo e nas receitas (kg, L, un, lata...)
+    unidade_medida = models.CharField(max_length=20, default="un")
     quantidade_disponivel = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True
     )
@@ -18,4 +20,3 @@ class Ingrediente(models.Model):
 
     class Meta:
         db_table = "ingrediente"
-        managed = False

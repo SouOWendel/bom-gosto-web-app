@@ -12,6 +12,13 @@ class EstoqueSerializer(serializers.ModelSerializer):
         queryset=Produto.objects.all(),
         source="produto",
     )
+    produto_nome = serializers.CharField(source="produto.nome", read_only=True)
+    produto_preco_venda = serializers.DecimalField(
+        source="produto.preco_venda",
+        max_digits=10,
+        decimal_places=2,
+        read_only=True,
+    )
     vencido = serializers.SerializerMethodField()
     alerta_validade = serializers.SerializerMethodField()
 
@@ -20,13 +27,15 @@ class EstoqueSerializer(serializers.ModelSerializer):
         fields = (
             "id_estoque",
             "id_produto",
+            "produto_nome",
+            "produto_preco_venda",
             "quantidade_disponivel",
             "data_validade",
             "custo",
             "vencido",
             "alerta_validade",
         )
-        read_only_fields = ("id_estoque", "vencido")
+        read_only_fields = ("id_estoque", "vencido", "produto_nome", "produto_preco_venda")
 
     def validate_quantidade_disponivel(self, valor):
         if valor < 0:
@@ -61,7 +70,10 @@ class EstoqueSerializer(serializers.ModelSerializer):
             nivel = "preventivo"
         else:
             return None
-        return {"nivel": nivel, "dias_para_vencer": dias}
+        return {
+            "nivel": nivel,
+            "dias_para_vencer": dias,
+        }
 
 # Valida produto e quantidade recebidos na consulta de disponibilidade.
 class VerificarDisponibilidadeSerializer(serializers.Serializer):
@@ -69,8 +81,11 @@ class VerificarDisponibilidadeSerializer(serializers.Serializer):
         queryset=Produto.objects.all(),
         source="produto",
     )
-    quantidade = serializers.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        min_value=Decimal("0.01"),
-    )
+    quantidade = serializers.DecimalField(max_digits=10, decimal_places=2)
+
+    def validate_quantidade(self, valor):
+        if valor <= Decimal("0.00"):
+            raise serializers.ValidationError(
+                "A quantidade deve ser maior que zero."
+            )
+        return valor

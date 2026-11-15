@@ -1,9 +1,9 @@
 from django.db import models
 
 
-# Converte status legados para a etapa operacional equivalente ao ler pedidos antigos.
+# converte status legados para a etapa operacional equivalente ao ler pedidos antigos
 def status_operacional(status):
-    """Traduz status antigos em leitura, sem exigir alteração nos dados existentes."""
+    """traduz status antigos durante a leitura, sem alterar os dados existentes"""
     return {
         "pagamento_parcial": "em_producao",
         "pagamento_total": "pedido_feito",
@@ -14,12 +14,12 @@ def status_operacional(status):
 
 # models do fluxo de pedidos
 # migrations do Django criam e atualizam suas tabelas
-# `on_delete` define o comportamento ao excluir objetos pelo ORM
-# comandos SQL diretos seguem as regras de chave estrangeira definidas no banco
-# `CASCADE` propaga a exclusao pelo ORM
-# `PROTECT` impede excluir um objeto relacionado
-# `SET_NULL` limpa uma FK anulavel
-# Guarda nome e contato usados pelos pedidos externos.
+# on_delete define o comportamento ao excluir objetos pelo orm
+# comandos sql diretos seguem as regras de chave estrangeira definidas no banco
+# cascade propaga a exclusao pelo orm
+# protect impede excluir um objeto relacionado
+# set_null limpa uma chave estrangeira anulavel
+# guarda nome e contato usados pelos pedidos externos
 class Cliente(models.Model):
     id_cliente = models.AutoField(primary_key=True)
     nome = models.CharField(max_length=100)
@@ -30,7 +30,7 @@ class Cliente(models.Model):
         db_table = "cliente"
 
 
-# Registra o rendimento e o custo de referência de cada receita.
+# registra o rendimento e o custo de referencia de cada receita
 class Receita(models.Model):
     id_receita = models.AutoField(primary_key=True)
     nome = models.CharField(max_length=100)
@@ -45,7 +45,7 @@ class Receita(models.Model):
         db_table = "receita"
 
 
-# Representa um produto vendável e sua receita principal, quando houver.
+# representa um produto vendavel e sua receita principal, quando houver
 class Produto(models.Model):
     id_produto = models.AutoField(primary_key=True)
     receita = models.ForeignKey(
@@ -63,9 +63,9 @@ class Produto(models.Model):
         db_table = "produto"
 
 
-# Centraliza dados comerciais, entrega e status operacional do pedido.
+# centraliza dados comerciais, entrega e status operacional do pedido
 class Pedido(models.Model):
-    # choices centraliza valores aceitos pela aplicacao (nao cria constraints `CHECK` no banco)
+    # choices centraliza valores aceitos pela aplicacao e nao cria constraints check no banco
     class Tipo(models.TextChoices):
         INTERNO = "interno", "Interno"
         EXTERNO = "externo", "Externo"
@@ -110,7 +110,7 @@ class Pedido(models.Model):
         db_table = "pedido"
 
 
-# Guarda cada produto ou receita, quantidade e especificações incluídas no pedido.
+# guarda cada produto ou receita, quantidade e especificacoes incluidas no pedido
 class ItemPedido(models.Model):
     id_item_pedido = models.AutoField(primary_key=True)
     pedido = models.ForeignKey(
@@ -150,7 +150,7 @@ class ItemPedido(models.Model):
         db_table = "item_pedido"
 
 
-# Mapeia relações complementares entre receitas e produtos existentes no schema.
+# mapeia relacoes complementares entre receitas e produtos existentes no schema
 class ReceitaProduto(models.Model):
     id_receita_produto = models.AutoField(primary_key=True)
     receita = models.ForeignKey(Receita, on_delete=models.CASCADE, db_column="id_receita")
@@ -161,10 +161,15 @@ class ReceitaProduto(models.Model):
 
     class Meta:
         db_table = "receita_produto"
-        managed = False
+        constraints = [
+            models.UniqueConstraint(
+                fields=("receita", "produto"),
+                name="uq_receita_produto",
+            ),
+        ]
 
 
-# Registra o pedido cancelado, a data e o destino informado para o resultado.
+# registra o pedido cancelado, a data e o destino informado para o resultado
 class Cancelamento(models.Model):
     id_cancelamento = models.AutoField(primary_key=True)
     pedido = models.ForeignKey(Pedido, on_delete=models.PROTECT, db_column="pedido_id")
@@ -173,4 +178,3 @@ class Cancelamento(models.Model):
 
     class Meta:
         db_table = "cancelamento"
-        managed = False

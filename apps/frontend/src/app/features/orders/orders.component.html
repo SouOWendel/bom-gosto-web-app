@@ -1,0 +1,289 @@
+<div class="page">
+  <app-page-greeting
+    title="Pedidos e encomendas"
+    [subtitle]="ordersSubtitle()"
+    [actions]="greetingActions"
+    (actionClick)="handleGreetingAction($event)"
+  />
+
+  <app-metric-cards [items]="summaryCards()" />
+
+  @if (isCancelModalOpen()) {
+    <app-cancel-production-modal
+      [order]="selectedOrder()"
+      [apiError]="actionError()"
+      (closed)="closeCancelModal()"
+      (confirmed)="confirmOrderCancellation()"
+    />
+  }
+
+  @if (isCompleteModalOpen() && selectedOrder(); as order) {
+    <app-complete-production-modal
+      [order]="order"
+      [apiError]="actionError()"
+      (closed)="closeCompleteModal()"
+      (confirmed)="confirmOrderCompletion()"
+    />
+  }
+
+  @if (pendingStart(); as pending) {
+    <app-confirm-dialog
+      [title]="
+        pending.mode === 'producao'
+          ? 'Iniciar produção do pedido ' + pending.order.id + '?'
+          : 'Atender o pedido ' + pending.order.id + ' pelo estoque?'
+      "
+      [message]="
+        pending.mode === 'producao'
+          ? 'Não há produto pronto suficiente no estoque. O pedido passará para Em produção; os ingredientes só serão baixados ao concluir a produção.'
+          : 'Há produto pronto suficiente no estoque. Os lotes serão baixados agora e o pedido será concluído.'
+      "
+      [confirmLabel]="
+        pending.mode === 'producao' ? 'Iniciar produção' : 'Baixar estoque e concluir'
+      "
+      [busy]="operationInProgress()"
+      [error]="actionError()"
+      (closed)="closeStartDialog()"
+      (confirmed)="confirmStart()"
+    >
+      <div class="modal__section">
+        <h3 class="modal__section-title">Disponibilidade no estoque</h3>
+        <div class="data-table-frame">
+          <table class="data-table data-table--compact">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th class="is-numeric">Disponível / pedido</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of pending.analysis.estoque; track item.id_item_pedido) {
+                <tr>
+                  <td>{{ productName(item.produto_id) }}</td>
+                  <td class="is-numeric">
+                    <span
+                      class="badge"
+                      [class]="item.disponivel ? 'badge--success' : 'badge--danger'"
+                    >
+                      {{ formatQuantity(item.quantidade_disponivel) }} /
+                      {{ formatQuantity(item.quantidade_solicitada) }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+      @if (pending.mode === 'producao' && pending.analysis.ingredientes.length > 0) {
+        <div class="modal__section">
+          <h3 class="modal__section-title">Ingredientes previstos pela receita</h3>
+          <div class="data-table-frame">
+            <table class="data-table data-table--compact">
+              <thead>
+                <tr>
+                  <th>Ingrediente</th>
+                  <th class="is-numeric">Previsto</th>
+                  <th class="is-numeric">Disponível</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (
+                  ingredient of pending.analysis.ingredientes;
+                  track ingredient.id_ingrediente
+                ) {
+                  <tr>
+                    <td>{{ ingredient.nome }}</td>
+                    <td class="is-numeric">
+                      {{ formatQuantity(ingredient.necessario) }} {{ ingredient.unidade_medida }}
+                    </td>
+                    <td class="is-numeric">
+                      <span
+                        class="badge"
+                        [class]="ingredient.suficiente ? 'badge--success' : 'badge--danger'"
+                      >
+                        {{ formatQuantity(ingredient.disponivel) }} {{ ingredient.unidade_medida }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    </app-confirm-dialog>
+  }
+
+  @if (isCreateModalOpen()) {
+    <app-order-create-modal
+      [recipes]="recipes()"
+      [productsList]="products()"
+      [apiError]="createError()"
+      (closed)="closeCreateModal()"
+      (submitted)="createOrder($event)"
+    />
+  }
+
+  @if (isEditModalOpen() && selectedOrder(); as editTarget) {
+    <app-order-create-modal
+      [recipes]="recipes()"
+      [productsList]="products()"
+      [orderToEdit]="editTarget.apiOrder"
+      [apiError]="createError()"
+      (closed)="closeEditModal()"
+      (submitted)="handleOrderEdit($event)"
+    />
+  }
+
+  @if (createError()) {
+    <div class="alert alert--danger" role="alert">{{ createError() }}</div>
+  }
+  @if (pendingFinish(); as finishing) {
+    <app-confirm-dialog
+      [title]="
+        finishing.apiOrder.tipo === 'externo'
+          ? 'Entregar o pedido ' + finishing.id + ' pelo estoque?'
+          : 'Concluir a reposição ' + finishing.id + '?'
+      "
+      [message]="
+        finishing.apiOrder.tipo === 'externo'
+          ? 'Os lotes do produto pronto serão baixados agora e o pedido ficará como Concluído. Esta ação não pode ser desfeita.'
+          : 'O pedido interno ficará como Concluído; os lotes produzidos continuam no estoque. Esta ação não pode ser desfeita.'
+      "
+      [confirmLabel]="
+        finishing.apiOrder.tipo === 'externo' ? 'Baixar estoque e concluir' : 'Concluir pedido'
+      "
+      [busy]="operationInProgress()"
+      [error]="actionError()"
+      (closed)="closeFinishDialog()"
+      (confirmed)="confirmFinish()"
+    />
+  }
+
+  @if (actionError() && !pendingStart() && !pendingFinish()) {
+    <div class="alert alert--danger" role="alert">{{ actionError() }}</div>
+  }
+
+  <section class="panel" aria-label="Lista de pedidos">
+    <div class="panel__toolbar">
+      <div class="filter-tabs" role="tablist" aria-label="Filtrar por status">
+        @for (tab of statusTabs; track tab.value) {
+          <button
+            type="button"
+            role="tab"
+            class="filter-tab"
+            [class.is-active]="selectedStatus() === tab.value"
+            [attr.aria-selected]="selectedStatus() === tab.value"
+            (click)="setStatus(tab.value)"
+          >
+            {{ tab.label }}
+            <span class="filter-tab__count">{{ statusCounts()[tab.value] }}</span>
+          </button>
+        }
+      </div>
+      <label class="search-field orders-page__search">
+        <svg [lucideIcon]="'search'" [size]="16"></svg>
+        <input
+          type="search"
+          placeholder="Buscar por número, cliente ou item..."
+          aria-label="Buscar pedidos"
+          [value]="searchTerm()"
+          (input)="onSearch($any($event.target).value)"
+        />
+      </label>
+    </div>
+
+    <div class="data-table-wrap">
+      <table class="data-table orders-table">
+        <thead>
+          <tr>
+            <th>Pedido / entrega</th>
+            <th>Cliente</th>
+            <th>Itens</th>
+            <th class="is-numeric">Total</th>
+            <th>Status</th>
+            <th class="is-actions">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (order of paginatedOrders(); track order.id) {
+            <tr>
+              <td>
+                <strong class="data-table__primary orders-table__number">{{ order.id }}</strong>
+                <small class="data-table__secondary">{{ order.schedule }}</small>
+                <small class="data-table__secondary">{{ order.modality }}</small>
+              </td>
+              <td>
+                <strong class="data-table__primary">{{ order.customer }}</strong>
+                <small class="data-table__secondary">{{ order.phone }}</small>
+                <small class="data-table__secondary">{{ order.address }}</small>
+              </td>
+              <td class="orders-table__items">
+                <span class="data-table__primary">{{ order.item }}</span>
+              </td>
+              <td class="is-numeric">
+                <strong class="data-table__primary">{{ order.total }}</strong>
+                <small class="data-table__secondary">{{ order.payment }}</small>
+              </td>
+              <td>
+                <span class="badge badge--dot" [class]="statusBadge[order.status]">{{
+                  order.statusLabel
+                }}</span>
+                <small class="data-table__secondary">{{ order.detail }}</small>
+              </td>
+              <td class="is-actions">
+                @if (
+                  order.apiOrder.status !== 'concluido' && order.apiOrder.status !== 'cancelado'
+                ) {
+                  <div class="data-table__actions">
+                    <button
+                      type="button"
+                      class="btn-icon"
+                      aria-label="Editar pedido"
+                      title="Editar pedido"
+                      (click)="editOrder(order)"
+                    >
+                      <svg [lucideIcon]="'pencil'" [size]="15"></svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-icon"
+                      aria-label="Cancelar pedido"
+                      title="Cancelar pedido"
+                      (click)="cancelOrder(order)"
+                    >
+                      <svg [lucideIcon]="'ban'" [size]="15"></svg>
+                    </button>
+                    <app-button
+                      variant="primary"
+                      size="small"
+                      [disabled]="operationInProgress()"
+                      (click)="completeOrder(order)"
+                    >
+                      {{ order.action }}
+                    </app-button>
+                  </div>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="data-table__empty">
+                Nenhum pedido encontrado com os filtros selecionados.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-table-pagination
+      [total]="filteredOrders().length"
+      [pageSize]="pageSize"
+      [currentPage]="currentPage()"
+      itemLabel="pedidos"
+      (pageChange)="goToPage($event)"
+    />
+  </section>
+</div>

@@ -1,0 +1,99 @@
+import { Component, HostListener, effect, input, output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { LucideDynamicIcon, LucideX, provideLucideIcons } from '@lucide/angular';
+import { ButtonComponent } from '../button/button.component';
+import { InputTextComponent } from '../input-text/input-text.component';
+import { Ingredient } from '../../../core/models/api.model';
+import { parseDecimal } from '../../../core/utils/format';
+
+export interface IngredientCreationPayload {
+  nome: string;
+  unidade_medida: string;
+  quantidade_disponivel: string | null;
+  quantidade_minima: string | null;
+  data_validade: string | null;
+  custo_unitario: string | null;
+}
+
+@Component({
+  selector: 'app-ingredient-create-modal',
+  standalone: true,
+  imports: [FormsModule, ButtonComponent, InputTextComponent, LucideDynamicIcon],
+  providers: [provideLucideIcons(LucideX)],
+  templateUrl: './ingredient-create-modal.component.html',
+})
+export class IngredientCreateModalComponent {
+  readonly closed = output<void>();
+  readonly submitted = output<IngredientCreationPayload>();
+  readonly apiError = input<string | null>(null);
+  readonly ingredientToEdit = input<Ingredient | null>(null);
+
+  name = '';
+  unit = 'kg';
+  readonly unitOptions = ['kg', 'g', 'L', 'ml', 'un', 'lata', 'caixa', 'pacote'];
+  availableQuantity = '';
+  minimumQuantity = '';
+  expirationDate = '';
+  unitCost = '';
+  errorMessage = '';
+
+  constructor() {
+    effect(() => {
+      const ing = this.ingredientToEdit();
+      if (ing) {
+        this.populate(ing);
+      }
+    });
+  }
+
+  private populate(ing: Ingredient): void {
+    this.name = ing.nome ?? '';
+    this.unit = ing.unidade_medida || 'un';
+    this.availableQuantity =
+      ing.quantidade_disponivel !== null ? String(ing.quantidade_disponivel) : '';
+    this.minimumQuantity = ing.quantidade_minima !== null ? String(ing.quantidade_minima) : '';
+    this.expirationDate = ing.data_validade ?? '';
+    this.unitCost = ing.custo_unitario !== null ? String(ing.custo_unitario) : '';
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.close();
+  }
+
+  close(): void {
+    this.closed.emit();
+  }
+
+  submit(): void {
+    const name = this.name.trim();
+    if (!name) {
+      this.errorMessage = 'Informe o nome do insumo.';
+      return;
+    }
+
+    const values = [this.availableQuantity, this.minimumQuantity, this.unitCost];
+    if (values.some((value) => value.trim() && !this.isNonNegative(value))) {
+      this.errorMessage = 'Quantidade e custo devem ser números maiores ou iguais a zero.';
+      return;
+    }
+
+    this.submitted.emit({
+      nome: name,
+      unidade_medida: this.unit,
+      quantidade_disponivel: this.toDecimalOrNull(this.availableQuantity),
+      quantidade_minima: this.toDecimalOrNull(this.minimumQuantity),
+      data_validade: this.expirationDate || null,
+      custo_unitario: this.toDecimalOrNull(this.unitCost),
+    });
+  }
+
+  private isNonNegative(value: string): boolean {
+    const number = Number(this.toDecimalOrNull(value));
+    return Number.isFinite(number) && number >= 0;
+  }
+
+  private toDecimalOrNull(value: string): string | null {
+    return parseDecimal(value) || null;
+  }
+}

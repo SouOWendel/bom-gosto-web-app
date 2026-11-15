@@ -1,0 +1,30 @@
+<section class="page-greeting">
+  <div class="page-greeting__text">
+    <h1 class="page-greeting__title">
+      {{ title() }}
+    </h1>
+    @if (subtitle()) {
+      <p class="page-greeting__subtitle">
+        {{ subtitle() }}
+      </p>
+    }
+  </div>
+
+  @if (actions().length > 0) {
+    <div class="page-greeting__actions">
+      @for (action of actions(); track action.id ?? action.label) {
+        <!-- Com rota o app-button vira link; sem rota, o clique é tratado pela página. -->
+        <app-button
+          [route]="action.route ?? ''"
+          [variant]="action.variant ?? 'primary'"
+          (click)="onActionClick(action)"
+        >
+          @if (action.icon) {
+            <svg [lucideIcon]="action.icon" [size]="16" [strokeWidth]="2"></svg>
+          }
+          <span>{{ action.label }}</span>
+        </app-button>
+      }
+    </div>
+  }
+</section>

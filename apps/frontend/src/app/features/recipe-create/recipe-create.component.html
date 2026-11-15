@@ -1,0 +1,182 @@
+<div class="page">
+  <app-page-greeting
+    [title]="isEditing ? 'Editar receita' : 'Cadastrar receita'"
+    subtitle="Defina ingredientes, proporções e rendimento para padronizar a produção."
+    [actions]="greetingActions"
+  />
+
+  @if (errorMessage) {
+    <div class="alert alert--danger" role="alert">{{ errorMessage }}</div>
+  }
+
+  <form class="recipe-form" (ngSubmit)="saveRecipe()">
+    <section class="panel" aria-labelledby="identification-title">
+      <header class="panel__header">
+        <div>
+          <h2 id="identification-title" class="panel__title">Identificação</h2>
+          <p class="panel__subtitle">Campos com * são obrigatórios.</p>
+        </div>
+      </header>
+      <div class="panel__body recipe-form__grid">
+        <app-input-text
+          label="Nome da receita *"
+          inputId="recipe-name"
+          [(ngModel)]="recipeName"
+          name="recipeName"
+        />
+        <label class="form-field" for="recipe-product">
+          <span class="form-field__label">Produto associado</span>
+          <select id="recipe-product" class="form-control" [(ngModel)]="productId" name="productId">
+            <option [ngValue]="null">Sem produto associado</option>
+            @for (p of availableProducts; track p.id_produto) {
+              <option [ngValue]="p.id_produto">{{ p.nome }} (#{{ p.id_produto }})</option>
+            }
+          </select>
+        </label>
+        <app-input-text
+          label="Rendimento *"
+          inputId="recipe-yield"
+          type="number"
+          [(ngModel)]="yield"
+          name="yield"
+        />
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="ingredients-title">
+      <header class="panel__header">
+        <div>
+          <h2 id="ingredients-title" class="panel__title">Ingredientes e proporções</h2>
+          <p class="panel__subtitle">
+            Quantidades para uma receita, na mesma unidade cadastrada no inventário.
+          </p>
+        </div>
+        <app-button type="button" variant="outline" size="small" (click)="addIngredient()">
+          <svg [lucideIcon]="'plus'" [size]="14"></svg>
+          Adicionar ingrediente
+        </app-button>
+      </header>
+
+      <div class="data-table-wrap">
+        <table class="data-table recipe-form__table">
+          <thead>
+            <tr>
+              <th>Ingrediente do inventário *</th>
+              <th class="recipe-form__quantity">Quantidade *</th>
+              <th class="is-numeric">Custo unitário</th>
+              <th class="is-numeric">Custo</th>
+              <th class="is-actions"><span class="sr-only">Remover</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ingredient of ingredients; track $index) {
+              <tr>
+                <td>
+                  <select
+                    class="form-control form-control--compact"
+                    [(ngModel)]="ingredient.id"
+                    [name]="'ingredient-' + $index"
+                    aria-label="Ingrediente"
+                    (ngModelChange)="onIngredientSelected($index, $event)"
+                  >
+                    <option [ngValue]="null">Selecione um ingrediente</option>
+                    @for (available of availableIngredients; track available.id_ingrediente) {
+                      <option [ngValue]="available.id_ingrediente">
+                        {{ available.nome }} · INS-{{ available.id_ingrediente }}
+                      </option>
+                    }
+                  </select>
+                </td>
+                <td>
+                  <app-input-text
+                    label=""
+                    [inputId]="'quantity-' + $index"
+                    type="number"
+                    size="compact"
+                    [suffix]="ingredient.unit"
+                    [(ngModel)]="ingredient.quantity"
+                    [name]="'quantity-' + $index"
+                  />
+                </td>
+                <td class="is-numeric">
+                  {{ formatCurrency(ingredient.unitCost) }} / {{ ingredient.unit }}
+                </td>
+                <td class="is-numeric">
+                  <strong class="data-table__primary">{{
+                    formatCurrency((ingredient.quantity || 0) * ingredient.unitCost)
+                  }}</strong>
+                </td>
+                <td class="is-actions">
+                  <button
+                    type="button"
+                    class="btn-icon"
+                    aria-label="Remover ingrediente"
+                    title="Remover ingrediente"
+                    (click)="removeIngredient($index)"
+                  >
+                    <svg [lucideIcon]="'trash-2'" [size]="15"></svg>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="data-table__empty">
+                  Nenhum ingrediente adicionado. Use "Adicionar ingrediente".
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="preparation-title">
+      <header class="panel__header">
+        <div>
+          <h2 id="preparation-title" class="panel__title">Modo de preparo</h2>
+          <p class="panel__subtitle">Instruções para padronizar o lote.</p>
+        </div>
+      </header>
+      <div class="panel__body">
+        <label class="sr-only" for="preparation">Etapas de preparo</label>
+        <textarea
+          id="preparation"
+          class="form-control"
+          [(ngModel)]="preparation"
+          name="preparation"
+          rows="6"
+          placeholder="Descreva o passo a passo do preparo..."
+        ></textarea>
+      </div>
+    </section>
+
+    <div class="recipe-summary">
+      <div class="recipe-summary__item">
+        <span>Custo total da receita</span>
+        <strong>{{ formatCurrency(totalCost) }}</strong>
+        <small>Soma dos ingredientes do inventário</small>
+      </div>
+      <div class="recipe-summary__item">
+        <span>Rendimento</span>
+        <strong>{{ yieldValue }}</strong>
+        <small>Quantidade produzida por receita</small>
+      </div>
+      <div class="recipe-summary__item">
+        <span>Custo por unidade</span>
+        <strong>{{ formatCurrency(unitCost) }}</strong>
+        <small>Custo total ÷ rendimento</small>
+      </div>
+    </div>
+
+    <footer class="panel recipe-form__footer">
+      <span>Confira os ingredientes e o rendimento antes de salvar.</span>
+      <div class="recipe-form__actions">
+        <app-button type="button" variant="outline" (click)="cancel()">Cancelar</app-button>
+        <app-button type="submit" variant="primary" [disabled]="isSaving">
+          <svg [lucideIcon]="'check'" [size]="15"></svg>
+          Salvar receita
+        </app-button>
+      </div>
+    </footer>
+  </form>
+</div>

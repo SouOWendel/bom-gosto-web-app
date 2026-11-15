@@ -1,0 +1,16 @@
+// A estrutura visual vem de .modal e .data-table (styles.scss).
+.consumption-column {
+  width: 11rem;
+}
+
+.expiration-field {
+  display: flex;
+  max-width: 17rem;
+  flex-direction: column;
+  gap: var(--space-1);
+
+  small {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+  }
+}

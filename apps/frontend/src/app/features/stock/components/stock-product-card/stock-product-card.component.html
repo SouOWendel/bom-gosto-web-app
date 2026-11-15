@@ -1,0 +1,40 @@
+<article class="stock-card">
+  <div class="stock-card__image">
+    <img [src]="product().image" [alt]="product().name" />
+    <span class="badge badge--dot stock-card__status" [class]="statusBadge[product().status]">{{
+      product().statusLabel
+    }}</span>
+  </div>
+
+  <div class="stock-card__body">
+    <span class="stock-card__lot">Lote #{{ product().id }}</span>
+    <h2 class="stock-card__title">{{ product().name }}</h2>
+
+    <dl class="stock-card__facts">
+      <div>
+        <dt>Preço de venda</dt>
+        <dd class="stock-card__price">{{ product().salePrice }}</dd>
+      </div>
+      <div>
+        <dt>Custo do lote</dt>
+        <dd>{{ product().lotCost }}</dd>
+      </div>
+    </dl>
+
+    <div class="stock-card__meta">
+      <span>
+        <svg [lucideIcon]="'package'" [size]="14"></svg>
+        {{ product().quantity }} {{ product().unit }}
+      </span>
+      <span>
+        <svg [lucideIcon]="'calendar'" [size]="14"></svg>
+        {{ product().expiry }} · {{ product().expiryDetail }}
+      </span>
+    </div>
+
+    <app-button size="small" variant="outline" (click)="edit.emit()">
+      <svg [lucideIcon]="'pencil'" [size]="14"></svg>
+      Editar lote
+    </app-button>
+  </div>
+</article>

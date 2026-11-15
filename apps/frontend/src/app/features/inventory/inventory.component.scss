@@ -1,0 +1,48 @@
+// Layout, tabela, abas, busca, badges e legenda vêm dos estilos globais (styles.scss).
+.inventory-page__search {
+  max-width: 22rem;
+  margin-left: auto;
+}
+
+.inventory-page__legend-row {
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+  background: var(--color-surface-muted);
+}
+
+.inventory-page__table {
+  min-width: 56rem;
+}
+
+.inventory-page__table .badge + .data-table__secondary {
+  margin-top: var(--space-1);
+}
+
+// Barra de saldo em relação ao mínimo (metade = exatamente o mínimo).
+.level-bar {
+  display: block;
+  width: 4.5rem;
+  height: 0.3rem;
+  margin-top: var(--space-1);
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-border);
+
+  &__fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-dot-normal);
+  }
+
+  &--low &__fill {
+    background: var(--color-dot-atencao);
+  }
+}
+
+@media (max-width: 900px) {
+  .inventory-page__search {
+    max-width: none;
+    margin-left: 0;
+  }
+}

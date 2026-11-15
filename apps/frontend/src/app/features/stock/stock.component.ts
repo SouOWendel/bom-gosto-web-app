@@ -1,0 +1,205 @@
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { LucideDynamicIcon, LucidePlus, LucideSearch, provideLucideIcons } from '@lucide/angular';
+import { MetricCardsComponent } from '../../shared/components/metric-cards/metric-cards.component';
+import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
+import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
+import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
+import { StockProductCardComponent } from './components/stock-product-card/stock-product-card.component';
+import { StockProductCardItem } from './components/stock-product-card/stock-product-card.model';
+import { TablePaginationComponent } from '../../shared/components/table-pagination/table-pagination.component';
+import { StockLotEditModalComponent } from '../../shared/components/stock-lot-edit-modal/stock-lot-edit-modal.component';
+import { StockLot } from '../../core/models/api.model';
+import { DomainApiService } from '../../core/services/domain-api.service';
+import { apiErrorMessage } from '../../core/utils/api-error';
+import {
+  expiryText,
+  formatCurrency,
+  formatCurrencyOrUnavailable,
+  formatDate,
+  toNumber,
+} from '../../core/utils/format';
+
+@Component({
+  selector: 'app-stock',
+  standalone: true,
+  imports: [
+    LucideDynamicIcon,
+    PageGreetingComponent,
+    MetricCardsComponent,
+    StockProductCardComponent,
+    TablePaginationComponent,
+    StockLotEditModalComponent,
+  ],
+  providers: [provideLucideIcons(LucidePlus, LucideSearch)],
+  templateUrl: './stock.component.html',
+  styleUrls: ['./stock.component.scss'],
+})
+export class StockComponent implements OnInit {
+  private readonly domainApi = inject(DomainApiService);
+  readonly stockLots = signal<StockLot[]>([]);
+
+  readonly loadError = signal<string | null>(null);
+  readonly editingLot = signal<StockLot | null>(null);
+  readonly editError = signal<string | null>(null);
+  readonly saving = signal(false);
+
+  readonly greetingActions: PageAction[] = [
+    { label: 'Nova produção (Pedidos)', route: '/pedidos', icon: 'plus', variant: 'primary' },
+  ];
+
+  get summaryCards(): MetricCardItem[] {
+    const lots = this.stockLots();
+    const critical = lots.filter(
+      (lot) => lot.vencido || lot.alerta_validade?.nivel === 'critico',
+    ).length;
+    const attention = lots.filter((lot) => lot.alerta_validade?.nivel === 'atencao').length;
+    const preventive = lots.filter((lot) => lot.alerta_validade?.nivel === 'preventivo').length;
+    const totalCost = lots.reduce((total, lot) => total + toNumber(lot.custo), 0);
+
+    return [
+      {
+        label: 'Produtos armazenados',
+        value: `${lots.length} lotes`,
+        subtext: 'Lotes retornados pela API',
+        icon: 'package',
+        variant: 'destaque',
+      },
+      {
+        label: 'Custo total em estoque',
+        value: formatCurrency(totalCost),
+        subtext: 'Soma do custo informado por lote',
+        icon: 'banknote',
+        variant: 'neutro',
+      },
+      {
+        label: 'Alertas de validade',
+        value: `${critical + attention + preventive} lotes`,
+        subtext: `${critical} críticos • ${attention} atenção • ${preventive} preventivos`,
+        icon: 'calendar',
+        variant: 'alerta',
+      },
+    ];
+  }
+
+  readonly searchTerm = signal('');
+  readonly currentPage = signal(1);
+  readonly pageSize = 8;
+
+  readonly stockItems = computed<StockProductCardItem[]>(() =>
+    this.stockLots().map((lot) => this.toStockItem(lot)),
+  );
+
+  readonly filteredItems = computed(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    return this.stockItems().filter(
+      (item) => !term || item.name.toLowerCase().includes(term) || item.id.includes(term),
+    );
+  });
+  readonly paginatedItems = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredItems().slice(start, start + this.pageSize);
+  });
+  readonly totalPages = computed(() => Math.ceil(this.filteredItems().length / this.pageSize));
+
+  onSearch(value: string): void {
+    this.searchTerm.set(value);
+    this.currentPage.set(1);
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
+  }
+
+  openEdit(lotId: string): void {
+    this.editError.set(null);
+    this.editingLot.set(this.stockLots().find((lot) => String(lot.id_estoque) === lotId) ?? null);
+  }
+
+  closeEdit(): void {
+    if (!this.saving()) {
+      this.editingLot.set(null);
+    }
+  }
+
+  saveLot(lotId: number, payload: Partial<StockLot>): void {
+    this.saving.set(true);
+    this.editError.set(null);
+    this.domainApi.updateStockLot(lotId, payload).subscribe({
+      next: (updated) => {
+        this.saving.set(false);
+        this.editingLot.set(null);
+        this.stockLots.update((lots) =>
+          lots
+            .map((lot) => (lot.id_estoque === updated.id_estoque ? updated : lot))
+            .filter((lot) => toNumber(lot.quantidade_disponivel) > 0),
+        );
+      },
+      error: (error: unknown) => {
+        this.saving.set(false);
+        this.editError.set(`Não foi possível salvar o lote. ${apiErrorMessage(error)}`);
+      },
+    });
+  }
+
+  ngOnInit(): void {
+    this.domainApi.getStock().subscribe({
+      next: (lots) => {
+        // Lotes totalmente consumidos não têm o que vender; ficam fora da vitrine.
+        this.stockLots.set(lots.filter((lot) => toNumber(lot.quantidade_disponivel) > 0));
+        this.loadError.set(null);
+        this.currentPage.set(1);
+      },
+      error: (error: unknown) => {
+        const detail = apiErrorMessage(error);
+        this.loadError.set(detail);
+        console.error('Falha ao carregar os lotes de estoque.', error);
+      },
+    });
+  }
+
+  private toStockItem(lot: StockLot): StockProductCardItem {
+    const alertLevel = lot.alerta_validade?.nivel;
+    const isCritical = lot.vencido || alertLevel === 'critico';
+    const status = isCritical
+      ? 'critico'
+      : alertLevel === 'atencao'
+        ? 'atencao'
+        : alertLevel === 'preventivo'
+          ? 'preventivo'
+          : 'normal';
+    const productName = lot.produto_nome || `Produto #${lot.id_produto}`;
+
+    return {
+      id: String(lot.id_estoque),
+      name: productName,
+      quantity: toNumber(lot.quantidade_disponivel),
+      unit: 'un.',
+      salePrice: formatCurrencyOrUnavailable(lot.produto_preco_venda ?? null),
+      lotCost: formatCurrencyOrUnavailable(lot.custo),
+      expiry: formatDate(lot.data_validade),
+      expiryDetail: this.expiryDetail(lot),
+      status,
+      statusLabel: isCritical
+        ? 'Crítico'
+        : alertLevel === 'atencao'
+          ? 'Atenção'
+          : alertLevel === 'preventivo'
+            ? 'Preventivo'
+            : 'Sem alerta',
+      image: '/images/auth-cake.jpg',
+    };
+  }
+
+  private expiryDetail(lot: StockLot): string {
+    const alert = lot.alerta_validade;
+    if (lot.vencido && alert === null) {
+      return 'Vencido';
+    }
+    if (alert === null) {
+      return lot.data_validade === null ? 'Sem validade informada' : 'Sem alerta';
+    }
+    return expiryText(alert.dias_para_vencer);
+  }
+}

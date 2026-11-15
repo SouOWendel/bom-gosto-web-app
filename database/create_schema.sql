@@ -1,6 +1,5 @@
--- referencia do modelo fisico completo do projeto
--- migrations criam somente as tabelas representadas pelos models atuais
--- nao execute este arquivo no banco da aplicacao pois ele cria todas as tabelas fisicas, incluindo as que nao sao gerenciadas pelo Django
+-- referencia legada do modelo fisico, nao e executada pelo docker
+-- o schema ativo do mvp e criado e alterado pelas migrations do django
 BEGIN;
 
 
@@ -123,10 +122,11 @@ CREATE TABLE Receita_Produto (
     unidade_medida VARCHAR(20),
     custo_unitario DECIMAL(10,2),
     CONSTRAINT UQ_Receita_Produto UNIQUE (id_receita, id_produto),
+    -- remove o vinculo ao excluir a receita ou o produto relacionado
     CONSTRAINT FK_Receita_Produto_Receita
-        FOREIGN KEY (id_receita) REFERENCES Receita(id_receita),
+        FOREIGN KEY (id_receita) REFERENCES Receita(id_receita) ON DELETE CASCADE,
     CONSTRAINT FK_Receita_Produto_Produto
-        FOREIGN KEY (id_produto) REFERENCES Produto(id_produto)
+        FOREIGN KEY (id_produto) REFERENCES Produto(id_produto) ON DELETE CASCADE
 );
 
 CREATE TABLE Ingrediente_Receita (
@@ -135,8 +135,9 @@ CREATE TABLE Ingrediente_Receita (
     ingrediente_id        INT NOT NULL,
     quantidade_necessaria DECIMAL(10,2) NOT NULL,
     CONSTRAINT UQ_Ingrediente_Receita UNIQUE (ingrediente_id, receita_id),
+    -- remove os componentes ao excluir a receita
     CONSTRAINT FK_Ingrediente_Receita_Receita
-        FOREIGN KEY (receita_id) REFERENCES Receita(id_receita),
+        FOREIGN KEY (receita_id) REFERENCES Receita(id_receita) ON DELETE CASCADE,
     CONSTRAINT FK_Ingrediente_Receita_Ingrediente
         FOREIGN KEY (ingrediente_id) REFERENCES Ingrediente(id_ingrediente)
 );

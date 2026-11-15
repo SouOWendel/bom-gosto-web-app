@@ -1,0 +1,33 @@
+// Layout, tabela, abas, busca e badges vêm dos estilos globais (styles.scss).
+:host {
+  display: block;
+}
+
+.orders-page__search {
+  max-width: 22rem;
+  margin-left: auto;
+}
+
+.orders-table {
+  min-width: 62rem;
+}
+
+.orders-table__number {
+  color: var(--color-primary);
+  font-size: var(--text-md);
+}
+
+.orders-table__items {
+  max-width: 16rem;
+}
+
+.orders-table .badge + .data-table__secondary {
+  margin-top: var(--space-1);
+}
+
+@media (max-width: 900px) {
+  .orders-page__search {
+    max-width: none;
+    margin-left: 0;
+  }
+}

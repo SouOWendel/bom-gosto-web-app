@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from django.db.models import Q
 from django.http import Http404
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from rest_framework import serializers, status
 from rest_framework.test import APIClient
 
@@ -13,6 +13,7 @@ from pedido.models import Produto
 
 from .models import Estoque
 from .serializers import EstoqueSerializer
+from .services import baixar_lotes
 from .views import EstoqueViewSet
 
 # classe que testa a API do modulo Estoque, garantindo que as operacoes de CRUD funcionem corretamente e que as validacoes sejam aplicadas conforme esperado
@@ -234,3 +235,16 @@ class EstoqueManagerTests(SimpleTestCase):
         self.assertEqual(resultado["quantidade_disponivel"], Decimal("2.00"))
         self.assertFalse(resultado["disponivel"])
         self.assertTrue(resultado["encaminhar_para_producao"])
+
+
+# testa a baixa de lotes com banco real, conferindo o rateio do custo
+class BaixarLotesTests(TestCase):
+    def test_custo_do_lote_acompanha_a_quantidade_restante(self):
+        produto = Produto.objects.create(nome="Brigadeiro", preco_venda=Decimal("3.00"))
+        lote = Estoque.objects.create(produto=produto, quantidade_disponivel=Decimal("10.00"), custo=Decimal("20.00"))
+
+        baixar_lotes(produto.pk, Decimal("4"))
+
+        lote.refresh_from_db()
+        self.assertEqual(lote.quantidade_disponivel, Decimal("6.00"))
+        self.assertEqual(lote.custo, Decimal("12.00"))

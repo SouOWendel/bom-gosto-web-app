@@ -1,0 +1,120 @@
+<section class="panel agenda-panel" aria-label="Agenda de produção">
+  <header class="panel__header">
+    <div>
+      <h2 class="panel__title">Agenda de produção</h2>
+      <p class="panel__subtitle">
+        {{ pedidosFiltrados().length }} entrega(s) programada(s) para o dia
+        {{ getDiaDoMes(dataSelecionada()) }}
+      </p>
+    </div>
+  </header>
+
+  <div class="panel__toolbar">
+    <div class="filter-tabs" role="tablist" aria-label="Filtrar por categoria">
+      @for (aba of abas; track aba.valor) {
+        <button
+          type="button"
+          role="tab"
+          class="filter-tab"
+          [class.is-active]="filtroCategoria() === aba.valor"
+          [attr.aria-selected]="filtroCategoria() === aba.valor"
+          (click)="setFiltro(aba.valor)"
+        >
+          {{ aba.rotulo }}
+          <span class="filter-tab__count">{{ contadoresCategoria()[aba.valor] }}</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="agenda-list">
+    @if (pedidosFiltrados().length === 0) {
+      <div class="agenda-empty">
+        <svg [lucideIcon]="'package'" [size]="32" [strokeWidth]="1.5"></svg>
+        <h3>Nenhum pedido agendado</h3>
+        <p>Não há encomendas para o filtro ou a data selecionada.</p>
+        <app-button route="/pedidos" variant="primary" size="small">Cadastrar encomenda</app-button>
+      </div>
+    } @else {
+      @for (pedido of pedidosFiltrados(); track pedido.id) {
+        <article class="order-card">
+          <div class="order-card__top">
+            <div class="order-card__time">
+              <svg [lucideIcon]="'clock'" [size]="14" [strokeWidth]="2"></svg>
+              <strong>{{ pedido.horario }}</strong>
+              <span>· {{ pedido.modalidade }}</span>
+            </div>
+            <span class="badge badge--dot" [class]="statusBadge[pedido.status]">
+              {{ pedido.statusLabel }}
+            </span>
+          </div>
+
+          <div class="order-card__body">
+            <div
+              class="order-card__icon order-card__icon--{{ pedido.categoria }}"
+              aria-hidden="true"
+            >
+              <svg [lucideIcon]="iconeCategoria[pedido.categoria ?? 'bolo']" [size]="22"></svg>
+            </div>
+
+            <div class="order-card__details">
+              <h3 class="order-card__title">{{ pedido.titulo }}</h3>
+              @if (pedido.descricao) {
+                <p class="order-card__desc">{{ pedido.descricao }}</p>
+              }
+              <p class="order-card__client">
+                Cliente: <strong>{{ pedido.cliente }}</strong>
+              </p>
+
+              @if (pedido.endereco) {
+                <p class="order-card__address">
+                  <svg [lucideIcon]="'map-pin'" [size]="13" [strokeWidth]="2"></svg>
+                  {{ pedido.endereco }}
+                </p>
+              }
+
+              <p class="order-card__payment">
+                @if (pedido.status === 'pronto') {
+                  <span class="order-card__paid">
+                    <svg [lucideIcon]="'circle-check'" [size]="14" [strokeWidth]="2.5"></svg>
+                    Pago
+                  </span>
+                }
+                <strong>{{ pedido.pagamentoInfo }}</strong>
+              </p>
+            </div>
+          </div>
+
+          <div class="order-card__actions">
+            <!-- Sem telefone (ex.: reposição interna) não há com quem conversar. -->
+            @if (pedido.telefone) {
+              <app-button
+                variant="outline"
+                size="small"
+                ariaLabel="Conversar com o cliente no WhatsApp"
+                (click)="abrirWhatsApp(pedido.telefone, pedido.cliente)"
+              >
+                <svg [lucideIcon]="'phone'" [size]="14" [strokeWidth]="2"></svg>
+                WhatsApp
+              </app-button>
+            }
+            @if (pedido.status === 'pronto') {
+              <app-button route="/pedidos" variant="outline" size="small">
+                <svg [lucideIcon]="'file-text'" [size]="14" [strokeWidth]="2"></svg>
+                Ver pedido
+              </app-button>
+            } @else if (pedido.status === 'em_producao') {
+              <app-button variant="primary" size="small" (click)="avancarStatus(pedido)">
+                Concluir produção
+              </app-button>
+            } @else if (pedido.status === 'confirmado') {
+              <app-button variant="primary" size="small" (click)="avancarStatus(pedido)">
+                Iniciar produção
+              </app-button>
+            }
+          </div>
+        </article>
+      }
+    }
+  </div>
+</section>

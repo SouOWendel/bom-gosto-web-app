@@ -1,0 +1,114 @@
+.metric-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--columns, 2), minmax(0, 1fr));
+  gap: var(--space-4);
+
+  @media (max-width: 1000px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 420px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.metric-card {
+  position: relative;
+  display: flex;
+  min-height: 7.5rem;
+  overflow: hidden;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+
+  &__content {
+    display: flex;
+    width: 100%;
+    flex: 1;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  &__label {
+    display: block;
+    margin-bottom: var(--space-2);
+    color: var(--color-text-muted);
+    font-size: var(--text-2xs);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    line-height: 1.35;
+    text-transform: uppercase;
+  }
+
+  &__icon-wrap {
+    display: flex;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
+  }
+
+  &__body {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  &__value {
+    color: var(--color-text-strong);
+    font-size: 1.375rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  &__subtext {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+  }
+
+  // Cada variante só troca o acento (rótulo e ícone); fundo e borda continuam iguais
+  // para que os cartões tenham o mesmo peso visual em todas as telas.
+  &--destaque {
+    .metric-card__label {
+      color: var(--color-primary);
+    }
+  }
+
+  &--pedidos {
+    .metric-card__label {
+      color: var(--color-info);
+    }
+
+    .metric-card__icon-wrap {
+      background: var(--color-info-bg);
+      color: var(--color-info);
+    }
+  }
+
+  &--alerta {
+    .metric-card__label {
+      color: var(--color-warning);
+    }
+
+    .metric-card__icon-wrap {
+      background: var(--color-warning-bg);
+      color: var(--color-warning);
+    }
+  }
+
+  &--neutro {
+    .metric-card__icon-wrap {
+      background: var(--color-surface-muted);
+      color: var(--color-text-muted);
+    }
+  }
+}

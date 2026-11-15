@@ -5,8 +5,49 @@ from rest_framework import serializers
 
 from estoque.models import Estoque
 
-from .models import Cancelamento, Cliente, ItemPedido, Pedido, status_operacional
-from producao.services import analisar_pedido
+from .models import (
+    Cancelamento,
+    Cliente,
+    ItemPedido,
+    Pedido,
+    Produto,
+    ReceitaProduto,
+    status_operacional,
+)
+
+
+# Itens por receita precisam de um produto pronto para entrar no Estoque ao concluir.
+def receita_tem_produto(receita):
+    return (
+        receita.produtos.exists()
+        or ReceitaProduto.objects.filter(receita_id=receita.pk).exists()
+    )
+
+
+# Reaproveita o cliente com o mesmo telefone em vez de duplicar o cadastro.
+def _cliente_por_contato(nome, telefone):
+    cliente = Cliente.objects.filter(telefone=telefone).order_by("id_cliente").first()
+    if cliente is None:
+        return Cliente.objects.create(nome=nome, telefone=telefone)
+    if cliente.nome != nome:
+        cliente.nome = nome
+        cliente.save(update_fields=["nome"])
+    return cliente
+
+
+# Serializador para consulta e cadastro de produtos comercializados.
+class ProdutoSerializer(serializers.ModelSerializer):
+    receita_nome = serializers.CharField(source="receita.nome", read_only=True, allow_null=True)
+
+    class Meta:
+        model = Produto
+        fields = ("id_produto", "nome", "preco_venda", "receita", "receita_nome")
+        read_only_fields = ("id_produto", "receita_nome")
+
+    def validate_preco_venda(self, valor):
+        if valor < 0:
+            raise serializers.ValidationError("O preço de venda não pode ser negativo.")
+        return valor
 
 
 # Devolve os dados do registro de cancelamento para consulta pela API.
@@ -20,6 +61,8 @@ class CancelamentoRegistroSerializer(serializers.ModelSerializer):
 # Valida os dados de cada item e apresenta sua disponibilidade em Estoque.
 class ItemPedidoSerializer(serializers.ModelSerializer):
     verificacao_estoque = serializers.SerializerMethodField()
+    produto_nome = serializers.CharField(source="produto.nome", read_only=True, default=None)
+    receita_nome = serializers.CharField(source="receita.nome", read_only=True, default=None)
 
     class Meta:
         model = ItemPedido
@@ -34,13 +77,14 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
             "quantidade_peso",
             "decoracao",
             "verificacao_estoque",
+            "produto_nome",
+            "receita_nome",
         )
-        read_only_fields = ("id_item_pedido", "verificacao_estoque")
+        read_only_fields = ("id_item_pedido", "verificacao_estoque", "produto_nome", "receita_nome")
 
     # Confere o saldo do produto pronto e sinaliza quando o item precisa de Produção.
     def get_verificacao_estoque(self, item):
-        pedido_serializer = self.parent.parent
-        pedido = pedido_serializer.instance
+        pedido = item.pedido
         if (
             pedido is None
             or pedido.tipo != Pedido.Tipo.EXTERNO
@@ -85,6 +129,11 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
                 "Informe exatamente um: produto ou receita."
             )
 
+        if receita is not None and not receita_tem_produto(receita):
+            raise serializers.ValidationError(
+                {"receita": f"A receita {receita.nome} não tem produto vinculado; vincule-a a um produto em Produtos."}
+            )
+
         quantidade = attrs.get("quantidade")
         if quantidade is not None and quantidade <= 0:
             raise serializers.ValidationError(
@@ -116,18 +165,23 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
         return attrs
 
 
-# Valida e grava pedidos com seus itens, contato e análise operacional integrada.
+# Valida e grava pedidos com seus itens e contato.
+# A análise de produção fica em /producao/pedidos/<id>/validar/: calculá-la aqui
+# pesava cada listagem e, se falhasse, devolvia erro com o pedido já gravado.
 class PedidoSerializer(serializers.ModelSerializer):
     itens = ItemPedidoSerializer(many=True, required=False)
     contato_nome = serializers.CharField(write_only=True, required=False, allow_blank=False, max_length=100)
     contato_telefone = serializers.CharField(write_only=True, required=False, allow_blank=False, max_length=20)
-    analise = serializers.SerializerMethodField()
+    cliente_nome = serializers.CharField(source="cliente.nome", read_only=True, default=None)
+    cliente_telefone = serializers.CharField(source="cliente.telefone", read_only=True, default=None)
 
     class Meta:
         model = Pedido
         fields = (
             "id_pedido",
             "cliente",
+            "cliente_nome",
+            "cliente_telefone",
             "tipo",
             "subtipo",
             "status",
@@ -138,11 +192,10 @@ class PedidoSerializer(serializers.ModelSerializer):
             "endereco_entrega",
             "forma_pagamento",
             "itens",
-            "analise",
             "contato_nome",
             "contato_telefone",
         )
-        read_only_fields = ("id_pedido", "status", "analise")
+        read_only_fields = ("id_pedido", "status", "cliente_nome", "cliente_telefone")
 
     # Aplica as regras de tipo, contato, subtipo, itens e valores do pedido.
     def validate(self, attrs):
@@ -243,17 +296,13 @@ class PedidoSerializer(serializers.ModelSerializer):
 
         return attrs
 
-    # Reúne disponibilidade, receitas aplicáveis e faltas no Inventário.
-    def get_analise(self, pedido):
-        return analisar_pedido(pedido)
-
     # Cria o pedido e seus itens dentro de uma única transação.
     @transaction.atomic
     def create(self, validated_data):
         nome = validated_data.pop("contato_nome", None)
         telefone = validated_data.pop("contato_telefone", None)
         if not validated_data.get("cliente") and nome and telefone:
-            validated_data["cliente"] = Cliente.objects.create(nome=nome, telefone=telefone)
+            validated_data["cliente"] = _cliente_por_contato(nome, telefone)
         itens_data = validated_data.pop("itens", [])
         pedido = Pedido.objects.create(**validated_data)
 
@@ -268,7 +317,10 @@ class PedidoSerializer(serializers.ModelSerializer):
         nome = validated_data.pop("contato_nome", None)
         telefone = validated_data.pop("contato_telefone", None)
         if not validated_data.get("cliente") and nome and telefone:
-            validated_data["cliente"] = Cliente.objects.create(nome=nome, telefone=telefone)
+            validated_data["cliente"] = _cliente_por_contato(nome, telefone)
+        # Reposição interna não tem cliente (RN18): ao virar interno, solta o vínculo.
+        if validated_data.get("tipo", instance.tipo) == Pedido.Tipo.INTERNO:
+            validated_data["cliente"] = None
         itens_data = validated_data.pop("itens", None)
 
         for campo, valor in validated_data.items():

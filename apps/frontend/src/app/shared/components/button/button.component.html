@@ -1,0 +1,35 @@
+<!-- O conteúdo é projetado uma única vez e reaproveitado nos dois ramos (link ou botão). -->
+<ng-template #content><ng-content /></ng-template>
+
+@if (route) {
+  <a
+    [routerLink]="route"
+    class="button"
+    [class.button--primary]="variant === 'primary'"
+    [class.button--secondary]="variant === 'secondary'"
+    [class.button--outline]="variant === 'outline'"
+    [class.button--danger]="variant === 'danger'"
+    [class.button--ghost]="variant === 'ghost'"
+    [class.button--small]="size === 'small'"
+    [class.button--block]="block"
+    [attr.aria-label]="ariaLabel || null"
+  >
+    <ng-container [ngTemplateOutlet]="content" />
+  </a>
+} @else {
+  <button
+    [type]="type"
+    [disabled]="disabled"
+    [attr.aria-label]="ariaLabel || null"
+    class="button"
+    [class.button--primary]="variant === 'primary'"
+    [class.button--secondary]="variant === 'secondary'"
+    [class.button--outline]="variant === 'outline'"
+    [class.button--danger]="variant === 'danger'"
+    [class.button--ghost]="variant === 'ghost'"
+    [class.button--small]="size === 'small'"
+    [class.button--block]="block"
+  >
+    <ng-container [ngTemplateOutlet]="content" />
+  </button>
+}

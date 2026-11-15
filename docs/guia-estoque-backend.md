@@ -16,4 +16,4 @@ Cada lote inclui `vencido` e `alerta_validade`. O nível é `critico` quando est
 - Pedido cancelado: `POST /api/pedido/{pedido_id}/cancelar/` pode registrar o descarte ou criar produto e lote reaproveitado.
 - Produto pronto consumido: `POST /api/pedido/{pedido_id}/consumir-estoque/` dá baixa nos lotes por ordem de validade e marca o pedido como concluído.
 
-As movimentações usam os registros atuais do schema. Não execute o script de criação do schema contra um banco existente e não remova o volume PostgreSQL para atualizar o backend.
+As movimentações usam as tabelas ativas do MVP, criadas e controladas pelas migrations Django (11 tabelas no total). O Compose não executa `database/create_schema.sql`. Este último é apenas uma referência legada e não deve ser executado no banco da aplicação. Não remova o volume PostgreSQL para atualizar o backend.

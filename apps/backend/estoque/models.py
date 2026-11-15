@@ -4,7 +4,7 @@ from django.db import models
 from django.db.models import Q, Sum
 from django.utils import timezone
 
-# Soma lotes dentro da validade e indica se a quantidade atende ao pedido.
+# soma lotes dentro da validade e indica se a quantidade atende ao pedido
 class EstoqueManager(models.Manager):
     def verificar_disponibilidade(self, produto_id, quantidade):
         hoje = timezone.localdate()
@@ -23,7 +23,7 @@ class EstoqueManager(models.Manager):
             "encaminhar_para_producao": not disponivel,
         }
 
-# Representa um lote de produto pronto com quantidade, validade e custo.
+# representa um lote de produto pronto com quantidade, validade e custo
 class Estoque(models.Model):
     id_estoque = models.AutoField(primary_key=True)
     produto = models.ForeignKey(
@@ -49,4 +49,3 @@ class Estoque(models.Model):
 
     class Meta:
         db_table = "estoque"
-        managed = False

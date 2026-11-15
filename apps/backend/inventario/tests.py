@@ -6,14 +6,17 @@ from unittest.mock import patch
 from django.http import Http404
 from django.test import SimpleTestCase
 from rest_framework import status
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, APITestCase
+
+from pedido.models import Receita
+from producao.models import IngredienteReceita
 
 from .models import Ingrediente
 from .serializers import IngredienteSerializer
 from .views import IngredienteViewSet
 
 # classe que testaa a API do modulo Inventario, garantindo que as operacoes de CRUD funcionem corretamente e que as validacoes sejam aplicadas conforme esperado
-class IngredienteApiTests(SimpleTestCase):
+class IngredienteApiTests(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.client.force_authenticate(
@@ -119,6 +122,48 @@ class IngredienteApiTests(SimpleTestCase):
         self.assertFalse(serializer.is_valid())
         self.assertIn("quantidade_disponivel", serializer.errors)
 
+    def test_movimenta_entrada_e_saida_sem_permitir_saldo_negativo(self):
+        ingrediente = Ingrediente(
+            id_ingrediente=1,
+            nome="Farinha",
+            quantidade_disponivel=Decimal("4.00"),
+        )
+
+        with patch.object(IngredienteViewSet, "get_object", return_value=ingrediente):
+            with patch.object(ingrediente, "save") as salvar:
+                entrada = self.client.post(
+                    "/api/inventario/ingrediente/1/movimentar/",
+                    {
+                        "tipo": "entrada",
+                        "quantidade": "2.50",
+                        "custo_unitario": "3.25",
+                        "data_validade": "2027-01-31",
+                    },
+                    format="json",
+                )
+                self.assertEqual(entrada.status_code, status.HTTP_200_OK)
+                self.assertEqual(ingrediente.quantidade_disponivel, Decimal("6.50"))
+                self.assertEqual(ingrediente.custo_unitario, Decimal("3.25"))
+                self.assertEqual(ingrediente.data_validade, date(2027, 1, 31))
+
+                saida = self.client.post(
+                    "/api/inventario/ingrediente/1/movimentar/",
+                    {"tipo": "saida", "quantidade": "1.50"},
+                    format="json",
+                )
+                self.assertEqual(saida.status_code, status.HTTP_200_OK)
+                self.assertEqual(ingrediente.quantidade_disponivel, Decimal("5.00"))
+                self.assertGreaterEqual(salvar.call_count, 2)
+
+                negativa = self.client.post(
+                    "/api/inventario/ingrediente/1/movimentar/",
+                    {"tipo": "saida", "quantidade": "6.00"},
+                    format="json",
+                )
+
+        self.assertEqual(negativa.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("quantidade", negativa.data)
+
     def test_classifica_alertas_de_validade(self):
         serializer = IngredienteSerializer()
         hoje = date(2026, 1, 1)
@@ -134,11 +179,22 @@ class IngredienteApiTests(SimpleTestCase):
 
         self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND)
 
-    # testa que a API nao permite a exclusao de ingredientes, retornando um status 405 Method Not Allowed, garantindo que a operação de DELETE nao esteja habilitada para o endpoint de ingredientes
-    def test_nao_disponibiliza_exclusao(self):
-        resposta = self.client.delete("/api/inventario/ingrediente/1/")
+    # exclui ingredientes fora de receitas e recusa com 400 os que estao na composicao de alguma receita
+    def test_exclui_somente_ingrediente_fora_de_receitas(self):
+        livre = Ingrediente.objects.create(nome="Fermento")
+        em_uso = Ingrediente.objects.create(nome="Farinha")
+        receita = Receita.objects.create(nome="Massa", rendimento_quantidade=Decimal("1"))
+        IngredienteReceita.objects.create(
+            receita=receita, ingrediente=em_uso, quantidade_necessaria=Decimal("1")
+        )
 
-        self.assertEqual(resposta.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        resposta = self.client.delete(f"/api/inventario/ingrediente/{livre.pk}/")
+        self.assertEqual(resposta.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Ingrediente.objects.filter(pk=livre.pk).exists())
+
+        resposta = self.client.delete(f"/api/inventario/ingrediente/{em_uso.pk}/")
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(Ingrediente.objects.filter(pk=em_uso.pk).exists())
 
     # testa que a API exige que o usuario troque a senha inicial no primeiro acesso, retornando um status 403 Forbidden, garantindo que a politica de seguranca para novos usuarios seja aplicada corretamente
     def test_exige_troca_da_senha_inicial(self):

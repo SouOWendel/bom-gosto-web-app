@@ -1,0 +1,82 @@
+// Layout, painéis, tabela e controles vêm dos estilos globais (styles.scss).
+.recipe-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+
+  &__grid {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: 1.4fr 1.4fr 0.8fr;
+  }
+
+  &__table {
+    min-width: 44rem;
+  }
+
+  &__quantity {
+    width: 10rem;
+  }
+
+  &__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+
+    > span {
+      color: var(--color-text-muted);
+      font-size: var(--text-xs);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    gap: var(--space-2);
+  }
+}
+
+.recipe-summary {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+
+    span {
+      color: var(--color-text-muted);
+      font-size: var(--text-2xs);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    strong {
+      color: var(--color-text-strong);
+      font-size: 1.375rem;
+      font-weight: 800;
+    }
+
+    small {
+      color: var(--color-text-muted);
+      font-size: var(--text-xs);
+    }
+  }
+}
+
+@media (max-width: 800px) {
+  .recipe-form__grid,
+  .recipe-summary {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,99 @@
+<div class="modal-backdrop" role="presentation" (click)="close()">
+  <section
+    class="modal modal--lg"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="complete-production-modal-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="modal__header">
+      <span class="modal__icon" aria-hidden="true">
+        <svg [lucideIcon]="'check'" [size]="18"></svg>
+      </span>
+      <div class="modal__heading">
+        <p class="modal__eyebrow">Produção · pedido {{ order().id }}</p>
+        <h2 id="complete-production-modal-title" class="modal__title">
+          Confirmar conclusão da produção
+        </h2>
+        <p class="modal__subtitle">
+          Informe o consumo real de cada ingrediente. A baixa no inventário e a entrada no estoque
+          acontecem só depois desta confirmação.
+        </p>
+      </div>
+      <button type="button" class="modal__close" aria-label="Fechar" (click)="close()">
+        <svg [lucideIcon]="'x'" [size]="18"></svg>
+      </button>
+    </header>
+
+    <div class="modal__body">
+      <section class="modal__section">
+        <h3 class="modal__section-title">
+          Ajuste de consumo ({{ ingredients.length }} ingredientes)
+        </h3>
+        <div class="data-table-frame">
+          <table class="data-table data-table--compact">
+            <thead>
+              <tr>
+                <th>Ingrediente</th>
+                <th class="is-numeric">Previsto</th>
+                <th class="consumption-column">Consumo real</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (ingredient of ingredients; track ingredient.id) {
+                <tr>
+                  <td>
+                    <strong class="data-table__primary">{{ ingredient.name }}</strong>
+                    <small class="data-table__secondary">{{ ingredient.lot }}</small>
+                  </td>
+                  <td class="is-numeric">
+                    {{ ingredient.theoreticalLabel }} {{ ingredient.unit }}
+                  </td>
+                  <td>
+                    <app-input-text
+                      label=""
+                      [inputId]="'consumption-' + ingredient.id"
+                      type="number"
+                      [suffix]="ingredient.unit"
+                      size="compact"
+                      [placeholder]="ingredient.theoreticalQuantity"
+                      [(ngModel)]="ingredient.quantity"
+                    />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="modal__section">
+        <div class="expiration-field">
+          <app-input-text
+            label="Validade do lote produzido *"
+            inputId="production-expiration"
+            type="date"
+            icon="calendar"
+            [(ngModel)]="expirationDate"
+          />
+          <small>Esta data será vinculada ao novo lote no estoque.</small>
+        </div>
+      </section>
+    </div>
+
+    <footer class="modal__footer">
+      @if (apiError() || errorMessage) {
+        <p class="modal__error" role="alert">{{ apiError() || errorMessage }}</p>
+      } @else {
+        <span class="modal__footer-note">Os saldos serão atualizados após a confirmação.</span>
+      }
+      <div class="modal__actions">
+        <app-button variant="outline" (click)="close()">Voltar</app-button>
+        <app-button variant="primary" [disabled]="!expirationDate" (click)="confirm()">
+          <svg [lucideIcon]="'check'" [size]="15"></svg>
+          Confirmar baixa e enviar ao estoque
+        </app-button>
+      </div>
+    </footer>
+  </section>
+</div>
