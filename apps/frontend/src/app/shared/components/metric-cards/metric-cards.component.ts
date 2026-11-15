@@ -1,5 +1,4 @@
 import { Component, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
   LucideDynamicIcon,
   provideLucideIcons,
@@ -7,7 +6,6 @@ import {
   LucideCalendar,
   LucideReceipt,
   LucideTrendingUp,
-  LucideTrendingDown,
   LucidePackage,
   LucideCircleAlert,
   LucideShoppingBag,
@@ -17,14 +15,13 @@ import { MetricCardItem } from './metric-cards.model';
 @Component({
   selector: 'app-metric-cards',
   standalone: true,
-  imports: [CommonModule, LucideDynamicIcon],
+  imports: [LucideDynamicIcon],
   providers: [
     provideLucideIcons(
       LucideBanknote,
       LucideCalendar,
       LucideReceipt,
       LucideTrendingUp,
-      LucideTrendingDown,
       LucidePackage,
       LucideCircleAlert,
       LucideShoppingBag,

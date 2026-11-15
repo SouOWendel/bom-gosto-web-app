@@ -27,7 +27,7 @@
       </button>
     </header>
 
-    <form class="order-modal__form" (ngSubmit)="submit()">
+    <form class="modal__form" (ngSubmit)="submit()">
       <div class="modal__body">
         <section class="modal__section">
           <h3 class="modal__section-title">Tipo do pedido</h3>
@@ -134,7 +134,7 @@
                 >
                   <option [ngValue]="null">Selecione</option>
                   @if (item.kind === 'receita') {
-                    @for (recipe of recipes(); track recipe.id_receita) {
+                    @for (recipe of orderableRecipes; track recipe.id_receita) {
                       <option [ngValue]="recipe.id_receita">{{ recipe.nome }}</option>
                     }
                   } @else {

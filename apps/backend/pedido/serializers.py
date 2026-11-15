@@ -5,7 +5,23 @@ from rest_framework import serializers
 
 from estoque.models import Estoque
 
-from .models import Cancelamento, Cliente, ItemPedido, Pedido, Produto, status_operacional
+from .models import (
+    Cancelamento,
+    Cliente,
+    ItemPedido,
+    Pedido,
+    Produto,
+    ReceitaProduto,
+    status_operacional,
+)
+
+
+# Itens por receita precisam de um produto pronto para entrar no Estoque ao concluir.
+def receita_tem_produto(receita):
+    return (
+        receita.produtos.exists()
+        or ReceitaProduto.objects.filter(receita_id=receita.pk).exists()
+    )
 
 
 # Reaproveita o cliente com o mesmo telefone em vez de duplicar o cadastro.
@@ -111,6 +127,11 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
         if (produto is None) == (receita is None):
             raise serializers.ValidationError(
                 "Informe exatamente um: produto ou receita."
+            )
+
+        if receita is not None and not receita_tem_produto(receita):
+            raise serializers.ValidationError(
+                {"receita": f"A receita {receita.nome} não tem produto vinculado; vincule-a a um produto em Produtos."}
             )
 
         quantidade = attrs.get("quantidade")

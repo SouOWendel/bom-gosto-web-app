@@ -1,5 +1,4 @@
-import { CommonModule } from '@angular/common';
-import { Component, effect, input, OnInit, output } from '@angular/core';
+import { Component, HostListener, effect, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   LucideDynamicIcon,
@@ -17,6 +16,7 @@ import {
 } from '../../../core/models/api.model';
 import { ButtonComponent } from '../button/button.component';
 import { InputTextComponent } from '../input-text/input-text.component';
+import { formatCurrency, parseDecimal, toDisplayDecimal } from '../../../core/utils/format';
 
 interface OrderItemForm {
   kind: 'produto' | 'receita';
@@ -34,12 +34,12 @@ interface OrderItemForm {
 @Component({
   selector: 'app-order-create-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, InputTextComponent, LucideDynamicIcon],
+  imports: [FormsModule, ButtonComponent, InputTextComponent, LucideDynamicIcon],
   providers: [provideLucideIcons(LucidePlus, LucideTrash2, LucideX)],
   templateUrl: './order-create-modal.component.html',
   styleUrls: ['./order-create-modal.component.scss'],
 })
-export class OrderCreateModalComponent implements OnInit {
+export class OrderCreateModalComponent {
   readonly recipes = input<Recipe[]>([]);
   readonly productsList = input<Product[]>([]);
   readonly orderToEdit = input<Order | null>(null);
@@ -69,13 +69,6 @@ export class OrderCreateModalComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    const order = this.orderToEdit();
-    if (order) {
-      this.populate(order);
-    }
-  }
-
   private populate(order: Order): void {
     this.tipo = order.tipo;
     this.subtipo = order.subtipo ?? 'personalizado';
@@ -95,7 +88,7 @@ export class OrderCreateModalComponent implements OnInit {
           kind: item.produto ? 'produto' : 'receita',
           referenceId: item.produto ?? item.receita ?? null,
           quantity: item.quantidade == null ? '' : String(item.quantidade),
-          weight: item.quantidade_peso ? this.toDisplayDecimal(item.quantidade_peso) : '',
+          weight: item.quantidade_peso ? toDisplayDecimal(item.quantidade_peso) : '',
           unitPrice: String(item.preco_unitario ?? ''),
           filling: item.recheio ?? '',
           decoration: item.decoracao ?? '',
@@ -103,6 +96,34 @@ export class OrderCreateModalComponent implements OnInit {
         };
       });
     }
+  }
+
+  // Receitas que têm produto pronto (pela ficha do produto ou pela relação receita-produto).
+  // Sem produto, a produção não consegue ser concluída, então elas não aparecem para novos itens.
+  private get recipeIdsWithProduct(): Set<number> {
+    const ids = new Set<number>();
+    for (const product of this.productsList()) {
+      if (product.receita !== null) {
+        ids.add(product.receita);
+      }
+    }
+    for (const recipe of this.recipes()) {
+      if ((recipe.produtos ?? []).length > 0) {
+        ids.add(recipe.id_receita);
+      }
+    }
+    return ids;
+  }
+
+  // Mantém visível a receita já escolhida em um pedido antigo, para a validação explicar o problema.
+  get orderableRecipes(): Recipe[] {
+    const withProduct = this.recipeIdsWithProduct;
+    const selected = new Set(
+      this.items.filter((item) => item.kind === 'receita').map((item) => item.referenceId),
+    );
+    return this.recipes().filter(
+      (recipe) => withProduct.has(recipe.id_receita) || selected.has(recipe.id_receita),
+    );
   }
 
   get products(): Array<{ id: number; label: string }> {
@@ -125,15 +146,15 @@ export class OrderCreateModalComponent implements OnInit {
   // Soma preço x peso (quando informado) ou preço x quantidade de cada item.
   get itemsTotal(): number {
     return this.items.reduce((sum, item) => {
-      const price = Number(this.toDecimal(item.unitPrice)) || 0;
-      const weight = Number(this.toDecimal(item.weight)) || 0;
+      const price = Number(parseDecimal(item.unitPrice)) || 0;
+      const weight = Number(parseDecimal(item.weight)) || 0;
       const quantity = Number(item.quantity) || 0;
       return sum + price * (weight > 0 ? weight : quantity);
     }, 0);
   }
 
   get totalDiffersFromItems(): boolean {
-    const total = Number(this.toDecimal(this.total));
+    const total = Number(parseDecimal(this.total));
     return (
       Number.isFinite(total) &&
       this.total.trim() !== '' &&
@@ -141,9 +162,7 @@ export class OrderCreateModalComponent implements OnInit {
     );
   }
 
-  formatCurrency(value: number): string {
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  }
+  readonly formatCurrency = formatCurrency;
 
   useItemsTotal(): void {
     this.total = this.itemsTotal.toFixed(2).replace('.', ',');
@@ -158,6 +177,11 @@ export class OrderCreateModalComponent implements OnInit {
       return;
     }
     this.items = this.items.filter((_, itemIndex) => itemIndex !== index);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.close();
   }
 
   close(): void {
@@ -176,8 +200,8 @@ export class OrderCreateModalComponent implements OnInit {
       subtipo: this.tipo === 'externo' ? this.subtipo : null,
       data_entrega: this.deliveryDate || null,
       horario_entrega: this.deliveryTime || null,
-      valor_total: this.toDecimal(this.total),
-      valor_sinal: this.toDecimal(this.deposit),
+      valor_total: parseDecimal(this.total),
+      valor_sinal: parseDecimal(this.deposit),
       endereco_entrega: this.address.trim() || null,
       forma_pagamento: this.paymentMethod || null,
       itens: this.items.map((item) => this.toApiItem(item)),
@@ -206,14 +230,14 @@ export class OrderCreateModalComponent implements OnInit {
 
   private toApiItem(item: OrderItemForm): OrderCreationItem {
     const apiItem: OrderCreationItem = {
-      preco_unitario: this.toDecimal(item.unitPrice),
+      preco_unitario: parseDecimal(item.unitPrice),
     };
     apiItem[item.kind] = item.referenceId as number;
     if (item.quantity.trim()) {
       apiItem.quantidade = Number(item.quantity.trim());
     }
     if (item.weight.trim()) {
-      apiItem.quantidade_peso = this.toDecimal(item.weight);
+      apiItem.quantidade_peso = parseDecimal(item.weight);
     }
     apiItem.recheio = item.filling.trim() || null;
     apiItem.decoracao = item.decoration.trim() || null;
@@ -240,9 +264,22 @@ export class OrderCreateModalComponent implements OnInit {
     if (this.items.some((item) => item.referenceId === null)) {
       return 'Selecione a receita ou o produto de cada item.';
     }
+    const withProduct = this.recipeIdsWithProduct;
+    const recipeWithoutProduct = this.items.find(
+      (item) =>
+        item.kind === 'receita' &&
+        item.referenceId !== null &&
+        !withProduct.has(item.referenceId),
+    );
+    if (recipeWithoutProduct) {
+      const name =
+        this.recipes().find((recipe) => recipe.id_receita === recipeWithoutProduct.referenceId)
+          ?.nome ?? 'escolhida';
+      return `A receita ${name} não tem produto vinculado; vincule-a a um produto em Produtos.`;
+    }
     for (const item of this.items) {
       const quantity = item.quantity.trim();
-      const weight = this.toDecimal(item.weight);
+      const weight = parseDecimal(item.weight);
       if (!quantity && !weight) {
         return 'Informe a quantidade ou o peso de cada item.';
       }
@@ -258,37 +295,25 @@ export class OrderCreateModalComponent implements OnInit {
     }
     if (
       this.items.some((item) => {
-        const price = Number(this.toDecimal(item.unitPrice));
+        const price = Number(parseDecimal(item.unitPrice));
         return !Number.isFinite(price) || price < 0;
       })
     ) {
       return 'Informe um preço unitário válido para cada item.';
     }
-    const total = Number(this.toDecimal(this.total));
-    const deposit = Number(this.toDecimal(this.deposit));
+    const total = Number(parseDecimal(this.total));
+    const deposit = Number(parseDecimal(this.deposit));
     if (!Number.isFinite(total) || total < 0) {
       return 'Informe um valor total válido.';
     }
     if (!Number.isFinite(deposit) || deposit < 0 || deposit > total) {
       return 'O sinal deve estar entre zero e o valor total.';
     }
-    if (this.tipo === 'externo' && deposit !== 0 && Math.abs(deposit - total / 2) > 0.001) {
-      return 'Para pedidos externos, o sinal deve ser zero ou metade do total.';
+    // Mesmo arredondamento do backend: metade do total em centavos, arredondada para cima.
+    const halfInCents = Math.ceil(Math.round(total * 100) / 2);
+    if (this.tipo === 'externo' && deposit !== 0 && Math.round(deposit * 100) !== halfInCents) {
+      return `Para pedidos externos, o sinal deve ser zero ou metade do total (${formatCurrency(halfInCents / 100)}).`;
     }
     return null;
-  }
-
-  // Exibe decimais da API (1.50) no formato brasileiro (1,5).
-  private toDisplayDecimal(value: string): string {
-    const number = Number(value);
-    return Number.isFinite(number) ? String(number).replace('.', ',') : value;
-  }
-
-  private toDecimal(value: string): string {
-    const normalized = value.trim().replace(/[R$\s]/g, '');
-    if (normalized.includes(',')) {
-      return normalized.replace(/\./g, '').replace(',', '.');
-    }
-    return normalized;
   }
 }

@@ -73,15 +73,6 @@
                 </p>
               }
 
-              @if (pedido.etapaProducao) {
-                <div class="order-card__progress">
-                  <span>{{ pedido.etapaProducao }}</span>
-                  <div class="order-card__progress-bar">
-                    <div [style.width.%]="pedido.progressoPct ?? 0"></div>
-                  </div>
-                </div>
-              }
-
               <p class="order-card__payment">
                 @if (pedido.status === 'pronto') {
                   <span class="order-card__paid">

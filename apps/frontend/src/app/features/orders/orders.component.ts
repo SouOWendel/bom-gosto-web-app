@@ -1,6 +1,5 @@
 import { Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
 import {
   LucideDynamicIcon,
   LucideBan,
@@ -31,10 +30,10 @@ import {
 import { DomainApiService } from '../../core/services/domain-api.service';
 import { TablePaginationComponent } from '../../shared/components/table-pagination/table-pagination.component';
 import { apiErrorMessage } from '../../core/utils/api-error';
+import { formatCurrency, formatDate, formatQuantity, toNumber } from '../../core/utils/format';
 import { ORDER_STATUS_LABELS } from '../../core/models/order-status';
 
 type OrderStatus = 'retirada' | 'producao' | 'pendente' | 'cancelado';
-type OrderCategory = 'bolos' | 'doces' | 'kits';
 
 // Ação confirmada pela confeiteira após validar o pedido: produzir ou atender pelo estoque pronto.
 interface PendingStart {
@@ -49,8 +48,8 @@ interface OrderRow {
   phone: string;
   address: string;
   item: string;
+  // Nome sugerido para o produto reaproveitado no cancelamento.
   reuseName: string;
-  category: OrderCategory | null;
   total: string;
   payment: string;
   status: OrderStatus;
@@ -68,7 +67,6 @@ interface OrderRow {
   standalone: true,
   imports: [
     TablePaginationComponent,
-    CommonModule,
     LucideDynamicIcon,
     PageGreetingComponent,
     MetricCardsComponent,
@@ -105,13 +103,14 @@ export class OrdersComponent implements OnInit {
   readonly pendingFinish = signal<OrderRow | null>(null);
   readonly currentPage = signal(1);
   readonly pageSize = 6;
+  readonly formatQuantity = formatQuantity;
   @ViewChild(CancelProductionModalComponent)
   private cancelProductionModal?: CancelProductionModalComponent;
   @ViewChild(CompleteProductionModalComponent)
   private completeProductionModal?: CompleteProductionModalComponent;
 
   readonly greetingActions: PageAction[] = [
-    { label: 'Novo pedido', icon: 'plus', variant: 'primary' },
+    { id: 'novo-pedido', label: 'Novo pedido', icon: 'plus', variant: 'primary' },
   ];
 
   readonly statusTabs: Array<{ value: 'todos' | OrderStatus; label: string }> = [
@@ -141,15 +140,12 @@ export class OrdersComponent implements OnInit {
       cancelado: orders.filter((order) => order.status === 'cancelado').length,
     };
   });
-  readonly waitingProductionCount = computed(
-    () => this.orders().filter((order) => order.apiOrder.status === 'pedido_feito').length,
-  );
   readonly ordersSubtitle = computed(
     () =>
-      `${this.orders().length} pedidos cadastrados • ${this.waitingProductionCount()} aguardando produção`,
+      `${this.orders().length} pedidos cadastrados • ${this.statusCounts().pendente} aguardando produção`,
   );
 
-  get summaryCards(): MetricCardItem[] {
+  readonly summaryCards = computed<MetricCardItem[]>(() => {
     const orders = this.orders();
     const inProduction = orders.filter((order) => order.status === 'producao');
     const ready = orders.filter(
@@ -161,21 +157,18 @@ export class OrdersComponent implements OnInit {
       .reduce(
         (total, order) =>
           total +
-          Math.max(
-            0,
-            this.toNumber(order.apiOrder.valor_total) - this.toNumber(order.apiOrder.valor_sinal),
-          ),
+          Math.max(0, toNumber(order.apiOrder.valor_total) - toNumber(order.apiOrder.valor_sinal)),
         0,
       );
     const productionValue = inProduction.reduce(
-      (total, order) => total + this.toNumber(order.apiOrder.valor_total),
+      (total, order) => total + toNumber(order.apiOrder.valor_total),
       0,
     );
 
     return [
       {
         label: 'Em produção',
-        value: this.formatCurrency(productionValue),
+        value: formatCurrency(productionValue),
         subtext: `${inProduction.length} pedidos em produção`,
         icon: 'calendar',
         variant: 'destaque',
@@ -189,7 +182,7 @@ export class OrdersComponent implements OnInit {
       },
       {
         label: 'Pagamentos pendentes',
-        value: this.formatCurrency(pendingBalance),
+        value: formatCurrency(pendingBalance),
         subtext: 'Saldo calculado pelo sinal informado',
         icon: 'banknote',
         variant: 'pedidos',
@@ -205,26 +198,10 @@ export class OrdersComponent implements OnInit {
         variant: 'neutro',
       },
     ];
-  }
+  });
 
   readonly searchTerm = signal('');
-  readonly selectedCategory = signal<'todos' | OrderCategory>('todos');
   readonly selectedStatus = signal<'todos' | OrderStatus>('todos');
-  readonly pendingCount = computed(
-    () => this.orders().filter((o) => o.status === 'pendente').length,
-  );
-  readonly productionCount = computed(
-    () => this.orders().filter((o) => o.status === 'producao').length,
-  );
-  readonly readyCount = computed(() => this.orders().filter((o) => o.status === 'retirada').length);
-  readonly cancelledCount = computed(
-    () => this.orders().filter((o) => o.status === 'cancelado').length,
-  );
-  readonly activeCount = computed(
-    () =>
-      this.orders().filter((o) => ['pedido_feito', 'em_producao'].includes(o.apiOrder.status))
-        .length,
-  );
 
   readonly filteredOrders = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
@@ -258,16 +235,11 @@ export class OrdersComponent implements OnInit {
       next: (recipes) => this.recipes.set(recipes),
       error: (error: unknown) => {
         this.createError.set(
-          `Não foi possível carregar as receitas para o cadastro. ${this.errorDetail(error)}`,
+          `Não foi possível carregar as receitas para o cadastro. ${apiErrorMessage(error)}`,
         );
         console.error('Falha ao carregar as receitas para o cadastro de pedido.', error);
       },
     });
-  }
-
-  setCategory(category: 'todos' | OrderCategory): void {
-    this.selectedCategory.set(category);
-    this.currentPage.set(1);
   }
 
   setStatus(status: 'todos' | OrderStatus): void {
@@ -342,7 +314,7 @@ export class OrdersComponent implements OnInit {
         this.replaceOrder(pedido);
         this.operationInProgress.set(false);
         this.closeCompleteModal();
-        this.refreshOrders();
+        this.loadOrders();
       },
       error: (error: unknown) => {
         this.handleActionError('Não foi possível concluir a produção.', error);
@@ -390,7 +362,7 @@ export class OrdersComponent implements OnInit {
         this.updateOrderStatus(order.apiOrder.id_pedido, 'cancelado');
         this.operationInProgress.set(false);
         this.closeCancelModal();
-        this.refreshOrders();
+        this.loadOrders();
       },
       error: (error: unknown) => {
         this.handleActionError('Não foi possível cancelar o pedido.', error);
@@ -399,7 +371,7 @@ export class OrdersComponent implements OnInit {
   }
 
   handleGreetingAction(action: PageAction): void {
-    if (action.label === 'Novo pedido') {
+    if (action.id === 'novo-pedido') {
       this.createError.set(null);
       this.isCreateModalOpen.set(true);
       return;
@@ -434,7 +406,7 @@ export class OrdersComponent implements OnInit {
       },
       error: (error: unknown) => {
         this.creationInProgress.set(false);
-        this.createError.set(`Não foi possível cadastrar o pedido. ${this.errorDetail(error)}`);
+        this.createError.set(`Não foi possível cadastrar o pedido. ${apiErrorMessage(error)}`);
         console.error('Falha ao cadastrar pedido.', error);
       },
     });
@@ -471,7 +443,7 @@ export class OrdersComponent implements OnInit {
       },
       error: (error: unknown) => {
         this.creationInProgress.set(false);
-        this.createError.set(`Não foi possível atualizar o pedido. ${this.errorDetail(error)}`);
+        this.createError.set(`Não foi possível atualizar o pedido. ${apiErrorMessage(error)}`);
         console.error('Falha ao editar pedido.', error);
       },
     });
@@ -486,7 +458,7 @@ export class OrdersComponent implements OnInit {
         this.runRequestedAction();
       },
       error: (error: unknown) => {
-        this.loadError.set(this.errorDetail(error));
+        this.loadError.set(apiErrorMessage(error));
         console.error('Falha ao carregar os pedidos.', error);
       },
     });
@@ -505,10 +477,6 @@ export class OrdersComponent implements OnInit {
     } else {
       this.actionError.set(`Pedido #${requested} não encontrado.`);
     }
-  }
-
-  private refreshOrders(): void {
-    this.loadOrders();
   }
 
   // Valida o pedido e pede confirmação antes de iniciar a produção ou baixar o estoque (RNF04).
@@ -638,7 +606,7 @@ export class OrdersComponent implements OnInit {
     this.replaceOrder(order);
     this.operationInProgress.set(false);
     this.actionError.set(null);
-    this.refreshOrders();
+    this.loadOrders();
   }
 
   private replaceOrder(order: ApiOrder): void {
@@ -661,7 +629,7 @@ export class OrdersComponent implements OnInit {
 
   private handleActionError(message: string, error?: unknown): void {
     this.operationInProgress.set(false);
-    this.actionError.set(error === undefined ? message : `${message} ${this.errorDetail(error)}`);
+    this.actionError.set(error === undefined ? message : `${message} ${apiErrorMessage(error)}`);
     console.error(message, error);
   }
 
@@ -675,8 +643,8 @@ export class OrdersComponent implements OnInit {
       ].filter((part) => part !== null);
       return `${baseNames[index]}${parts.length ? ` (${parts.join(' · ')})` : ''}`;
     });
-    const total = this.toNumber(order.valor_total);
-    const balance = Math.max(0, total - this.toNumber(order.valor_sinal));
+    const total = toNumber(order.valor_total);
+    const balance = Math.max(0, total - toNumber(order.valor_sinal));
     const status = this.toViewStatus(order.status);
     const statusDetail: Record<ApiOrder['status'], string> = {
       pedido_feito: 'Aguardando validação',
@@ -699,8 +667,7 @@ export class OrdersComponent implements OnInit {
       address: order.endereco_entrega ?? 'Endereço não informado',
       item: itemNames.join(', ') || 'Itens não informados',
       reuseName: baseNames.length > 0 ? `${baseNames[0]} reaproveitado` : '',
-      category: this.toCategory(itemNames.join(' ')),
-      total: this.formatCurrency(total),
+      total: formatCurrency(total),
       payment: this.paymentLabel(order),
       status,
       statusLabel: ORDER_STATUS_LABELS[order.status],
@@ -708,7 +675,7 @@ export class OrdersComponent implements OnInit {
       modality: order.endereco_entrega ? 'Entrega' : 'Retirada',
       detail:
         balance > 0 && order.status !== 'cancelado'
-          ? `${statusDetail[order.status]} · Saldo ${this.formatCurrency(balance)}`
+          ? `${statusDetail[order.status]} · Saldo ${formatCurrency(balance)}`
           : statusDetail[order.status],
       action: this.actionLabel(order),
       apiOrder: order,
@@ -729,17 +696,10 @@ export class OrdersComponent implements OnInit {
     return item.receita !== null ? `Receita #${item.receita}` : 'Item sem produto vinculado';
   }
 
-  formatQuantity(value: string | number | null | undefined): string {
-    const number = Number(value ?? 0);
-    return Number.isFinite(number)
-      ? number.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
-      : String(value);
-  }
-
   private paymentLabel(order: ApiOrder): string {
     const method = this.paymentMethodLabel(order.forma_pagamento);
-    const deposit = this.toNumber(order.valor_sinal);
-    return deposit > 0 ? `Sinal ${this.formatCurrency(deposit)} · ${method}` : method;
+    const deposit = toNumber(order.valor_sinal);
+    return deposit > 0 ? `Sinal ${formatCurrency(deposit)} · ${method}` : method;
   }
 
   private paymentMethodLabel(method: string | null): string {
@@ -780,45 +740,11 @@ export class OrdersComponent implements OnInit {
     }
   }
 
-  private toCategory(value: string): OrderCategory | null {
-    const normalized = value.toLocaleLowerCase('pt-BR');
-    if (
-      normalized.includes('brigadeiro') ||
-      normalized.includes('doce') ||
-      normalized.includes('docinho')
-    ) {
-      return 'doces';
-    }
-    if (normalized.includes('kit') || normalized.includes('festa')) {
-      return 'kits';
-    }
-    if (normalized.includes('bolo') || normalized.includes('torta')) {
-      return 'bolos';
-    }
-    return null;
-  }
-
   private formatSchedule(date: string | null, time: string | null): string {
     if (!date) {
       return 'Entrega não informada';
     }
-    const parsedDate = new Date(`${date}T00:00:00`);
-    const formattedDate = Number.isNaN(parsedDate.getTime())
-      ? date
-      : parsedDate.toLocaleDateString('pt-BR');
+    const formattedDate = formatDate(date);
     return time ? `${formattedDate} · ${time.slice(0, 5)}` : formattedDate;
-  }
-
-  private toNumber(value: string | null): number {
-    const number = Number(value);
-    return Number.isFinite(number) ? number : 0;
-  }
-
-  private formatCurrency(value: number): string {
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  }
-
-  private errorDetail(error: unknown): string {
-    return apiErrorMessage(error);
   }
 }

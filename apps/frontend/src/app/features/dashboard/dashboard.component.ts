@@ -1,5 +1,4 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import {
   LucideDynamicIcon,
@@ -9,23 +8,13 @@ import {
   LucidePlus,
 } from '@lucide/angular';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
-import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
-import { MetricCardItem } from '../../shared/components/metric-cards/metric-cards.model';
 import { DashboardAgendaComponent } from './components/dashboard-agenda/dashboard-agenda.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { Order } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
 import { ORDER_STATUS_LABELS } from '../../core/models/order-status';
+import { formatCurrency } from '../../core/utils/format';
 import { OrderCategory, orderCategory, orderItemName } from '../../core/utils/order-category';
-
-export interface ResumoCard {
-  titulo: string;
-  valor: string;
-  subtexto: string;
-  tipo: 'vendas' | 'pedidos' | 'ticket' | 'alerta';
-  tagAcao?: string;
-  icone: string;
-}
 
 export type CategoriaPedido = OrderCategory;
 export type StatusPedido = 'confirmado' | 'em_producao' | 'pronto' | 'entregue';
@@ -44,8 +33,6 @@ export interface PedidoSimulado {
   telefone: string;
   endereco?: string;
   pagamentoInfo: string;
-  etapaProducao?: string;
-  progressoPct?: number;
   botaoAcao?: string;
 }
 
@@ -59,13 +46,7 @@ export interface DiaCalendario {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [
-    CommonModule,
-    LucideDynamicIcon,
-    PageGreetingComponent,
-    DashboardAgendaComponent,
-    ButtonComponent,
-  ],
+  imports: [LucideDynamicIcon, PageGreetingComponent, DashboardAgendaComponent, ButtonComponent],
   providers: [provideLucideIcons(LucideChevronLeft, LucideChevronRight, LucidePlus)],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
@@ -73,7 +54,6 @@ export interface DiaCalendario {
 export class DashboardComponent implements OnInit {
   private readonly api = inject(DomainApiService);
   private readonly router = inject(Router);
-  private readonly orderData = signal<Order[]>([]);
 
   // Informações do Cabeçalho
   readonly nomeChef = 'Rosangela';
@@ -85,35 +65,6 @@ export class DashboardComponent implements OnInit {
   }
   get mesAno(): string {
     return this.monthLabel(this.dataSelecionada());
-  }
-
-  readonly greetingActions: PageAction[] = [];
-
-  get metricas(): MetricCardItem[] {
-    const orders = this.orderData();
-    const scheduled = orders.filter((order) =>
-      ['pedido_feito', 'em_producao', 'producao_concluida'].includes(order.status),
-    );
-
-    return [
-      {
-        label: 'VENDAS DE HOJE',
-        value: '—',
-        icon: 'banknote',
-        variant: 'vendas',
-        trend: {
-          value: 'Data de conclusão não disponível na API',
-          direction: 'up',
-        },
-      },
-      {
-        label: 'PEDIDOS AGENDADOS',
-        value: `${scheduled.length} pedidos`,
-        icon: 'receipt',
-        variant: 'pedidos',
-        subtext: `${orders.filter((order) => order.status === 'producao_concluida').length} prontos • ${orders.filter((order) => order.status === 'em_producao').length} em produção • ${orders.filter((order) => order.status === 'pedido_feito').length} pendentes`,
-      },
-    ];
   }
 
   // Dia atualmente selecionado no calendário (YYYY-MM-DD)
@@ -257,7 +208,6 @@ export class DashboardComponent implements OnInit {
 
   private setOrders(orders: Order[]): void {
     const activeOrders = orders.filter((order) => order.status !== 'cancelado');
-    this.orderData.set(orders);
     this.pedidos.set(activeOrders.map((order) => this.toDashboardOrder(order)));
   }
 
@@ -291,7 +241,7 @@ export class DashboardComponent implements OnInit {
         (order.tipo === 'interno' ? 'Reposição interna' : 'Cliente não informado'),
       telefone: order.cliente_telefone ?? '',
       endereco: order.endereco_entrega ?? undefined,
-      pagamentoInfo: `Total: ${this.formatCurrency(subtotal)} • Sinal: ${this.formatCurrency(Number(order.valor_sinal))}`,
+      pagamentoInfo: `Total: ${formatCurrency(subtotal)} • Sinal: ${formatCurrency(Number(order.valor_sinal))}`,
       botaoAcao: order.status === 'pedido_feito' ? 'Iniciar Preparo' : undefined,
     };
   }
@@ -313,9 +263,5 @@ export class DashboardComponent implements OnInit {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
-  }
-
-  private formatCurrency(value: number): string {
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 }

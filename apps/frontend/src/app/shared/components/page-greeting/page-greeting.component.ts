@@ -1,16 +1,9 @@
 import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
-  LucideDynamicIcon,
-  provideLucideIcons,
   LucideArrowLeft,
-  LucideCalendar,
+  LucideDynamicIcon,
   LucidePlus,
-  LucideBell,
-  LucideClock,
-  LucideFilter,
-  LucideDownload,
-  LucideRefreshCw,
+  provideLucideIcons,
 } from '@lucide/angular';
 import { PageAction } from './page-greeting.model';
 import { ButtonComponent } from '../button/button.component';
@@ -18,25 +11,14 @@ import { ButtonComponent } from '../button/button.component';
 @Component({
   selector: 'app-page-greeting',
   standalone: true,
-  imports: [CommonModule, LucideDynamicIcon, ButtonComponent],
-  providers: [
-    provideLucideIcons(
-      LucideArrowLeft,
-      LucideCalendar,
-      LucidePlus,
-      LucideBell,
-      LucideClock,
-      LucideFilter,
-      LucideDownload,
-      LucideRefreshCw,
-    ),
-  ],
+  imports: [LucideDynamicIcon, ButtonComponent],
+  providers: [provideLucideIcons(LucideArrowLeft, LucidePlus)],
   templateUrl: './page-greeting.component.html',
   styleUrls: ['./page-greeting.component.scss'],
 })
 export class PageGreetingComponent {
-  readonly title = input<string>('Bom dia, Chef Rosangela! 👩‍🍳🔍');
-  readonly subtitle = input<string>('🔔 Acesse os atalhos a seguir.');
+  readonly title = input.required<string>();
+  readonly subtitle = input<string>('');
   readonly actions = input<PageAction[]>([]);
 
   readonly actionClick = output<PageAction>();

@@ -71,9 +71,4 @@ describe('DashboardComponent', () => {
     expect(component.pedidosFiltrados().length).toBe(0);
     expect(component.pedidos().every((order) => order.categoria === null)).toBe(true);
   });
-
-  it('deve indicar quando a API não fornece a data para calcular vendas de hoje', () => {
-    const component = TestBed.createComponent(DashboardComponent).componentInstance;
-    expect(component.metricas[0].value).toBe('—');
-  });
 });

@@ -1,5 +1,4 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   LucideDynamicIcon,
@@ -13,6 +12,7 @@ import {
 import { DomainApiService } from '../../core/services/domain-api.service';
 import { Product, Recipe } from '../../core/models/api.model';
 import { apiErrorMessage } from '../../core/utils/api-error';
+import { formatCurrency } from '../../core/utils/format';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
 import { PageAction } from '../../shared/components/page-greeting/page-greeting.model';
 import { MetricCardsComponent } from '../../shared/components/metric-cards/metric-cards.component';
@@ -25,7 +25,6 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
   selector: 'app-products',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     LucideDynamicIcon,
     PageGreetingComponent,
@@ -54,7 +53,7 @@ export class ProductsComponent implements OnInit {
   readonly deleteError = signal<string | null>(null);
 
   readonly greetingActions: PageAction[] = [
-    { label: 'Novo produto', icon: 'plus', variant: 'primary' },
+    { id: 'novo-produto', label: 'Novo produto', icon: 'plus', variant: 'primary' },
   ];
 
   get summaryCards(): MetricCardItem[] {
@@ -73,7 +72,7 @@ export class ProductsComponent implements OnInit {
       },
       {
         label: 'Preço médio de venda',
-        value: this.formatCurrency(avgPrice),
+        value: formatCurrency(avgPrice),
         subtext: 'Média do catálogo ativo',
         icon: 'banknote',
         variant: 'pedidos',
@@ -110,7 +109,7 @@ export class ProductsComponent implements OnInit {
   }
 
   handleGreetingAction(action: PageAction): void {
-    if (action.label === 'Novo produto') {
+    if (action.id === 'novo-produto') {
       this.openCreateModal();
     }
   }
@@ -195,12 +194,8 @@ export class ProductsComponent implements OnInit {
     });
   }
 
-  formatCurrency(value: number): string {
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  }
-
   formatPrice(price: string): string {
     const num = Number(price);
-    return Number.isFinite(num) ? this.formatCurrency(num) : price;
+    return Number.isFinite(num) ? formatCurrency(num) : price;
   }
 }

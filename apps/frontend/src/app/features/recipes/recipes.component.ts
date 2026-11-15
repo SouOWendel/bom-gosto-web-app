@@ -13,6 +13,7 @@ import { Router } from '@angular/router';
 import { DomainApiService } from '../../core/services/domain-api.service';
 import { Product, Recipe as ApiRecipe } from '../../core/models/api.model';
 import { apiErrorMessage } from '../../core/utils/api-error';
+import { formatCurrency } from '../../core/utils/format';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { PageGreetingComponent } from '../../shared/components/page-greeting/page-greeting.component';
@@ -144,12 +145,7 @@ export class RecipesComponent implements OnInit {
     }
   }
 
-  formatCurrency(value: number): string {
-    if (!Number.isFinite(value)) {
-      return '—';
-    }
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  }
+  readonly formatCurrency = formatCurrency;
 
   // Produtos ligados pela receita principal (Produto.receita) ou por Receita_Produto.
   private toRecipeRow(recipe: ApiRecipe, products: Product[]): RecipeRow {

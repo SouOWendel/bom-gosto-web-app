@@ -16,6 +16,14 @@ import { Ingredient } from '../../core/models/api.model';
 import { DomainApiService } from '../../core/services/domain-api.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
 import {
+  expiryText,
+  formatCurrency,
+  formatCurrencyOrUnavailable,
+  formatDate,
+  formatQuantity,
+  toNumber,
+} from '../../core/utils/format';
+import {
   IngredientCreateModalComponent,
   IngredientCreationPayload,
 } from '../../shared/components/ingredient-create-modal/ingredient-create-modal.component';
@@ -78,7 +86,7 @@ export class InventoryComponent implements OnInit {
   readonly totalPages = computed(() => Math.ceil(this.totalItems() / this.pageSize));
 
   readonly greetingActions: PageAction[] = [
-    { label: 'Novo insumo', icon: 'plus', variant: 'primary' },
+    { id: 'novo-insumo', label: 'Novo insumo', icon: 'plus', variant: 'primary' },
   ];
 
   // Cores únicas para estoque e validade (ver .badge em styles.scss).
@@ -101,12 +109,11 @@ export class InventoryComponent implements OnInit {
     const exhausted = ingredients.filter(
       (ingredient) =>
         ingredient.quantidade_disponivel !== null &&
-        this.toNumber(ingredient.quantidade_disponivel) <= 0,
+        toNumber(ingredient.quantidade_disponivel) <= 0,
     ).length;
     const totalValue = ingredients.reduce(
       (total, ingredient) =>
-        total +
-        this.toNumber(ingredient.quantidade_disponivel) * this.toNumber(ingredient.custo_unitario),
+        total + toNumber(ingredient.quantidade_disponivel) * toNumber(ingredient.custo_unitario),
       0,
     );
 
@@ -120,7 +127,7 @@ export class InventoryComponent implements OnInit {
       },
       {
         label: 'Valor em estoque',
-        value: this.formatCurrency(totalValue),
+        value: formatCurrency(totalValue),
         subtext: 'Estimado por quantidade e custo unitário',
         icon: 'banknote',
         variant: 'neutro',
@@ -175,7 +182,7 @@ export class InventoryComponent implements OnInit {
         this.currentPage.set(1);
       },
       error: (error: unknown) => {
-        const detail = this.errorDetail(error);
+        const detail = apiErrorMessage(error);
         this.loadError.set(detail);
         console.error('Falha ao carregar o inventário de insumos.', error);
       },
@@ -193,7 +200,7 @@ export class InventoryComponent implements OnInit {
   }
 
   handleGreetingAction(action: PageAction): void {
-    if (action.label === 'Novo insumo') {
+    if (action.id === 'novo-insumo') {
       this.openCreateModal();
     }
   }
@@ -262,7 +269,7 @@ export class InventoryComponent implements OnInit {
           this.closeCreateModal();
         },
         error: (error: unknown) => {
-          this.createError.set(`Não foi possível atualizar o insumo. ${this.errorDetail(error)}`);
+          this.createError.set(`Não foi possível atualizar o insumo. ${apiErrorMessage(error)}`);
           console.error('Falha ao atualizar insumo.', error);
         },
       });
@@ -273,7 +280,7 @@ export class InventoryComponent implements OnInit {
           this.closeCreateModal();
         },
         error: (error: unknown) => {
-          this.createError.set(`Não foi possível cadastrar o insumo. ${this.errorDetail(error)}`);
+          this.createError.set(`Não foi possível cadastrar o insumo. ${apiErrorMessage(error)}`);
           console.error('Falha ao cadastrar insumo.', error);
         },
       });
@@ -287,8 +294,8 @@ export class InventoryComponent implements OnInit {
   }
 
   private toInventoryItem(ingredient: Ingredient): InventoryItem {
-    const quantity = this.toNumber(ingredient.quantidade_disponivel);
-    const minimum = this.toNumber(ingredient.quantidade_minima);
+    const quantity = toNumber(ingredient.quantidade_disponivel);
+    const minimum = toNumber(ingredient.quantidade_minima);
     const belowMinimum = ingredient.abaixo_do_minimo === true;
     const unit = ingredient.unidade_medida || 'un';
     const status =
@@ -303,7 +310,7 @@ export class InventoryComponent implements OnInit {
       name: ingredient.nome,
       code: `INS-${String(ingredient.id_ingrediente).padStart(4, '0')}`,
       lot: '',
-      level: `${this.formatQuantity(ingredient.quantidade_disponivel)} ${unit}`,
+      level: `${formatQuantity(ingredient.quantidade_disponivel)} ${unit}`,
       // A barra vai até o dobro do mínimo: metade da barra = exatamente o mínimo.
       percentage:
         minimum > 0
@@ -315,43 +322,15 @@ export class InventoryComponent implements OnInit {
       minimum:
         ingredient.quantidade_minima === null
           ? 'Não informado'
-          : `${this.formatQuantity(ingredient.quantidade_minima)} ${unit}`,
+          : `${formatQuantity(ingredient.quantidade_minima)} ${unit}`,
       status,
       statusLabel: status === 'critical' ? 'Esgotado' : status === 'low' ? 'Baixo' : 'Normal',
-      expiration: this.formatDate(ingredient.data_validade),
+      expiration: formatDate(ingredient.data_validade),
       expirationDetail: this.expirationDetail(ingredient.alerta_validade),
       expirationLevel: ingredient.alerta_validade?.nivel ?? null,
       expirationLabel: this.expirationLabel(ingredient.alerta_validade?.nivel ?? null),
-      cost: this.formatCurrencyOrUnavailable(ingredient.custo_unitario),
+      cost: formatCurrencyOrUnavailable(ingredient.custo_unitario),
     };
-  }
-
-  private toNumber(value: string | null): number {
-    const number = Number(value);
-    return Number.isFinite(number) ? number : 0;
-  }
-
-  private formatQuantity(value: string | null): string {
-    return value === null
-      ? 'Não informado'
-      : this.toNumber(value).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
-  }
-
-  private formatCurrency(value: number): string {
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  }
-
-  private formatCurrencyOrUnavailable(value: string | null): string {
-    return value === null ? 'Não informado' : this.formatCurrency(this.toNumber(value));
-  }
-
-  private formatDate(value: string | null): string {
-    if (value === null) {
-      return 'Não informada';
-    }
-
-    const date = new Date(`${value}T00:00:00`);
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('pt-BR');
   }
 
   // Semáforo de validade (RN17): crítico, atenção ou preventivo.
@@ -369,22 +348,6 @@ export class InventoryComponent implements OnInit {
   }
 
   private expirationDetail(alert: Ingredient['alerta_validade']): string {
-    if (alert === null) {
-      return 'Sem alerta';
-    }
-
-    if (alert.dias_para_vencer < 0) {
-      return `Vencido há ${Math.abs(alert.dias_para_vencer)} dia(s)`;
-    }
-
-    if (alert.dias_para_vencer === 0) {
-      return 'Vence hoje';
-    }
-
-    return `Vence em ${alert.dias_para_vencer} dia(s)`;
-  }
-
-  private errorDetail(error: unknown): string {
-    return error instanceof Error ? error.message : 'Erro desconhecido ao consultar a API.';
+    return alert === null ? 'Sem alerta' : expiryText(alert.dias_para_vencer);
   }
 }
