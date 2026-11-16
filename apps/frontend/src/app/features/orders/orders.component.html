@@ -46,6 +46,9 @@
       (closed)="closeStartDialog()"
       (confirmed)="confirmStart()"
     >
+      @if (pending.mode === 'producao' && depositReminder(pending.order); as reminder) {
+        <p class="alert alert--warning" role="note">{{ reminder }}</p>
+      }
       <div class="modal__section">
         <h3 class="modal__section-title">Disponibilidade no estoque</h3>
         <div class="data-table-frame">

@@ -104,6 +104,18 @@ export class OrdersComponent implements OnInit {
   readonly currentPage = signal(1);
   readonly pageSize = 6;
   readonly formatQuantity = formatQuantity;
+
+  // Iniciar a produção de um pedido externo pressupõe o sinal recebido. É só um lembrete:
+  // o pagamento continua sendo registrado em Finanças, não pelo status (RN13).
+  depositReminder(order: OrderRow): string | null {
+    if (order.apiOrder.tipo !== 'externo') {
+      return null;
+    }
+    const deposit = toNumber(order.apiOrder.valor_sinal);
+    return deposit > 0
+      ? `Confirme que o sinal de ${formatCurrency(deposit)} foi recebido antes de iniciar.`
+      : 'Nenhum sinal registrado neste pedido. Confirme o pagamento com o cliente antes de iniciar.';
+  }
   @ViewChild(CancelProductionModalComponent)
   private cancelProductionModal?: CancelProductionModalComponent;
   @ViewChild(CompleteProductionModalComponent)
