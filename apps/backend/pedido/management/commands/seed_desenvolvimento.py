@@ -332,12 +332,23 @@ class Command(BaseCommand):
                 quantidade_peso=Decimal(peso) if peso else None,
             )
 
-    # custo de referencia por unidade, derivado da receita do produto
+    # custo de referencia por unidade: receita principal mais as complementares (RF18),
+    # na mesma proporcao usada pela Producao
     def _custo_unitario(self, produto):
-        receita = produto.receita
-        if receita is None or not receita.rendimento_quantidade:
+        partes = []
+        if produto.receita is not None:
+            partes.append((produto.receita, Decimal("1")))
+        partes.extend(
+            (relacao.receita, relacao.quantidade)
+            for relacao in ReceitaProduto.objects.filter(produto=produto).exclude(receita_id=produto.receita_id).select_related("receita")
+        )
+        if not partes or any(not receita.rendimento_quantidade for receita, _ in partes):
             return None
-        return (receita.custo_calculado / receita.rendimento_quantidade).quantize(Decimal("0.01"))
+        custo = sum(
+            (receita.custo_calculado * por_unidade / receita.rendimento_quantidade for receita, por_unidade in partes),
+            Decimal("0"),
+        )
+        return custo.quantize(Decimal("0.01"))
 
     # a senha temporaria so e exibida quando o usuario de exemplo e criado pela primeira vez
     def _carregar_usuario(self):

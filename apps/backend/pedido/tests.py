@@ -300,6 +300,11 @@ class SeedDemonstracaoTests(APITestCase):
 			{grupo["nome"] for grupo in analise["receitas"]},
 			{"Massa branca", "Recheio delícia de limão"},
 		)
+		# o custo de referencia do item tambem inclui o recheio
+		massa = Receita.objects.get(nome="Massa branca")
+		recheio = Receita.objects.get(nome="Recheio delícia de limão")
+		esperado = (massa.custo_calculado / massa.rendimento_quantidade + recheio.custo_calculado * Decimal("0.40") / recheio.rendimento_quantidade).quantize(Decimal("0.01"))
+		self.assertEqual(licilene.itens.get().custo_unitario, esperado)
 
 		carlos = Pedido.objects.get(cliente__nome="Carlos Menezes", status=Pedido.Status.EM_PRODUCAO)
 		self.assertTrue(analisar_pedido(carlos)["ingredientes"])
