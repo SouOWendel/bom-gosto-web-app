@@ -9,7 +9,7 @@ from rest_framework.test import APITestCase
 
 from usuario.models import Usuario
 
-from .models import Cliente, Pedido, Produto, Receita
+from .models import Cliente, ItemPedido, Pedido, Produto, Receita
 from .serializers import ItemPedidoSerializer, PedidoSerializer
 
 # testes de integracao da API de pedidos e da regra de acesso
@@ -148,9 +148,11 @@ class PedidoApiTests(APITestCase):
 		resposta = self.client.delete(f"/api/produtos/{self.produto.id_produto}/")
 		self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
 
-	# item por receita sem produto vinculado nao pode virar pedido, pois a producao nao conclui
-	def test_receita_sem_produto_nao_pode_ser_pedida(self):
-		receita = Receita.objects.create(nome="Receita sem produto", rendimento_quantidade="1")
+	# itens novos usam produto do catalogo; a receita vem do cadastro do produto
+	def test_item_novo_exige_produto(self):
+		receita = Receita.objects.create(nome="Receita", rendimento_quantidade="1")
+		self.produto.receita = receita
+		self.produto.save(update_fields=["receita"])
 		pedido = {
 			"tipo": "externo",
 			"subtipo": "personalizado",
@@ -161,12 +163,16 @@ class PedidoApiTests(APITestCase):
 		}
 		resposta = self.client.post("/api/pedido/", pedido, format="json")
 		self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
-		self.assertIn("não tem produto vinculado", str(resposta.data))
+		self.assertIn("produto do catálogo", str(resposta.data))
 
-		self.produto.receita = receita
-		self.produto.save(update_fields=["receita"])
-		resposta = self.client.post("/api/pedido/", pedido, format="json")
-		self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+	# pedido antigo com item de receita fica so para leitura
+	def test_pedido_antigo_com_receita_nao_pode_ser_editado(self):
+		receita = Receita.objects.create(nome="Receita antiga", rendimento_quantidade="1")
+		pedido = Pedido.objects.create(tipo=Pedido.Tipo.INTERNO)
+		ItemPedido.objects.create(pedido=pedido, receita=receita, quantidade=1, preco_unitario="0")
+		resposta = self.client.patch(f"/api/pedido/{pedido.pk}/", {"data_entrega": "2026-12-01"}, format="json")
+		self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+		self.assertIn("não podem ser editados", str(resposta.data))
 
 	# sinal de pedido externo aceita a metade arredondada para cima nos centavos
 	def test_sinal_aceita_metade_arredondada(self):
@@ -289,6 +295,16 @@ class SeedDemonstracaoTests(APITestCase):
 		self.assertTrue(analise["encaminhar_para_producao"])
 		self.assertEqual(analise["ausencias"], [])
 		self.assertEqual(analise["ingredientes_insuficientes"], [])
+		# o bolo do roteiro soma a massa (principal) e o recheio (complementar)
+		self.assertEqual(
+			{grupo["nome"] for grupo in analise["receitas"]},
+			{"Massa branca", "Recheio delícia de limão"},
+		)
+		# o custo de referencia do item tambem inclui o recheio
+		massa = Receita.objects.get(nome="Massa branca")
+		recheio = Receita.objects.get(nome="Recheio delícia de limão")
+		esperado = (massa.custo_calculado / massa.rendimento_quantidade + recheio.custo_calculado * Decimal("0.40") / recheio.rendimento_quantidade).quantize(Decimal("0.01"))
+		self.assertEqual(licilene.itens.get().custo_unitario, esperado)
 
 		carlos = Pedido.objects.get(cliente__nome="Carlos Menezes", status=Pedido.Status.EM_PRODUCAO)
 		self.assertTrue(analisar_pedido(carlos)["ingredientes"])
@@ -299,3 +315,73 @@ class SeedDemonstracaoTests(APITestCase):
 		licilene.refresh_from_db()
 		self.assertEqual(licilene.status, Pedido.Status.PEDIDO_FEITO)
 		self.assertEqual(Pedido.objects.filter(cliente__nome="Licilene Alves", status=Pedido.Status.PEDIDO_FEITO).count(), 1)
+
+
+# receitas complementares do produto (RF18) sao gravadas pela API de produtos
+class ProdutoReceitasComplementaresApiTests(APITestCase):
+	def setUp(self):
+		usuario = Usuario.objects.create_user(login="teste-produto-receitas", password="senha-de-teste-123", primeiro_acesso=False)
+		self.client.force_authenticate(user=usuario)
+		self.massa = Receita.objects.create(nome="Massa de chocolate", rendimento_quantidade="1")
+		self.recheio = Receita.objects.create(nome="Recheio de brigadeiro", rendimento_quantidade="2")
+		self.cobertura = Receita.objects.create(nome="Ganache", rendimento_quantidade="1")
+
+	def test_cria_e_substitui_receitas_complementares(self):
+		resposta = self.client.post(
+			"/api/produtos/",
+			{
+				"nome": "Bolo de chocolate",
+				"preco_venda": "80.00",
+				"receita": self.massa.pk,
+				"receitas_complementares": [
+					{"receita": self.recheio.pk, "quantidade": "0.400", "unidade_medida": "kg"},
+					{"receita": self.cobertura.pk, "quantidade": "0.300", "unidade_medida": "kg"},
+				],
+			},
+			format="json",
+		)
+		self.assertEqual(resposta.status_code, status.HTTP_201_CREATED, resposta.data)
+		nomes = {linha["receita_nome"] for linha in resposta.data["receitas_complementares"]}
+		self.assertEqual(nomes, {"Recheio de brigadeiro", "Ganache"})
+
+		produto_id = resposta.data["id_produto"]
+		resposta = self.client.patch(
+			f"/api/produtos/{produto_id}/",
+			{"receitas_complementares": [{"receita": self.recheio.pk, "quantidade": "0.500", "unidade_medida": "kg"}]},
+			format="json",
+		)
+		self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+		self.assertEqual(len(resposta.data["receitas_complementares"]), 1)
+		self.assertEqual(resposta.data["receitas_complementares"][0]["quantidade"], "0.500")
+
+		# editar so o preco preserva as complementares
+		resposta = self.client.patch(f"/api/produtos/{produto_id}/", {"preco_venda": "90.00"}, format="json")
+		self.assertEqual(len(resposta.data["receitas_complementares"]), 1)
+
+	def test_recusa_principal_repetida_como_complementar(self):
+		resposta = self.client.post(
+			"/api/produtos/",
+			{
+				"nome": "Bolo",
+				"preco_venda": "50.00",
+				"receita": self.massa.pk,
+				"receitas_complementares": [{"receita": self.massa.pk, "quantidade": "1", "unidade_medida": "un"}],
+			},
+			format="json",
+		)
+		self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+		self.assertIn("receitas_complementares", resposta.data)
+
+	# o saldo do produto considera apenas lotes dentro da validade
+	def test_saldo_disponivel_ignora_lotes_vencidos(self):
+		from datetime import timedelta
+		from django.utils import timezone
+		from estoque.models import Estoque
+
+		produto = Produto.objects.create(nome="Brigadeiro", preco_venda="2.00")
+		hoje = timezone.localdate()
+		Estoque.objects.create(produto=produto, quantidade_disponivel="5", data_validade=hoje + timedelta(days=3))
+		Estoque.objects.create(produto=produto, quantidade_disponivel="3", data_validade=hoje - timedelta(days=1))
+		resposta = self.client.get("/api/produtos/")
+		saldo = next(p["saldo_disponivel"] for p in resposta.data if p["id_produto"] == produto.pk)
+		self.assertEqual(Decimal(saldo), Decimal("5"))

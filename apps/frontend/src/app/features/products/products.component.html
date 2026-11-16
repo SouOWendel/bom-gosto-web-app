@@ -31,7 +31,7 @@
         <thead>
           <tr>
             <th>Produto</th>
-            <th>Receita vinculada</th>
+            <th>Receitas</th>
             <th class="is-numeric">Preço de venda</th>
             <th class="is-actions">Ações</th>
           </tr>
@@ -44,11 +44,19 @@
                 <small class="data-table__secondary">#{{ prod.id_produto }}</small>
               </td>
               <td>
-                @if (prod.receita_nome) {
-                  <span class="badge badge--brand">{{ prod.receita_nome }}</span>
-                } @else {
-                  <span class="data-table__secondary">Sem receita (revenda ou reaproveitado)</span>
-                }
+                <div class="products-page__recipes">
+                  @if (prod.receita_nome) {
+                    <span class="badge badge--brand">{{ prod.receita_nome }}</span>
+                  }
+                  @for (extra of prod.receitas_complementares ?? []; track extra.receita) {
+                    <span class="badge">{{ extra.receita_nome }}</span>
+                  }
+                  @if (!prod.receita_nome && !prod.receitas_complementares?.length) {
+                    <span class="data-table__secondary"
+                      >Sem receita (revenda ou reaproveitado)</span
+                    >
+                  }
+                </div>
               </td>
               <td class="is-numeric">
                 <strong class="data-table__primary">{{ formatPrice(prod.preco_venda) }}</strong>

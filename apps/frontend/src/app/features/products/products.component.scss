@@ -9,3 +9,9 @@
   font-size: var(--text-xs);
   font-weight: 600;
 }
+
+.products-page__recipes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}

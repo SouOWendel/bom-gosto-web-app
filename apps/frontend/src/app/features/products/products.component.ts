@@ -143,7 +143,7 @@ export class ProductsComponent implements OnInit {
           this.closeModal();
         },
         error: (err) => {
-          this.apiError.set('Falha ao atualizar o produto. Verifique os dados.');
+          this.apiError.set(`Falha ao atualizar o produto. ${apiErrorMessage(err)}`);
           console.error(err);
         },
       });
@@ -154,7 +154,7 @@ export class ProductsComponent implements OnInit {
           this.closeModal();
         },
         error: (err) => {
-          this.apiError.set('Falha ao cadastrar o produto. Verifique os dados.');
+          this.apiError.set(`Falha ao cadastrar o produto. ${apiErrorMessage(err)}`);
           console.error(err);
         },
       });

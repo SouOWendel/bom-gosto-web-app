@@ -11,6 +11,8 @@ import {
 import { formatQuantity } from '../../../core/utils/format';
 
 interface ProductionIngredient {
+  // Chave da linha: o mesmo ingrediente pode aparecer em mais de uma receita.
+  key: string;
   id: number;
   name: string;
   lot: string;
@@ -19,6 +21,11 @@ interface ProductionIngredient {
   quantity: string;
   availableQuantity: string;
   unit: string;
+}
+
+interface ProductionGroup {
+  recipeName: string | null;
+  ingredients: ProductionIngredient[];
 }
 
 interface ProductionOrder {
@@ -42,7 +49,11 @@ export class CompleteProductionModalComponent implements OnInit {
   readonly confirmed = output<void>();
   submittedPayload: CompleteProductionPayload | null = null;
 
-  readonly ingredients: ProductionIngredient[] = [];
+  readonly groups: ProductionGroup[] = [];
+
+  get ingredients(): ProductionIngredient[] {
+    return this.groups.flatMap((group) => group.ingredients);
+  }
 
   expirationDate = '';
   errorMessage = '';
@@ -54,18 +65,61 @@ export class CompleteProductionModalComponent implements OnInit {
       return;
     }
 
-    this.ingredients.push(
-      ...analysis.ingredientes.map((ingredient) => ({
-        id: ingredient.id_ingrediente,
-        name: ingredient.nome,
-        lot: `Disponível: ${formatQuantity(ingredient.disponivel)} ${ingredient.unidade_medida ?? ''}`.trim(),
-        theoreticalQuantity: String(ingredient.necessario),
-        theoreticalLabel: formatQuantity(ingredient.necessario),
+    const available = new Map(analysis.ingredientes.map((item) => [item.id_ingrediente, item]));
+    const row = (
+      key: string,
+      id: number,
+      name: string,
+      expected: string,
+      unit: string | undefined,
+    ): ProductionIngredient => {
+      const stock = available.get(id);
+      const unitLabel = unit ?? stock?.unidade_medida ?? '';
+      return {
+        key,
+        id,
+        name,
+        lot: `Disponível: ${formatQuantity(stock?.disponivel ?? '0')} ${unitLabel}`.trim(),
+        theoreticalQuantity: String(expected),
+        theoreticalLabel: formatQuantity(expected),
         quantity: '',
-        availableQuantity: ingredient.disponivel,
-        unit: ingredient.unidade_medida ?? '',
-      })),
-    );
+        availableQuantity: stock?.disponivel ?? '0',
+        unit: unitLabel,
+      };
+    };
+
+    // Com a divisão por receita, a confeiteira confere massa, recheio e cobertura
+    // separadamente; a API soma as linhas do mesmo ingrediente na baixa.
+    if (analysis.receitas?.length) {
+      for (const recipe of analysis.receitas) {
+        this.groups.push({
+          recipeName: recipe.nome,
+          ingredients: recipe.ingredientes.map((item) =>
+            row(
+              `${recipe.id_receita}-${item.id_ingrediente}`,
+              item.id_ingrediente,
+              item.nome,
+              item.necessario,
+              item.unidade_medida,
+            ),
+          ),
+        });
+      }
+      return;
+    }
+
+    this.groups.push({
+      recipeName: null,
+      ingredients: analysis.ingredientes.map((item) =>
+        row(
+          String(item.id_ingrediente),
+          item.id_ingrediente,
+          item.nome,
+          item.necessario,
+          item.unidade_medida,
+        ),
+      ),
+    });
   }
 
   @HostListener('document:keydown.escape')

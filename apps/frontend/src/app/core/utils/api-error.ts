@@ -16,6 +16,7 @@ const FIELD_LABELS: Record<string, string> = {
   quantidade: 'Quantidade',
   quantidade_peso: 'Peso',
   receitas: 'Receitas',
+  receitas_complementares: 'Receitas complementares',
   status: 'Status',
   subtipo: 'Modalidade',
   tipo: 'Tipo',

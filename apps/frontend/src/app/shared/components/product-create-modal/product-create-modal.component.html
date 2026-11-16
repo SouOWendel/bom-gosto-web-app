@@ -1,6 +1,6 @@
 <div class="modal-backdrop" role="presentation" (click)="close()">
   <section
-    class="modal"
+    class="modal modal--lg"
     role="dialog"
     aria-modal="true"
     aria-labelledby="product-modal-title"
@@ -46,7 +46,7 @@
           />
 
           <label class="form-field" for="product-recipe">
-            <span class="form-field__label">Receita vinculada (opcional)</span>
+            <span class="form-field__label">Receita principal (opcional)</span>
             <select id="product-recipe" class="form-control" [(ngModel)]="recipeId" name="recipeId">
               <option [ngValue]="null">Sem receita direta</option>
               @for (rec of recipes(); track rec.id_receita) {
@@ -55,6 +55,69 @@
             </select>
           </label>
         </div>
+
+        <section class="modal__section">
+          <div class="product-modal__section-heading">
+            <h3 class="modal__section-title">Receitas complementares</h3>
+            <app-button type="button" variant="outline" size="small" (click)="addComplementary()">
+              <svg [lucideIcon]="'plus'" [size]="14"></svg> Adicionar receita
+            </app-button>
+          </div>
+          <p class="modal__section-hint">
+            Recheios, coberturas e outras partes do produto. A quantidade vale para cada unidade do
+            produto.
+          </p>
+          @for (row of complementary; track $index; let index = $index) {
+            <div class="product-modal__recipe-row">
+              <label class="form-field">
+                <span class="form-field__label">Receita</span>
+                <select
+                  class="form-control"
+                  [name]="'complementary-recipe-' + index"
+                  [(ngModel)]="row.recipeId"
+                >
+                  <option [ngValue]="null">Selecione</option>
+                  @for (rec of recipes(); track rec.id_receita) {
+                    <option [ngValue]="rec.id_receita">{{ rec.nome }}</option>
+                  }
+                </select>
+              </label>
+              <app-input-text
+                label="Quantidade"
+                [inputId]="'complementary-quantity-' + index"
+                placeholder="0,000"
+                [(ngModel)]="row.quantity"
+                [name]="'complementary-quantity-' + index"
+              />
+              <label class="form-field">
+                <span class="form-field__label">Unidade</span>
+                <select
+                  class="form-control"
+                  [name]="'complementary-unit-' + index"
+                  [(ngModel)]="row.unit"
+                >
+                  @for (unit of units; track unit) {
+                    <option [value]="unit">{{ unit }}</option>
+                  }
+                </select>
+              </label>
+              <app-button
+                type="button"
+                variant="ghost"
+                size="small"
+                aria-label="Remover receita complementar"
+                (click)="removeComplementary(index)"
+              >
+                <svg [lucideIcon]="'trash-2'" [size]="15"></svg>
+              </app-button>
+              @if (yieldHint(row.recipeId); as hint) {
+                <p class="product-modal__recipe-hint">{{ hint }}</p>
+              }
+            </div>
+          } @empty {
+            <p class="modal__section-hint">Nenhuma receita complementar.</p>
+          }
+        </section>
       </div>
 
       <footer class="modal__footer">

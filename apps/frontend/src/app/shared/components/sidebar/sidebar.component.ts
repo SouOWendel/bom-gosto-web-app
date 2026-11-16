@@ -1,4 +1,4 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, HostListener, input, output, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import {
   LucideDynamicIcon,
@@ -74,6 +74,10 @@ export class SidebarComponent {
     this.isUserMenuOpen.update((open) => !open);
   }
 
+  // Fecha o menu ao clicar fora dele. Um backdrop fixo fora da sidebar ficava acima
+  // do dropdown (a sidebar cria seu próprio contexto de z-index) e bloqueava o "Sair".
+  @HostListener('document:click')
+  @HostListener('document:keydown.escape')
   closeUserMenu(): void {
     this.isUserMenuOpen.set(false);
   }
