@@ -104,7 +104,7 @@
                 </td>
                 <td class="is-numeric">
                   <strong class="data-table__primary">{{
-                    formatCurrency((ingredient.quantity || 0) * ingredient.unitCost)
+                    formatCurrency(lineCost(ingredient))
                   }}</strong>
                 </td>
                 <td class="is-actions">
