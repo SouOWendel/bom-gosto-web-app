@@ -9,7 +9,7 @@ from rest_framework.test import APITestCase
 
 from usuario.models import Usuario
 
-from .models import Cliente, Pedido, Produto, Receita
+from .models import Cliente, ItemPedido, Pedido, Produto, Receita
 from .serializers import ItemPedidoSerializer, PedidoSerializer
 
 # testes de integracao da API de pedidos e da regra de acesso
@@ -148,9 +148,11 @@ class PedidoApiTests(APITestCase):
 		resposta = self.client.delete(f"/api/produtos/{self.produto.id_produto}/")
 		self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
 
-	# item por receita sem produto vinculado nao pode virar pedido, pois a producao nao conclui
-	def test_receita_sem_produto_nao_pode_ser_pedida(self):
-		receita = Receita.objects.create(nome="Receita sem produto", rendimento_quantidade="1")
+	# itens novos usam produto do catalogo; a receita vem do cadastro do produto
+	def test_item_novo_exige_produto(self):
+		receita = Receita.objects.create(nome="Receita", rendimento_quantidade="1")
+		self.produto.receita = receita
+		self.produto.save(update_fields=["receita"])
 		pedido = {
 			"tipo": "externo",
 			"subtipo": "personalizado",
@@ -161,12 +163,16 @@ class PedidoApiTests(APITestCase):
 		}
 		resposta = self.client.post("/api/pedido/", pedido, format="json")
 		self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
-		self.assertIn("não tem produto vinculado", str(resposta.data))
+		self.assertIn("produto do catálogo", str(resposta.data))
 
-		self.produto.receita = receita
-		self.produto.save(update_fields=["receita"])
-		resposta = self.client.post("/api/pedido/", pedido, format="json")
-		self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+	# pedido antigo com item de receita fica so para leitura
+	def test_pedido_antigo_com_receita_nao_pode_ser_editado(self):
+		receita = Receita.objects.create(nome="Receita antiga", rendimento_quantidade="1")
+		pedido = Pedido.objects.create(tipo=Pedido.Tipo.INTERNO)
+		ItemPedido.objects.create(pedido=pedido, receita=receita, quantidade=1, preco_unitario="0")
+		resposta = self.client.patch(f"/api/pedido/{pedido.pk}/", {"data_entrega": "2026-12-01"}, format="json")
+		self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+		self.assertIn("não podem ser editados", str(resposta.data))
 
 	# sinal de pedido externo aceita a metade arredondada para cima nos centavos
 	def test_sinal_aceita_metade_arredondada(self):
