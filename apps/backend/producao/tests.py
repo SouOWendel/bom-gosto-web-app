@@ -8,7 +8,9 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
 from inventario.models import Ingrediente
-from pedido.models import Pedido
+from estoque.models import Estoque
+from pedido.models import ItemPedido, Pedido, Produto, Receita, ReceitaProduto
+from .models import IngredienteReceita
 from usuario.models import Usuario
 from .services import cancelar_pedido, concluir_producao
 
@@ -94,3 +96,65 @@ class CustoReceitaApiTests(APITestCase):
         self.client.patch(f"/api/inventario/ingrediente/{self.farinha.pk}/", {"custo_unitario": "8.00"}, format="json")
         receita = self.client.get(f"/api/producao/receitas/{resposta.data['id_receita']}/")
         self.assertEqual(receita.data["custo_calculado"], "4.00")
+
+
+class ProducaoComReceitasComplementaresTests(APITestCase):
+    def setUp(self):
+        usuario = Usuario.objects.create_user(login="teste-composicao", password="senha-de-teste-123", primeiro_acesso=False)
+        self.client.force_authenticate(user=usuario)
+        self.farinha = Ingrediente.objects.create(nome="Farinha", unidade_medida="kg", quantidade_disponivel=Decimal("10"), custo_unitario=Decimal("5.00"))
+        self.leite = Ingrediente.objects.create(nome="Leite condensado", unidade_medida="lata", quantidade_disponivel=Decimal("10"), custo_unitario=Decimal("8.00"))
+        # a massa rende 1 bolo; o recheio rende 2 kg e cada bolo leva 0,5 kg
+        self.massa = Receita.objects.create(nome="Massa", rendimento_quantidade=Decimal("1"))
+        IngredienteReceita.objects.create(receita=self.massa, ingrediente=self.farinha, quantidade_necessaria=Decimal("1"))
+        self.recheio = Receita.objects.create(nome="Recheio", rendimento_quantidade=Decimal("2"))
+        IngredienteReceita.objects.create(receita=self.recheio, ingrediente=self.leite, quantidade_necessaria=Decimal("2"))
+        self.bolo = Produto.objects.create(nome="Bolo recheado", preco_venda=Decimal("80"), receita=self.massa)
+        ReceitaProduto.objects.create(produto=self.bolo, receita=self.recheio, quantidade=Decimal("0.5"), unidade_medida="kg")
+
+    def _pedido(self, **item):
+        pedido = Pedido.objects.create(tipo=Pedido.Tipo.INTERNO)
+        ItemPedido.objects.create(pedido=pedido, quantidade=2, preco_unitario=Decimal("0"), **item)
+        return pedido
+
+    # a previsao soma a receita principal e a complementar e agrupa por receita
+    def test_analise_soma_receita_principal_e_complementar(self):
+        pedido = self._pedido(produto=self.bolo)
+        analise = self.client.post(f"/api/producao/pedidos/{pedido.pk}/validar/").data
+        necessarios = {linha["nome"]: linha["necessario"] for linha in analise["ingredientes"]}
+        self.assertEqual(necessarios, {"Farinha": Decimal("2.00"), "Leite condensado": Decimal("1.00")})
+        grupos = {grupo["nome"]: [i["nome"] for i in grupo["ingredientes"]] for grupo in analise["receitas"]}
+        self.assertEqual(grupos, {"Massa": ["Farinha"], "Recheio": ["Leite condensado"]})
+
+    # a conclusao aceita consumos informados por receita e baixa a soma de cada insumo
+    def test_conclusao_baixa_ingredientes_das_duas_receitas(self):
+        pedido = self._pedido(produto=self.bolo)
+        self.client.post(f"/api/producao/pedidos/{pedido.pk}/iniciar/")
+        resposta = self.client.post(
+            f"/api/producao/pedidos/{pedido.pk}/concluir/",
+            {"data_validade": "2026-12-01", "consumos": [
+                {"ingrediente_id": self.farinha.pk, "quantidade": "2.00"},
+                {"ingrediente_id": self.leite.pk, "quantidade": "1.00"},
+            ]},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, 200, resposta.data)
+        self.farinha.refresh_from_db()
+        self.leite.refresh_from_db()
+        self.assertEqual(self.farinha.quantidade_disponivel, Decimal("8.00"))
+        self.assertEqual(self.leite.quantidade_disponivel, Decimal("9.00"))
+        self.assertEqual(Estoque.objects.get(produto=self.bolo).quantidade_disponivel, Decimal("2.00"))
+
+    # pedido antigo com receita no proprio item continua usando so aquela receita
+    def test_item_antigo_com_receita_usa_somente_ela(self):
+        pedido = self._pedido(receita=self.massa)
+        analise = self.client.post(f"/api/producao/pedidos/{pedido.pk}/validar/").data
+        self.assertEqual([linha["nome"] for linha in analise["ingredientes"]], ["Farinha"])
+
+    # receita complementar sem ingredientes impede a producao e explica o motivo
+    def test_complementar_sem_ingredientes_gera_ausencia(self):
+        vazia = Receita.objects.create(nome="Cobertura", rendimento_quantidade=Decimal("1"))
+        ReceitaProduto.objects.create(produto=self.bolo, receita=vazia, quantidade=Decimal("0.2"))
+        pedido = self._pedido(produto=self.bolo)
+        analise = self.client.post(f"/api/producao/pedidos/{pedido.pk}/validar/").data
+        self.assertEqual([a["motivo"] for a in analise["ausencias"]], ["A receita Cobertura ainda não tem ingredientes."])

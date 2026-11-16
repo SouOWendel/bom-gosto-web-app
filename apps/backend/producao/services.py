@@ -63,7 +63,40 @@ def _saldo_restante(produto_id, solicitado, reservado):
     return usado
 
 
+# Lista as receitas usadas por unidade do item, com o fator aplicado ao rendimento.
+# Item de pedido antigo com receita própria usa só aquela receita (regra anterior).
+# Item com produto usa a receita principal (Produto.receita, fator 1) e as complementares
+# de Receita_Produto, cuja quantidade está na unidade do rendimento da receita (RF18).
+def _receitas_do_item(item):
+    if item.receita_id:
+        return [(item.receita, Decimal("1"))]
+    if not item.produto_id:
+        return []
+    produto = item.produto
+    receitas = []
+    if produto.receita_id:
+        receitas.append((produto.receita, Decimal("1")))
+    complementares = (
+        ReceitaProduto.objects.filter(produto_id=produto.pk)
+        .exclude(receita_id=produto.receita_id)
+        .select_related("receita")
+        .order_by("id_receita_produto")
+    )
+    receitas.extend((relacao.receita, relacao.quantidade) for relacao in complementares)
+    return receitas
+
+
+# Confere se a receita pode ser usada no cálculo e devolve o motivo quando não pode.
+def _problema_receita(receita):
+    if not receita.rendimento_quantidade or receita.rendimento_quantidade <= 0:
+        return "rendimento", f"A receita {receita.nome} não tem rendimento válido."
+    if not IngredienteReceita.objects.filter(receita_id=receita.pk).exists():
+        return "ingredientes", f"A receita {receita.nome} ainda não tem ingredientes."
+    return None
+
+
 # Calcula os ingredientes exigidos para a parte do pedido que precisa ser produzida.
+# Cada linha guarda também quanto veio de cada receita, para a conferência por receita.
 def _ingredientes_previstos(pedido):
     previstos = {}
     ausencias = []
@@ -77,32 +110,29 @@ def _ingredientes_previstos(pedido):
             quantidade -= _saldo_restante(item.produto_id, quantidade, reservado)
             if quantidade == 0:
                 continue
-        receita = _receita_item(item)
-        if receita is None and item.produto_id:
-            receita_ids = ReceitaProduto.objects.filter(produto_id=item.produto_id).values_list("receita_id", flat=True)
-            receitas = list(Receita.objects.filter(pk__in=receita_ids).order_by("nome"))
-            sugestoes.extend({"id_receita": r.pk, "nome": r.nome} for r in receitas)
-            if not receitas:
-                ausencias.append({"item_pedido": item.pk, "tipo": "receita", "motivo": "Nenhuma receita associada ao produto."})
-            continue
-        if receita is None:
-            ausencias.append({"item_pedido": item.pk, "tipo": "receita", "motivo": "O item não possui receita aplicável."})
+        receitas = _receitas_do_item(item)
+        if not receitas:
+            motivo = "Nenhuma receita associada ao produto." if item.produto_id else "O item não possui receita aplicável."
+            ausencias.append({"item_pedido": item.pk, "tipo": "receita", "motivo": motivo})
             continue
         if produto_do_item(item) is None:
-            ausencias.append({"item_pedido": item.pk, "tipo": "produto", "motivo": f"A receita {receita.nome} não tem produto vinculado; vincule-a a um produto em Produtos."})
+            ausencias.append({"item_pedido": item.pk, "tipo": "produto", "motivo": f"A receita {receitas[0][0].nome} não tem produto vinculado; vincule-a a um produto em Produtos."})
             continue
-        if not receita.rendimento_quantidade or receita.rendimento_quantidade <= 0:
-            ausencias.append({"item_pedido": item.pk, "tipo": "rendimento", "motivo": "A receita não tem rendimento válido."})
+        problemas = [problema for receita, _ in receitas if (problema := _problema_receita(receita))]
+        if problemas:
+            ausencias.extend({"item_pedido": item.pk, "tipo": tipo, "motivo": motivo} for tipo, motivo in problemas)
             continue
-        composicao = list(IngredienteReceita.objects.filter(receita_id=receita.pk).select_related("ingrediente").order_by("ingrediente_id"))
-        if not composicao:
-            ausencias.append({"item_pedido": item.pk, "tipo": "ingredientes", "motivo": f"A receita {receita.nome} ainda não tem ingredientes."})
-            continue
-        fator = quantidade / receita.rendimento_quantidade
-        for componente in composicao:
-            necessario = (componente.quantidade_necessaria * fator).quantize(CENTAVO, rounding=ROUND_HALF_UP)
-            linha = previstos.setdefault(componente.ingrediente_id, {"ingrediente": componente.ingrediente, "necessario": Decimal("0")})
-            linha["necessario"] += necessario
+        for receita, por_unidade in receitas:
+            if not any(sugestao["id_receita"] == receita.pk for sugestao in sugestoes):
+                sugestoes.append({"id_receita": receita.pk, "nome": receita.nome})
+            fator = quantidade * por_unidade / receita.rendimento_quantidade
+            composicao = IngredienteReceita.objects.filter(receita_id=receita.pk).select_related("ingrediente").order_by("ingrediente_id")
+            for componente in composicao:
+                necessario = (componente.quantidade_necessaria * fator).quantize(CENTAVO, rounding=ROUND_HALF_UP)
+                linha = previstos.setdefault(componente.ingrediente_id, {"ingrediente": componente.ingrediente, "necessario": Decimal("0"), "receitas": {}})
+                linha["necessario"] += necessario
+                parte = linha["receitas"].setdefault(receita.pk, {"nome": receita.nome, "necessario": Decimal("0")})
+                parte["necessario"] += necessario
     return previstos, ausencias, sugestoes
 
 
@@ -138,7 +168,14 @@ def analisar_pedido(pedido):
                 alerta_validade = {"nivel": nivel, "dias_para_vencer": dias}
         minimo = ingrediente.quantidade_minima
         ingredientes.append({"id_ingrediente": ingrediente.pk, "nome": ingrediente.nome, "unidade_medida": ingrediente.unidade_medida, "necessario": linha["necessario"], "disponivel": disponivel, "suficiente": disponivel >= linha["necessario"], "abaixo_do_minimo": (minimo is not None and disponivel < minimo), "data_validade": validade, "alerta_validade": alerta_validade})
-    return {"estoque": itens, "receitas_sugeridas": sugestoes, "ausencias": ausencias, "ingredientes_insuficientes": [i for i in ingredientes if not i["suficiente"]], "ingredientes": ingredientes, "encaminhar_para_producao": any(not i["disponivel"] for i in itens)}
+    # Agrupa os mesmos ingredientes por receita (massa, recheio, cobertura) para a conferência.
+    por_receita = {}
+    for linha in previstos.values():
+        ingrediente = linha["ingrediente"]
+        for receita_id, parte in linha["receitas"].items():
+            grupo = por_receita.setdefault(receita_id, {"id_receita": receita_id, "nome": parte["nome"], "ingredientes": []})
+            grupo["ingredientes"].append({"id_ingrediente": ingrediente.pk, "nome": ingrediente.nome, "unidade_medida": ingrediente.unidade_medida, "necessario": parte["necessario"]})
+    return {"estoque": itens, "receitas": list(por_receita.values()), "receitas_sugeridas": sugestoes, "ausencias": ausencias, "ingredientes_insuficientes": [i for i in ingredientes if not i["suficiente"]], "ingredientes": ingredientes, "encaminhar_para_producao": any(not i["disponivel"] for i in itens)}
 
 
 # Soma consumos repetidos e valida todos os saldos antes de qualquer baixa.
