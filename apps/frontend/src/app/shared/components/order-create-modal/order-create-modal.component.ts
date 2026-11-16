@@ -74,8 +74,8 @@ export class OrderCreateModalComponent {
   // Produto cadastrado na hora, para a tela de pedidos atualizar o catálogo.
   readonly productCreated = output<Product>();
 
-  // Índice do item que pediu o cadastro rápido de produto (null = modal fechado).
-  readonly creatingProductFor = signal<number | null>(null);
+  // Cadastro rápido de produto aberto sobre o pedido.
+  readonly isProductModalOpen = signal(false);
   readonly productError = signal<string | null>(null);
 
   tipo: 'interno' | 'externo' = 'externo';
@@ -218,28 +218,31 @@ export class OrderCreateModalComponent {
     this.items = this.items.filter((_, itemIndex) => itemIndex !== index);
   }
 
-  openProductModal(index: number): void {
+  openProductModal(): void {
     this.productError.set(null);
-    this.creatingProductFor.set(index);
+    this.isProductModalOpen.set(true);
   }
 
   closeProductModal(): void {
-    this.creatingProductFor.set(null);
+    this.isProductModalOpen.set(false);
     this.productError.set(null);
   }
 
-  // Cadastra o produto sem sair do pedido e já o seleciona no item que pediu.
+  // Cadastra o produto sem sair do pedido e já o seleciona no primeiro item sem
+  // produto; se todos já tiverem um, o produto entra em um item novo.
   createProduct(payload: Partial<Product>): void {
-    const index = this.creatingProductFor();
     this.api.createProduct(payload).subscribe({
       next: (product) => {
         this.productCreated.emit(product);
-        if (index !== null && this.items[index]) {
-          this.items[index].productId = product.id_produto;
-          if (!this.items[index].unitPrice.trim()) {
-            // Mesmo formato da API usado ao editar um pedido; a máscara de moeda o converte.
-            this.items[index].unitPrice = product.preco_venda;
-          }
+        let item = this.items.find((candidate) => candidate.productId === null);
+        if (!item) {
+          item = this.newItem();
+          this.items = [...this.items, item];
+        }
+        item.productId = product.id_produto;
+        if (!item.unitPrice.trim()) {
+          // Mesmo formato da API usado ao editar um pedido; a máscara de moeda o converte.
+          item.unitPrice = product.preco_venda;
         }
         this.closeProductModal();
       },
@@ -251,7 +254,7 @@ export class OrderCreateModalComponent {
   // Com o cadastro rápido aberto, o Esc fecha só ele.
   @HostListener('document:keydown.escape')
   onEscape(): void {
-    if (this.creatingProductFor() !== null) {
+    if (this.isProductModalOpen()) {
       return;
     }
     this.close();
