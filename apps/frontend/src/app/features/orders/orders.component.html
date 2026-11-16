@@ -46,6 +46,9 @@
       (closed)="closeStartDialog()"
       (confirmed)="confirmStart()"
     >
+      @if (pending.mode === 'producao' && depositReminder(pending.order); as reminder) {
+        <p class="alert alert--warning" role="note">{{ reminder }}</p>
+      }
       <div class="modal__section">
         <h3 class="modal__section-title">Disponibilidade no estoque</h3>
         <div class="data-table-frame">
@@ -122,6 +125,7 @@
       [apiError]="createError()"
       (closed)="closeCreateModal()"
       (submitted)="createOrder($event)"
+      (productCreated)="addProduct($event)"
     />
   }
 
@@ -133,6 +137,7 @@
       [apiError]="createError()"
       (closed)="closeEditModal()"
       (submitted)="handleOrderEdit($event)"
+      (productCreated)="addProduct($event)"
     />
   }
 
@@ -241,7 +246,12 @@
                       type="button"
                       class="btn-icon"
                       aria-label="Editar pedido"
-                      title="Editar pedido"
+                      [title]="
+                        isLegacyOrder(order)
+                          ? 'Pedido antigo com item de receita: somente leitura'
+                          : 'Editar pedido'
+                      "
+                      [disabled]="isLegacyOrder(order)"
                       (click)="editOrder(order)"
                     >
                       <svg [lucideIcon]="'pencil'" [size]="15"></svg>

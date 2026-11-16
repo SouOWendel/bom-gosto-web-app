@@ -41,6 +41,8 @@ export interface Product {
   receita: number | null;
   receita_nome?: string | null;
   receitas_complementares?: ProductRecipe[];
+  // Saldo pronto dentro da validade (somente leitura).
+  saldo_disponivel?: string;
 }
 
 export interface StockLot {

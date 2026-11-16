@@ -16,14 +16,6 @@ from .models import (
 )
 
 
-# Itens por receita precisam de um produto pronto para entrar no Estoque ao concluir.
-def receita_tem_produto(receita):
-    return (
-        receita.produtos.exists()
-        or ReceitaProduto.objects.filter(receita_id=receita.pk).exists()
-    )
-
-
 # Reaproveita o cliente com o mesmo telefone em vez de duplicar o cadastro.
 def _cliente_por_contato(nome, telefone):
     cliente = Cliente.objects.filter(telefone=telefone).order_by("id_cliente").first()
@@ -56,11 +48,20 @@ class ProdutoSerializer(serializers.ModelSerializer):
     receitas_complementares = ReceitaComplementarSerializer(
         many=True, required=False, source="receitaproduto_set"
     )
+    # Saldo pronto dentro da validade, exibido ao montar o pedido (RN05).
+    saldo_disponivel = serializers.SerializerMethodField()
 
     class Meta:
         model = Produto
-        fields = ("id_produto", "nome", "preco_venda", "receita", "receita_nome", "receitas_complementares")
+        fields = ("id_produto", "nome", "preco_venda", "receita", "receita_nome", "receitas_complementares", "saldo_disponivel")
         read_only_fields = ("id_produto", "receita_nome")
+
+    # A listagem já traz o saldo anotado; criação e edição calculam pelo mesmo critério.
+    def get_saldo_disponivel(self, produto):
+        saldo = getattr(produto, "saldo_valido", None)
+        if saldo is None:
+            saldo = Estoque.objects.verificar_disponibilidade(produto.pk, Decimal("0"))["quantidade_disponivel"]
+        return str(saldo or Decimal("0.00"))
 
     def validate_preco_venda(self, valor):
         if valor < 0:
@@ -177,20 +178,15 @@ class ItemPedidoSerializer(serializers.ModelSerializer):
             **Estoque.objects.verificar_disponibilidade(item.produto_id, quantidade),
         }
 
-    # Garante que o item tenha produto ou receita e quantidades válidas.
+    # Itens novos sempre apontam para um produto do catálogo; as receitas usadas na
+    # produção vêm do próprio produto. A coluna receita fica só para pedidos antigos.
     def validate(self, attrs):
-        produto = attrs.get("produto")
-        receita = attrs.get("receita")
-
-        if (produto is None) == (receita is None):
+        if attrs.get("receita") is not None:
             raise serializers.ValidationError(
-                "Informe exatamente um: produto ou receita."
+                {"receita": "Escolha um produto do catálogo; a receita vem do cadastro do produto."}
             )
-
-        if receita is not None and not receita_tem_produto(receita):
-            raise serializers.ValidationError(
-                {"receita": f"A receita {receita.nome} não tem produto vinculado; vincule-a a um produto em Produtos."}
-            )
+        if attrs.get("produto") is None:
+            raise serializers.ValidationError({"produto": "Informe o produto do item."})
 
         quantidade = attrs.get("quantidade")
         if quantidade is not None and quantidade <= 0:
@@ -266,6 +262,13 @@ class PedidoSerializer(serializers.ModelSerializer):
         ):
             raise serializers.ValidationError(
                 {"status": "Pedidos concluídos ou cancelados não podem ser editados."}
+            )
+
+        # Pedidos antigos com item de receita ficam só para leitura: o formato atual
+        # exige produto em todos os itens e não há como convertê-los sem perder dados.
+        if pedido_existente and pedido_existente.itens.filter(receita__isnull=False).exists():
+            raise serializers.ValidationError(
+                {"itens": "Pedidos antigos com item de receita não podem ser editados; cancele e cadastre um novo, se necessário."}
             )
 
         tipo = attrs.get(
