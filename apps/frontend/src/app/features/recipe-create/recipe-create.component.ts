@@ -54,7 +54,6 @@ export class RecipeCreateComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   recipeName = '';
-  productId: number | null = null;
   // Texto digitado no campo (o input compartilhado emite string); use yieldValue para cálculos.
   yield = '';
   ingredients: RecipeIngredientRow[] = [];
@@ -64,6 +63,24 @@ export class RecipeCreateComponent implements OnInit {
 
   get isEditing(): boolean {
     return this.recipeId !== null;
+  }
+
+  // Produtos que usam esta receita. O vínculo é feito no cadastro de produtos (RF18):
+  // como principal (Produto.receita) ou como complementar (Receita_Produto).
+  get usedInProducts(): string[] {
+    if (this.recipeId === null) {
+      return [];
+    }
+    const id = this.recipeId;
+    return this.availableProducts.flatMap((product) => {
+      if (product.receita === id) {
+        return [`${product.nome} (principal)`];
+      }
+      if ((product.receitas_complementares ?? []).some((item) => item.receita === id)) {
+        return [`${product.nome} (complementar)`];
+      }
+      return [];
+    });
   }
   availableIngredients: Ingredient[] = [];
   availableProducts: Product[] = [];
@@ -217,27 +234,9 @@ export class RecipeCreateComponent implements OnInit {
         ? this.api.createRecipe(payload)
         : this.api.updateRecipe(this.recipeId, payload);
     request.subscribe({
-      next: (savedRecipe) => {
-        if (this.productId) {
-          this.api.updateProduct(this.productId, { receita: savedRecipe.id_receita }).subscribe({
-            next: () => {
-              this.isSaving = false;
-              void this.router.navigate(['/receitas']);
-            },
-            // A receita já foi salva: fica na tela, avisa e passa a editar essa mesma
-            // receita, para que tentar de novo não crie uma duplicata.
-            error: (error: unknown) => {
-              this.isSaving = false;
-              this.recipeId = savedRecipe.id_receita;
-              this.setError(
-                `A receita foi salva, mas não foi possível vinculá-la ao produto. ${apiErrorMessage(error)}`,
-              );
-            },
-          });
-        } else {
-          this.isSaving = false;
-          void this.router.navigate(['/receitas']);
-        }
+      next: () => {
+        this.isSaving = false;
+        void this.router.navigate(['/receitas']);
       },
       error: (error: unknown) => {
         this.isSaving = false;

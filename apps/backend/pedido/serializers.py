@@ -35,19 +35,77 @@ def _cliente_por_contato(nome, telefone):
     return cliente
 
 
+# Receita complementar do produto (Receita_Produto, RF18): a quantidade usa a mesma
+# unidade do rendimento da receita e vale para cada unidade do produto.
+class ReceitaComplementarSerializer(serializers.ModelSerializer):
+    receita_nome = serializers.CharField(source="receita.nome", read_only=True)
+
+    class Meta:
+        model = ReceitaProduto
+        fields = ("receita", "receita_nome", "quantidade", "unidade_medida")
+
+    def validate_quantidade(self, valor):
+        if valor <= 0:
+            raise serializers.ValidationError("A quantidade da receita deve ser maior que zero.")
+        return valor
+
+
 # Serializador para consulta e cadastro de produtos comercializados.
 class ProdutoSerializer(serializers.ModelSerializer):
     receita_nome = serializers.CharField(source="receita.nome", read_only=True, allow_null=True)
+    receitas_complementares = ReceitaComplementarSerializer(
+        many=True, required=False, source="receitaproduto_set"
+    )
 
     class Meta:
         model = Produto
-        fields = ("id_produto", "nome", "preco_venda", "receita", "receita_nome")
+        fields = ("id_produto", "nome", "preco_venda", "receita", "receita_nome", "receitas_complementares")
         read_only_fields = ("id_produto", "receita_nome")
 
     def validate_preco_venda(self, valor):
         if valor < 0:
             raise serializers.ValidationError("O preço de venda não pode ser negativo.")
         return valor
+
+    # A principal fica em Produto.receita; as complementares não podem repeti-la nem se repetir.
+    def validate(self, attrs):
+        complementares = attrs.get("receitaproduto_set")
+        if complementares is None:
+            return attrs
+        principal = attrs.get("receita", self.instance.receita if self.instance else None)
+        ids = [linha["receita"].pk for linha in complementares]
+        if len(ids) != len(set(ids)):
+            raise serializers.ValidationError(
+                {"receitas_complementares": "Cada receita pode aparecer uma vez no produto."}
+            )
+        if principal is not None and principal.pk in ids:
+            raise serializers.ValidationError(
+                {"receitas_complementares": "A receita principal não pode ser repetida como complementar."}
+            )
+        return attrs
+
+    def _gravar_complementares(self, produto, complementares):
+        ReceitaProduto.objects.filter(produto=produto).delete()
+        for linha in complementares:
+            ReceitaProduto.objects.create(produto=produto, **linha)
+
+    @transaction.atomic
+    def create(self, validated_data):
+        complementares = validated_data.pop("receitaproduto_set", [])
+        produto = Produto.objects.create(**validated_data)
+        self._gravar_complementares(produto, complementares)
+        return produto
+
+    # Substitui as complementares somente quando a lista é enviada.
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        complementares = validated_data.pop("receitaproduto_set", None)
+        for campo, valor in validated_data.items():
+            setattr(instance, campo, valor)
+        instance.save()
+        if complementares is not None:
+            self._gravar_complementares(instance, complementares)
+        return instance
 
 
 # Devolve os dados do registro de cancelamento para consulta pela API.

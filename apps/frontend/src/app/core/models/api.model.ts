@@ -25,12 +25,22 @@ export interface ExpirationAlert {
   dias_para_vencer: number;
 }
 
+// Receita complementar do produto (Receita_Produto): quantidade na unidade do
+// rendimento da receita, usada em cada unidade do produto.
+export interface ProductRecipe {
+  receita: number;
+  receita_nome?: string;
+  quantidade: string;
+  unidade_medida: string | null;
+}
+
 export interface Product {
   id_produto: number;
   nome: string;
   preco_venda: string;
   receita: number | null;
   receita_nome?: string | null;
+  receitas_complementares?: ProductRecipe[];
 }
 
 export interface StockLot {
@@ -139,6 +149,17 @@ export interface ProductionAnalysis {
     quantidade_disponivel: string;
     disponivel: boolean;
     encaminhar_para_producao: boolean;
+  }>;
+  // Mesmos ingredientes previstos, agrupados pela receita de origem (massa, recheio...).
+  receitas?: Array<{
+    id_receita: number;
+    nome: string;
+    ingredientes: Array<{
+      id_ingrediente: number;
+      nome: string;
+      unidade_medida?: string;
+      necessario: string;
+    }>;
   }>;
   receitas_sugeridas: Array<{ id_receita: number; nome: string }>;
   ausencias: Array<{ item_pedido: number; tipo: string; motivo: string }>;

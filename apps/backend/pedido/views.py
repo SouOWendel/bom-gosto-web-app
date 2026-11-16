@@ -92,7 +92,11 @@ class CancelamentoViewSet(ReadOnlyModelViewSet):
 
 # Permite o gerenciamento de produtos comercializados pela confeitaria.
 class ProdutoViewSet(ModelViewSet):
-    queryset = Produto.objects.select_related("receita").all().order_by("nome")
+    queryset = (
+        Produto.objects.select_related("receita")
+        .prefetch_related("receitaproduto_set__receita")
+        .order_by("nome")
+    )
     serializer_class = ProdutoSerializer
     permission_classes = [IsAuthenticated, SenhaInicialAlterada]
 

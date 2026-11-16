@@ -40,27 +40,34 @@
               </tr>
             </thead>
             <tbody>
-              @for (ingredient of ingredients; track ingredient.id) {
-                <tr>
-                  <td>
-                    <strong class="data-table__primary">{{ ingredient.name }}</strong>
-                    <small class="data-table__secondary">{{ ingredient.lot }}</small>
-                  </td>
-                  <td class="is-numeric">
-                    {{ ingredient.theoreticalLabel }} {{ ingredient.unit }}
-                  </td>
-                  <td>
-                    <app-input-text
-                      label=""
-                      [inputId]="'consumption-' + ingredient.id"
-                      type="number"
-                      [suffix]="ingredient.unit"
-                      size="compact"
-                      [placeholder]="ingredient.theoreticalQuantity"
-                      [(ngModel)]="ingredient.quantity"
-                    />
-                  </td>
-                </tr>
+              @for (group of groups; track $index) {
+                @if (group.recipeName) {
+                  <tr class="recipe-group-row">
+                    <th colspan="3" scope="colgroup">{{ group.recipeName }}</th>
+                  </tr>
+                }
+                @for (ingredient of group.ingredients; track ingredient.key) {
+                  <tr>
+                    <td>
+                      <strong class="data-table__primary">{{ ingredient.name }}</strong>
+                      <small class="data-table__secondary">{{ ingredient.lot }}</small>
+                    </td>
+                    <td class="is-numeric">
+                      {{ ingredient.theoreticalLabel }} {{ ingredient.unit }}
+                    </td>
+                    <td>
+                      <app-input-text
+                        label=""
+                        [inputId]="'consumption-' + ingredient.key"
+                        type="number"
+                        [suffix]="ingredient.unit"
+                        size="compact"
+                        [placeholder]="ingredient.theoreticalQuantity"
+                        [(ngModel)]="ingredient.quantity"
+                      />
+                    </td>
+                  </tr>
+                }
               }
             </tbody>
           </table>
