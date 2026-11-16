@@ -295,6 +295,11 @@ class SeedDemonstracaoTests(APITestCase):
 		self.assertTrue(analise["encaminhar_para_producao"])
 		self.assertEqual(analise["ausencias"], [])
 		self.assertEqual(analise["ingredientes_insuficientes"], [])
+		# o bolo do roteiro soma a massa (principal) e o recheio (complementar)
+		self.assertEqual(
+			{grupo["nome"] for grupo in analise["receitas"]},
+			{"Massa branca", "Recheio delícia de limão"},
+		)
 
 		carlos = Pedido.objects.get(cliente__nome="Carlos Menezes", status=Pedido.Status.EM_PRODUCAO)
 		self.assertTrue(analisar_pedido(carlos)["ingredientes"])

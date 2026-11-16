@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from estoque.models import Estoque
 from inventario.models import Ingrediente
-from pedido.models import Cancelamento, Cliente, ItemPedido, Pedido, Produto, Receita
+from pedido.models import Cancelamento, Cliente, ItemPedido, Pedido, Produto, Receita, ReceitaProduto
 from producao.models import IngredienteReceita
 from producao.services import recalcular_custo_receita
 from usuario.models import Usuario
@@ -62,6 +62,15 @@ PRODUTOS = [
     ("Pote", "15.00", "Banoffee de pote"),
     ("Fatia", "41.20", "Massa branca"),
     ("Mini vulcão", "20.00", "Caseirinho vulcão"),
+    ("Bolo 1kg delícia de limão", "95.00", "Massa branca"),
+    ("Bolo 1kg beijinho", "95.00", "Massa branca"),
+]
+
+# produto, receita complementar, quantidade por unidade do produto (na unidade do rendimento), unidade
+# a massa vem da receita principal; o recheio entra como receita complementar (RF18)
+RECEITAS_COMPLEMENTARES = [
+    ("Bolo 1kg delícia de limão", "Recheio delícia de limão", "0.40", "kg"),
+    ("Bolo 1kg beijinho", "Recheio de beijinho", "0.40", "kg"),
 ]
 
 # produto, quantidade, dias para vencer, custo do lote
@@ -191,6 +200,12 @@ class Command(BaseCommand):
                 },
             )
             produtos[nome] = produto
+        for produto_nome, receita_nome, quantidade, unidade in RECEITAS_COMPLEMENTARES:
+            ReceitaProduto.objects.update_or_create(
+                produto=produtos[produto_nome],
+                receita=receitas[receita_nome],
+                defaults={"quantidade": Decimal(quantidade), "unidade_medida": unidade},
+            )
         return produtos
 
     # 4. Estoque: lotes de vitrine com alertas de validade variados
@@ -214,9 +229,9 @@ class Command(BaseCommand):
                 data_validade=hoje + timedelta(days=dias),
                 custo=Decimal(custo),
             )
-        if Estoque.objects.filter(produto=produtos["Bolo 1kg massa branca"], quantidade_disponivel__gt=0).exists():
+        if Estoque.objects.filter(produto=produtos["Bolo 1kg delícia de limão"], quantidade_disponivel__gt=0).exists():
             self.stdout.write(self.style.WARNING(
-                "Há saldo de 'Bolo 1kg massa branca' no estoque; o pedido do roteiro não irá para Produção. "
+                "Há saldo de 'Bolo 1kg delícia de limão' no estoque; o pedido do roteiro não irá para Produção. "
                 "Use --resetar-demo para limpar os lotes de ensaio."
             ))
 
@@ -262,10 +277,10 @@ class Command(BaseCommand):
     def _carregar_pedidos_demo(self, clientes, produtos, hoje, resetar):
         # cliente (None = reposicao interna), tipo, subtipo, entrega, horario, total, sinal, status, itens
         demos = [
-            # encomenda sem produto pronto: Pedidos -> Producao -> Estoque -> entrega
+            # encomenda sem produto pronto: Pedidos -> Producao (massa + recheio) -> Estoque -> entrega
             ("Licilene Alves", Pedido.Tipo.EXTERNO, Pedido.Subtipo.PERSONALIZADO, hoje + timedelta(days=2), time(15, 0),
              "120.90", "60.45", Pedido.Status.PEDIDO_FEITO,
-             [("Bolo 1kg massa branca", 1, "delícia de limão", "Feliz aniversário", "1.00")]),
+             [("Bolo 1kg delícia de limão", 1, None, "Feliz aniversário", "1.00")]),
             # encomenda ja em producao que pode ser cancelada com reaproveitamento (RN12)
             ("Carlos Menezes", Pedido.Tipo.EXTERNO, Pedido.Subtipo.PERSONALIZADO, hoje + timedelta(days=1), time(15, 0),
              "90.00", "45.00", Pedido.Status.EM_PRODUCAO,
