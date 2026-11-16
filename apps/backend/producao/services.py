@@ -97,7 +97,8 @@ def _problema_receita(receita):
 
 # Calcula os ingredientes exigidos para a parte do pedido que precisa ser produzida.
 # Cada linha guarda também quanto veio de cada receita, para a conferência por receita.
-def _ingredientes_previstos(pedido):
+# Com descontar_estoque=False, considera o pedido inteiro (usado no cancelamento).
+def _ingredientes_previstos(pedido, descontar_estoque=True):
     previstos = {}
     ausencias = []
     sugestoes = []
@@ -106,7 +107,7 @@ def _ingredientes_previstos(pedido):
         quantidade = _quantidade_item(item)
         # Reposição interna produz toda a quantidade solicitada; não consome
         # o saldo de vitrine que já existe para clientes.
-        if item.produto_id and pedido.tipo == Pedido.Tipo.EXTERNO:
+        if descontar_estoque and item.produto_id and pedido.tipo == Pedido.Tipo.EXTERNO:
             quantidade -= _saldo_restante(item.produto_id, quantidade, reservado)
             if quantidade == 0:
                 continue
@@ -168,6 +169,16 @@ def analisar_pedido(pedido):
                 alerta_validade = {"nivel": nivel, "dias_para_vencer": dias}
         minimo = ingrediente.quantidade_minima
         ingredientes.append({"id_ingrediente": ingrediente.pk, "nome": ingrediente.nome, "unidade_medida": ingrediente.unidade_medida, "necessario": linha["necessario"], "disponivel": disponivel, "suficiente": disponivel >= linha["necessario"], "abaixo_do_minimo": (minimo is not None and disponivel < minimo), "data_validade": validade, "alerta_validade": alerta_validade})
+    # No cancelamento (RF26) a confeiteira informa o que já gastou. O saldo pronto pode ter
+    # chegado depois do início da produção, então a lista considera o pedido inteiro.
+    if status_operacional(pedido.status) == Pedido.Status.EM_PRODUCAO:
+        receitas_totais, _, _ = _ingredientes_previstos(pedido, descontar_estoque=False)
+    else:
+        receitas_totais = previstos
+    ingredientes_receitas = [
+        {"id_ingrediente": linha["ingrediente"].pk, "nome": linha["ingrediente"].nome, "unidade_medida": linha["ingrediente"].unidade_medida, "necessario": linha["necessario"], "disponivel": linha["ingrediente"].quantidade_disponivel or Decimal("0")}
+        for linha in receitas_totais.values()
+    ]
     # Agrupa os mesmos ingredientes por receita (massa, recheio, cobertura) para a conferência.
     por_receita = {}
     for linha in previstos.values():
@@ -175,7 +186,7 @@ def analisar_pedido(pedido):
         for receita_id, parte in linha["receitas"].items():
             grupo = por_receita.setdefault(receita_id, {"id_receita": receita_id, "nome": parte["nome"], "ingredientes": []})
             grupo["ingredientes"].append({"id_ingrediente": ingrediente.pk, "nome": ingrediente.nome, "unidade_medida": ingrediente.unidade_medida, "necessario": parte["necessario"]})
-    return {"estoque": itens, "receitas": list(por_receita.values()), "receitas_sugeridas": sugestoes, "ausencias": ausencias, "ingredientes_insuficientes": [i for i in ingredientes if not i["suficiente"]], "ingredientes": ingredientes, "encaminhar_para_producao": any(not i["disponivel"] for i in itens)}
+    return {"estoque": itens, "receitas": list(por_receita.values()), "receitas_sugeridas": sugestoes, "ausencias": ausencias, "ingredientes_insuficientes": [i for i in ingredientes if not i["suficiente"]], "ingredientes": ingredientes, "ingredientes_receitas": ingredientes_receitas, "encaminhar_para_producao": any(not i["disponivel"] for i in itens)}
 
 
 # Soma consumos repetidos e valida todos os saldos antes de qualquer baixa.

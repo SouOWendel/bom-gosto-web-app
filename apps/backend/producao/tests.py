@@ -158,3 +158,13 @@ class ProducaoComReceitasComplementaresTests(APITestCase):
         pedido = self._pedido(produto=self.bolo)
         analise = self.client.post(f"/api/producao/pedidos/{pedido.pk}/validar/").data
         self.assertEqual([a["motivo"] for a in analise["ausencias"]], ["A receita Cobertura ainda não tem ingredientes."])
+
+    # saldo pronto que chega depois do inicio nao some da lista usada no cancelamento (RF26)
+    def test_cancelamento_lista_receitas_mesmo_com_estoque_pronto(self):
+        pedido = Pedido.objects.create(tipo=Pedido.Tipo.EXTERNO, subtipo=Pedido.Subtipo.PERSONALIZADO, status=Pedido.Status.EM_PRODUCAO)
+        ItemPedido.objects.create(pedido=pedido, produto=self.bolo, quantidade=1, preco_unitario=Decimal("80"))
+        Estoque.objects.create(produto=self.bolo, quantidade_disponivel=Decimal("1"))
+        analise = self.client.post(f"/api/producao/pedidos/{pedido.pk}/validar/").data
+        self.assertEqual(analise["ingredientes"], [])
+        nomes = {linha["nome"]: linha["necessario"] for linha in analise["ingredientes_receitas"]}
+        self.assertEqual(nomes, {"Farinha": Decimal("1.00"), "Leite condensado": Decimal("0.50")})
