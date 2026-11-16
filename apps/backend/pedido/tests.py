@@ -361,3 +361,17 @@ class ProdutoReceitasComplementaresApiTests(APITestCase):
 		)
 		self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
 		self.assertIn("receitas_complementares", resposta.data)
+
+	# o saldo do produto considera apenas lotes dentro da validade
+	def test_saldo_disponivel_ignora_lotes_vencidos(self):
+		from datetime import timedelta
+		from django.utils import timezone
+		from estoque.models import Estoque
+
+		produto = Produto.objects.create(nome="Brigadeiro", preco_venda="2.00")
+		hoje = timezone.localdate()
+		Estoque.objects.create(produto=produto, quantidade_disponivel="5", data_validade=hoje + timedelta(days=3))
+		Estoque.objects.create(produto=produto, quantidade_disponivel="3", data_validade=hoje - timedelta(days=1))
+		resposta = self.client.get("/api/produtos/")
+		saldo = next(p["saldo_disponivel"] for p in resposta.data if p["id_produto"] == produto.pk)
+		self.assertEqual(Decimal(saldo), Decimal("5"))

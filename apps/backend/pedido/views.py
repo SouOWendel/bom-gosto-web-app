@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from django.db import transaction
+from django.db.models import Q, Sum
+from django.utils import timezone
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404
 
@@ -99,6 +101,14 @@ class ProdutoViewSet(ModelViewSet):
     )
     serializer_class = ProdutoSerializer
     permission_classes = [IsAuthenticated, SenhaInicialAlterada]
+
+    # Soma só os lotes dentro da validade, como em verificar_disponibilidade.
+    def get_queryset(self):
+        hoje = timezone.localdate()
+        validos = Q(lotes_estoque__data_validade__isnull=True) | Q(lotes_estoque__data_validade__gte=hoje)
+        return super().get_queryset().annotate(
+            saldo_valido=Sum("lotes_estoque__quantidade_disponivel", filter=validos)
+        )
 
     # Recusa com 400 a exclusão de produtos que já têm lotes ou pedidos vinculados.
     def perform_destroy(self, instance):

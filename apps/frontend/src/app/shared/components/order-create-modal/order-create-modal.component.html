@@ -167,6 +167,9 @@
               >
                 <svg [lucideIcon]="'trash-2'" [size]="15"></svg>
               </app-button>
+              @if (stockWarning(item); as warning) {
+                <p class="order-modal__stock-warning" role="status">{{ warning }}</p>
+              }
               <div class="order-modal__item-details">
                 <app-input-text
                   label="Recheio (opcional)"

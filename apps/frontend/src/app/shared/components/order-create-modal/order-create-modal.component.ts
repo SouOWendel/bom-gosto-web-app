@@ -19,7 +19,12 @@ import { apiErrorMessage } from '../../../core/utils/api-error';
 import { ButtonComponent } from '../button/button.component';
 import { InputTextComponent } from '../input-text/input-text.component';
 import { ProductCreateModalComponent } from '../product-create-modal/product-create-modal.component';
-import { formatCurrency, parseDecimal, toDisplayDecimal } from '../../../core/utils/format';
+import {
+  formatCurrency,
+  formatQuantity,
+  parseDecimal,
+  toDisplayDecimal,
+} from '../../../core/utils/format';
 
 // Todo item é um produto do catálogo; as receitas usadas na produção vêm do produto.
 interface OrderItemForm {
@@ -114,17 +119,43 @@ export class OrderCreateModalComponent {
     }
   }
 
-  // Catálogo completo; produtos sem receita só podem ser atendidos pelo estoque.
+  // Catálogo completo com o saldo pronto (RN05); produtos sem receita só saem do estoque.
   get products(): Array<{ id: number; label: string }> {
     return this.productsList().map((product) => {
       const hasRecipe =
         product.receita !== null || (product.receitas_complementares ?? []).length > 0;
+      const stock = `${formatQuantity(product.saldo_disponivel ?? '0')} em estoque`;
       const suffix = hasRecipe ? '' : ' · sem receita';
       return {
         id: product.id_produto,
-        label: `${product.nome} (R$ ${product.preco_venda})${suffix}`,
+        label: `${product.nome} (R$ ${product.preco_venda}) · ${stock}${suffix}`,
       };
     });
+  }
+
+  // Pedido externo usa primeiro o saldo pronto; o que faltar segue para a Produção (RN06).
+  // Não bloqueia o cadastro (RN03), só avisa.
+  stockWarning(item: OrderItemForm): string | null {
+    if (this.tipo !== 'externo' || item.productId === null) {
+      return null;
+    }
+    const product = this.productsList().find(
+      (candidate) => candidate.id_produto === item.productId,
+    );
+    if (!product) {
+      return null;
+    }
+    const requested = Number(item.quantity.trim()) || Number(parseDecimal(item.weight)) || 0;
+    const available = Number(product.saldo_disponivel ?? 0);
+    if (requested <= available) {
+      return null;
+    }
+    const hasRecipe =
+      product.receita !== null || (product.receitas_complementares ?? []).length > 0;
+    const missing = formatQuantity(requested - available);
+    return hasRecipe
+      ? `Há ${formatQuantity(available)} em estoque; o restante (${missing}) segue para a produção.`
+      : `Há ${formatQuantity(available)} em estoque e o produto não tem receita para produzir o restante.`;
   }
 
   // Soma preço x peso (quando informado) ou preço x quantidade de cada item.

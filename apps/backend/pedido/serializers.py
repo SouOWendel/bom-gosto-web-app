@@ -48,11 +48,20 @@ class ProdutoSerializer(serializers.ModelSerializer):
     receitas_complementares = ReceitaComplementarSerializer(
         many=True, required=False, source="receitaproduto_set"
     )
+    # Saldo pronto dentro da validade, exibido ao montar o pedido (RN05).
+    saldo_disponivel = serializers.SerializerMethodField()
 
     class Meta:
         model = Produto
-        fields = ("id_produto", "nome", "preco_venda", "receita", "receita_nome", "receitas_complementares")
+        fields = ("id_produto", "nome", "preco_venda", "receita", "receita_nome", "receitas_complementares", "saldo_disponivel")
         read_only_fields = ("id_produto", "receita_nome")
+
+    # A listagem já traz o saldo anotado; criação e edição calculam pelo mesmo critério.
+    def get_saldo_disponivel(self, produto):
+        saldo = getattr(produto, "saldo_valido", None)
+        if saldo is None:
+            saldo = Estoque.objects.verificar_disponibilidade(produto.pk, Decimal("0"))["quantidade_disponivel"]
+        return str(saldo or Decimal("0.00"))
 
     def validate_preco_venda(self, valor):
         if valor < 0:
