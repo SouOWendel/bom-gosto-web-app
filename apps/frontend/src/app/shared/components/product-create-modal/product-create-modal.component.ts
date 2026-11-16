@@ -119,13 +119,14 @@ export class ProductCreateModalComponent {
     if (this.complementary.some((item) => item.recipeId === null)) {
       return 'Selecione a receita de cada linha complementar ou remova a linha.';
     }
+    // A API guarda a quantidade com até 3 casas decimais (Receita_Produto.quantidade).
     if (
       this.complementary.some((item) => {
-        const quantity = Number(parseDecimal(item.quantity));
-        return !Number.isFinite(quantity) || quantity <= 0;
+        const quantity = parseDecimal(item.quantity);
+        return !/^\d+(\.\d{1,3})?$/.test(quantity) || Number(quantity) <= 0;
       })
     ) {
-      return 'Informe uma quantidade maior que zero para cada receita complementar.';
+      return 'Informe a quantidade de cada receita complementar, maior que zero e com até 3 casas decimais.';
     }
     const ids = this.complementary.map((item) => item.recipeId);
     if (new Set(ids).size !== ids.length) {
