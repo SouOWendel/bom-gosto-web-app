@@ -57,7 +57,6 @@ export class RecipeCreateComponent implements OnInit {
   productId: number | null = null;
   // Texto digitado no campo (o input compartilhado emite string); use yieldValue para cálculos.
   yield = '';
-  preparation = '';
   ingredients: RecipeIngredientRow[] = [];
   errorMessage = '';
   isSaving = false;
