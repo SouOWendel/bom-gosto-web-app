@@ -1,0 +1,26 @@
+.product-modal__recipe-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.8fr) minmax(0, 0.6fr) auto;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.product-modal__recipe-hint {
+  grid-column: 1 / -1;
+  margin: calc(var(--space-2) * -1) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.product-modal__section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+@media (max-width: 640px) {
+  .product-modal__recipe-row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -25,12 +25,22 @@ export interface ExpirationAlert {
   dias_para_vencer: number;
 }
 
+// Receita complementar do produto (Receita_Produto): quantidade na unidade do
+// rendimento da receita, usada em cada unidade do produto.
+export interface ProductRecipe {
+  receita: number;
+  receita_nome?: string;
+  quantidade: string;
+  unidade_medida: string | null;
+}
+
 export interface Product {
   id_produto: number;
   nome: string;
   preco_venda: string;
   receita: number | null;
   receita_nome?: string | null;
+  receitas_complementares?: ProductRecipe[];
 }
 
 export interface StockLot {
