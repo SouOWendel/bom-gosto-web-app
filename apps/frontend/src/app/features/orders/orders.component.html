@@ -122,6 +122,7 @@
       [apiError]="createError()"
       (closed)="closeCreateModal()"
       (submitted)="createOrder($event)"
+      (productCreated)="addProduct($event)"
     />
   }
 
@@ -133,6 +134,7 @@
       [apiError]="createError()"
       (closed)="closeEditModal()"
       (submitted)="handleOrderEdit($event)"
+      (productCreated)="addProduct($event)"
     />
   }
 
@@ -241,7 +243,12 @@
                       type="button"
                       class="btn-icon"
                       aria-label="Editar pedido"
-                      title="Editar pedido"
+                      [title]="
+                        isLegacyOrder(order)
+                          ? 'Pedido antigo com item de receita: somente leitura'
+                          : 'Editar pedido'
+                      "
+                      [disabled]="isLegacyOrder(order)"
                       (click)="editOrder(order)"
                     >
                       <svg [lucideIcon]="'pencil'" [size]="15"></svg>

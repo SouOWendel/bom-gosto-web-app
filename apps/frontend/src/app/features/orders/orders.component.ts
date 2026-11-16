@@ -412,9 +412,22 @@ export class OrdersComponent implements OnInit {
     });
   }
 
+  // Pedidos anteriores ao catálogo de produtos têm itens só com receita e ficam como leitura.
+  isLegacyOrder(order: OrderRow): boolean {
+    return order.apiOrder.itens.some((item) => item.produto === null && item.receita !== null);
+  }
+
+  addProduct(product: Product): void {
+    this.products.update((list) => [...list, product]);
+  }
+
   editOrder(order: OrderRow): void {
     if (['concluido', 'cancelado'].includes(order.apiOrder.status)) {
       this.actionError.set('Pedidos concluídos ou cancelados não podem ser editados.');
+      return;
+    }
+    if (this.isLegacyOrder(order)) {
+      this.actionError.set('Pedidos antigos com item de receita ficam somente para leitura.');
       return;
     }
     this.createError.set(null);

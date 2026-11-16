@@ -1,4 +1,4 @@
-import { Component, HostListener, effect, input, output } from '@angular/core';
+import { Component, HostListener, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   LucideDynamicIcon,
@@ -14,13 +14,16 @@ import {
   Product,
   Recipe,
 } from '../../../core/models/api.model';
+import { DomainApiService } from '../../../core/services/domain-api.service';
+import { apiErrorMessage } from '../../../core/utils/api-error';
 import { ButtonComponent } from '../button/button.component';
 import { InputTextComponent } from '../input-text/input-text.component';
+import { ProductCreateModalComponent } from '../product-create-modal/product-create-modal.component';
 import { formatCurrency, parseDecimal, toDisplayDecimal } from '../../../core/utils/format';
 
+// Todo item é um produto do catálogo; as receitas usadas na produção vêm do produto.
 interface OrderItemForm {
-  kind: 'produto' | 'receita';
-  referenceId: number | null;
+  productId: number | null;
   // Quantidade (un) e peso (kg) podem vir juntos, ex.: 1 bolo de 1,5 kg.
   quantity: string;
   weight: string;
@@ -34,18 +37,32 @@ interface OrderItemForm {
 @Component({
   selector: 'app-order-create-modal',
   standalone: true,
-  imports: [FormsModule, ButtonComponent, InputTextComponent, LucideDynamicIcon],
+  imports: [
+    FormsModule,
+    ButtonComponent,
+    InputTextComponent,
+    LucideDynamicIcon,
+    ProductCreateModalComponent,
+  ],
   providers: [provideLucideIcons(LucidePlus, LucideTrash2, LucideX)],
   templateUrl: './order-create-modal.component.html',
   styleUrls: ['./order-create-modal.component.scss'],
 })
 export class OrderCreateModalComponent {
+  private readonly api = inject(DomainApiService);
+
   readonly recipes = input<Recipe[]>([]);
   readonly productsList = input<Product[]>([]);
   readonly orderToEdit = input<Order | null>(null);
   readonly apiError = input<string | null>(null);
   readonly closed = output<void>();
   readonly submitted = output<OrderCreationPayload>();
+  // Produto cadastrado na hora, para a tela de pedidos atualizar o catálogo.
+  readonly productCreated = output<Product>();
+
+  // Índice do item que pediu o cadastro rápido de produto (null = modal fechado).
+  readonly creatingProductFor = signal<number | null>(null);
+  readonly productError = signal<string | null>(null);
 
   tipo: 'interno' | 'externo' = 'externo';
   subtipo: 'vitrine' | 'personalizado' = 'personalizado';
@@ -85,8 +102,7 @@ export class OrderCreateModalComponent {
     if (order.itens && order.itens.length > 0) {
       this.items = order.itens.map((item): OrderItemForm => {
         return {
-          kind: item.produto ? 'produto' : 'receita',
-          referenceId: item.produto ?? item.receita ?? null,
+          productId: item.produto ?? null,
           quantity: item.quantidade == null ? '' : String(item.quantidade),
           weight: item.quantidade_peso ? toDisplayDecimal(item.quantidade_peso) : '',
           unitPrice: String(item.preco_unitario ?? ''),
@@ -98,49 +114,17 @@ export class OrderCreateModalComponent {
     }
   }
 
-  // Receitas que têm produto pronto (pela ficha do produto ou pela relação receita-produto).
-  // Sem produto, a produção não consegue ser concluída, então elas não aparecem para novos itens.
-  private get recipeIdsWithProduct(): Set<number> {
-    const ids = new Set<number>();
-    for (const product of this.productsList()) {
-      if (product.receita !== null) {
-        ids.add(product.receita);
-      }
-    }
-    for (const recipe of this.recipes()) {
-      if ((recipe.produtos ?? []).length > 0) {
-        ids.add(recipe.id_receita);
-      }
-    }
-    return ids;
-  }
-
-  // Mantém visível a receita já escolhida em um pedido antigo, para a validação explicar o problema.
-  get orderableRecipes(): Recipe[] {
-    const withProduct = this.recipeIdsWithProduct;
-    const selected = new Set(
-      this.items.filter((item) => item.kind === 'receita').map((item) => item.referenceId),
-    );
-    return this.recipes().filter(
-      (recipe) => withProduct.has(recipe.id_receita) || selected.has(recipe.id_receita),
-    );
-  }
-
+  // Catálogo completo; produtos sem receita só podem ser atendidos pelo estoque.
   get products(): Array<{ id: number; label: string }> {
-    const list = this.productsList();
-    if (list && list.length > 0) {
-      return list.map((p) => ({
-        id: p.id_produto,
-        label: `${p.nome} (R$ ${p.preco_venda})`,
-      }));
-    }
-    const products = new Map<number, string>();
-    for (const recipe of this.recipes()) {
-      for (const product of recipe.produtos ?? []) {
-        products.set(product.produto, `Produto #${product.produto}`);
-      }
-    }
-    return [...products.entries()].map(([id, label]) => ({ id, label }));
+    return this.productsList().map((product) => {
+      const hasRecipe =
+        product.receita !== null || (product.receitas_complementares ?? []).length > 0;
+      const suffix = hasRecipe ? '' : ' · sem receita';
+      return {
+        id: product.id_produto,
+        label: `${product.nome} (R$ ${product.preco_venda})${suffix}`,
+      };
+    });
   }
 
   // Soma preço x peso (quando informado) ou preço x quantidade de cada item.
@@ -179,8 +163,42 @@ export class OrderCreateModalComponent {
     this.items = this.items.filter((_, itemIndex) => itemIndex !== index);
   }
 
+  openProductModal(index: number): void {
+    this.productError.set(null);
+    this.creatingProductFor.set(index);
+  }
+
+  closeProductModal(): void {
+    this.creatingProductFor.set(null);
+    this.productError.set(null);
+  }
+
+  // Cadastra o produto sem sair do pedido e já o seleciona no item que pediu.
+  createProduct(payload: Partial<Product>): void {
+    const index = this.creatingProductFor();
+    this.api.createProduct(payload).subscribe({
+      next: (product) => {
+        this.productCreated.emit(product);
+        if (index !== null && this.items[index]) {
+          this.items[index].productId = product.id_produto;
+          if (!this.items[index].unitPrice.trim()) {
+            // Mesmo formato da API usado ao editar um pedido; a máscara de moeda o converte.
+            this.items[index].unitPrice = product.preco_venda;
+          }
+        }
+        this.closeProductModal();
+      },
+      error: (error: unknown) =>
+        this.productError.set(`Não foi possível cadastrar o produto. ${apiErrorMessage(error)}`),
+    });
+  }
+
+  // Com o cadastro rápido aberto, o Esc fecha só ele.
   @HostListener('document:keydown.escape')
   onEscape(): void {
+    if (this.creatingProductFor() !== null) {
+      return;
+    }
     this.close();
   }
 
@@ -217,8 +235,7 @@ export class OrderCreateModalComponent {
 
   private newItem(): OrderItemForm {
     return {
-      kind: 'receita',
-      referenceId: null,
+      productId: null,
       quantity: '1',
       weight: '',
       unitPrice: '',
@@ -232,7 +249,7 @@ export class OrderCreateModalComponent {
     const apiItem: OrderCreationItem = {
       preco_unitario: parseDecimal(item.unitPrice),
     };
-    apiItem[item.kind] = item.referenceId as number;
+    apiItem.produto = item.productId as number;
     if (item.quantity.trim()) {
       apiItem.quantidade = Number(item.quantity.trim());
     }
@@ -254,28 +271,8 @@ export class OrderCreateModalComponent {
     if (this.tipo === 'externo' && this.contactPhone.replace(/\D/g, '').length < 10) {
       return 'Informe o telefone com DDD.';
     }
-    if (
-      this.tipo === 'externo' &&
-      this.subtipo === 'vitrine' &&
-      this.items.some((item) => item.kind !== 'produto')
-    ) {
-      return 'Pedidos de vitrine precisam usar produtos prontos.';
-    }
-    if (this.items.some((item) => item.referenceId === null)) {
-      return 'Selecione a receita ou o produto de cada item.';
-    }
-    const withProduct = this.recipeIdsWithProduct;
-    const recipeWithoutProduct = this.items.find(
-      (item) =>
-        item.kind === 'receita' &&
-        item.referenceId !== null &&
-        !withProduct.has(item.referenceId),
-    );
-    if (recipeWithoutProduct) {
-      const name =
-        this.recipes().find((recipe) => recipe.id_receita === recipeWithoutProduct.referenceId)
-          ?.nome ?? 'escolhida';
-      return `A receita ${name} não tem produto vinculado; vincule-a a um produto em Produtos.`;
+    if (this.items.some((item) => item.productId === null)) {
+      return 'Selecione o produto de cada item.';
     }
     for (const item of this.items) {
       const quantity = item.quantity.trim();

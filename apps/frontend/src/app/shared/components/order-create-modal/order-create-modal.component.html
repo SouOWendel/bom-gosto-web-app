@@ -116,34 +116,25 @@
           </div>
           @for (item of items; track $index; let index = $index) {
             <div class="order-modal__item">
-              <label class="form-field">
-                <span class="form-field__label">Tipo</span>
-                <select class="form-control" [name]="'item-kind-' + index" [(ngModel)]="item.kind">
-                  <option value="receita">Receita</option>
-                  <option value="produto">Produto pronto</option>
-                </select>
-              </label>
-              <label class="form-field">
-                <span class="form-field__label">{{
-                  item.kind === 'receita' ? 'Receita' : 'Produto'
-                }}</span>
+              <div class="form-field">
+                <div class="order-modal__product-label">
+                  <label class="form-field__label" [for]="'item-product-' + index">Produto</label>
+                  <button type="button" class="order-modal__link" (click)="openProductModal(index)">
+                    + Cadastrar produto
+                  </button>
+                </div>
                 <select
                   class="form-control"
-                  [name]="'item-reference-' + index"
-                  [(ngModel)]="item.referenceId"
+                  [id]="'item-product-' + index"
+                  [name]="'item-product-' + index"
+                  [(ngModel)]="item.productId"
                 >
                   <option [ngValue]="null">Selecione</option>
-                  @if (item.kind === 'receita') {
-                    @for (recipe of orderableRecipes; track recipe.id_receita) {
-                      <option [ngValue]="recipe.id_receita">{{ recipe.nome }}</option>
-                    }
-                  } @else {
-                    @for (product of products; track product.id) {
-                      <option [ngValue]="product.id">{{ product.label }}</option>
-                    }
+                  @for (product of products; track product.id) {
+                    <option [ngValue]="product.id">{{ product.label }}</option>
                   }
                 </select>
-              </label>
+              </div>
               <app-input-text
                 label="Quantidade"
                 [inputId]="'order-item-quantity-' + index"
@@ -244,3 +235,12 @@
     </form>
   </section>
 </div>
+
+@if (creatingProductFor() !== null) {
+  <app-product-create-modal
+    [recipes]="recipes()"
+    [apiError]="productError()"
+    (closed)="closeProductModal()"
+    (submitted)="createProduct($event)"
+  />
+}
