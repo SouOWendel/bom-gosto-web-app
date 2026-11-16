@@ -424,9 +424,10 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  // Pedidos anteriores ao catálogo de produtos têm itens só com receita e ficam como leitura.
+  // Pedidos anteriores ao catálogo de produtos têm item com receita e ficam como leitura.
+  // Mesma regra da API: basta um item com receita, mesmo que também tenha produto.
   isLegacyOrder(order: OrderRow): boolean {
-    return order.apiOrder.itens.some((item) => item.produto === null && item.receita !== null);
+    return order.apiOrder.itens.some((item) => item.receita != null);
   }
 
   addProduct(product: Product): void {
