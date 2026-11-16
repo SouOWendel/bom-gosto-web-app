@@ -150,6 +150,17 @@ export interface ProductionAnalysis {
     disponivel: boolean;
     encaminhar_para_producao: boolean;
   }>;
+  // Mesmos ingredientes previstos, agrupados pela receita de origem (massa, recheio...).
+  receitas?: Array<{
+    id_receita: number;
+    nome: string;
+    ingredientes: Array<{
+      id_ingrediente: number;
+      nome: string;
+      unidade_medida?: string;
+      necessario: string;
+    }>;
+  }>;
   receitas_sugeridas: Array<{ id_receita: number; nome: string }>;
   ausencias: Array<{ item_pedido: number; tipo: string; motivo: string }>;
   ingredientes_insuficientes: ProductionIngredient[];

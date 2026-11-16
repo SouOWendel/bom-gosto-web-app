@@ -14,3 +14,12 @@
     font-size: var(--text-xs);
   }
 }
+
+.recipe-group-row th {
+  padding-top: var(--space-3);
+  color: var(--color-text-strong);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-align: left;
+  background: var(--color-surface-muted);
+}
