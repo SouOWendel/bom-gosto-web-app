@@ -49,26 +49,12 @@
   background: var(--color-surface-muted);
 }
 
+// Rótulo do produto com o atalho de cadastro rápido ao lado.
 .order-modal__product-label {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-}
-
-// Abre o cadastro rápido de produto sem sair do pedido.
-.order-modal__link {
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--color-primary);
-  cursor: pointer;
-  font-size: var(--text-xs);
-  font-weight: 600;
-
-  &:hover {
-    text-decoration: underline;
-  }
 }
 
 .order-modal__items-total {

@@ -1,4 +1,13 @@
-import { Component, HostListener, effect, inject, input, output, signal } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   LucideDynamicIcon,
@@ -120,8 +129,9 @@ export class OrderCreateModalComponent {
   }
 
   // Catálogo completo com o saldo pronto (RN05); produtos sem receita só saem do estoque.
-  get products(): Array<{ id: number; label: string }> {
-    return this.productsList().map((product) => {
+  // computed: os rótulos só são refeitos quando a lista de produtos muda.
+  readonly products = computed(() =>
+    this.productsList().map((product) => {
       const hasRecipe =
         product.receita !== null || (product.receitas_complementares ?? []).length > 0;
       const stock = `${formatQuantity(product.saldo_disponivel ?? '0')} em estoque`;
@@ -130,8 +140,8 @@ export class OrderCreateModalComponent {
         id: product.id_produto,
         label: `${product.nome} (R$ ${product.preco_venda}) · ${stock}${suffix}`,
       };
-    });
-  }
+    }),
+  );
 
   // Pedido externo usa primeiro o saldo pronto; o que faltar segue para a Produção (RN06).
   // Não bloqueia o cadastro (RN03), só avisa.

@@ -119,9 +119,14 @@
               <div class="form-field">
                 <div class="order-modal__product-label">
                   <label class="form-field__label" [for]="'item-product-' + index">Produto</label>
-                  <button type="button" class="order-modal__link" (click)="openProductModal(index)">
+                  <app-button
+                    type="button"
+                    variant="ghost"
+                    size="small"
+                    (click)="openProductModal(index)"
+                  >
                     + Cadastrar produto
-                  </button>
+                  </app-button>
                 </div>
                 <select
                   class="form-control"
@@ -130,7 +135,7 @@
                   [(ngModel)]="item.productId"
                 >
                   <option [ngValue]="null">Selecione</option>
-                  @for (product of products; track product.id) {
+                  @for (product of products(); track product.id) {
                     <option [ngValue]="product.id">{{ product.label }}</option>
                   }
                 </select>
