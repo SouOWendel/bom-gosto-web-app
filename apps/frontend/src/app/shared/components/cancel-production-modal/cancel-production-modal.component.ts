@@ -90,8 +90,11 @@ export class CancelProductionModalComponent implements OnInit {
       return;
     }
 
+    // Lista o pedido inteiro: o estoque pronto pode ter chegado depois do início da
+    // produção, e mesmo assim os insumos já usados precisam ser informados (RF26).
+    const ingredients = order.analysis.ingredientes_receitas ?? order.analysis.ingredientes;
     this.ingredients.push(
-      ...order.analysis.ingredientes.map((ingredient) => ({
+      ...ingredients.map((ingredient) => ({
         id: ingredient.id_ingrediente,
         name: ingredient.nome,
         unit: ingredient.unidade_medida ?? '',

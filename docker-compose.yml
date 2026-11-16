@@ -42,6 +42,7 @@ services:
             - DB_HOST=postgres
             - DB_PORT=${POSTGRES_PORT:-5432}
             - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,backend # permite que o Django aceite conexoes de hosts especificos (localhost, 127.0.0.1, backend)
+            - DJANGO_FRONTEND_ORIGINS=${DJANGO_FRONTEND_ORIGINS:-http://localhost:4200,http://127.0.0.1:4200} # origens do frontend aceitas no CORS/CSRF; inclua o IP da rede pelo .env para testar em outros dispositivos
             - ENABLE_TEST_USER_REGISTRATION=${ENABLE_TEST_USER_REGISTRATION:-0}
         depends_on:
             postgres:
