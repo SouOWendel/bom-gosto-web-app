@@ -110,24 +110,19 @@
         <section class="modal__section">
           <div class="order-modal__section-heading">
             <h3 class="modal__section-title">Itens do pedido</h3>
-            <app-button type="button" variant="outline" size="small" (click)="addItem()">
-              <svg [lucideIcon]="'plus'" [size]="14"></svg> Adicionar item
-            </app-button>
+            <div class="order-modal__heading-actions">
+              <app-button type="button" variant="outline" size="small" (click)="openProductModal()">
+                Cadastrar produto
+              </app-button>
+              <app-button type="button" variant="outline" size="small" (click)="addItem()">
+                <svg [lucideIcon]="'plus'" [size]="14"></svg> Adicionar item
+              </app-button>
+            </div>
           </div>
           @for (item of items; track $index; let index = $index) {
             <div class="order-modal__item">
               <div class="form-field">
-                <div class="order-modal__product-label">
-                  <label class="form-field__label" [for]="'item-product-' + index">Produto</label>
-                  <app-button
-                    type="button"
-                    variant="ghost"
-                    size="small"
-                    (click)="openProductModal(index)"
-                  >
-                    + Cadastrar produto
-                  </app-button>
-                </div>
+                <label class="form-field__label" [for]="'item-product-' + index">Produto</label>
                 <select
                   class="form-control"
                   [id]="'item-product-' + index"
@@ -244,7 +239,7 @@
   </section>
 </div>
 
-@if (creatingProductFor() !== null) {
+@if (isProductModalOpen()) {
   <app-product-create-modal
     [recipes]="recipes()"
     [apiError]="productError()"
