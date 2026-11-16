@@ -167,6 +167,14 @@ export interface ProductionAnalysis {
   ausencias: Array<{ item_pedido: number; tipo: string; motivo: string }>;
   ingredientes_insuficientes: ProductionIngredient[];
   ingredientes: ProductionIngredient[];
+  // Insumos do pedido inteiro, sem descontar o estoque pronto (usado no cancelamento).
+  ingredientes_receitas?: Array<{
+    id_ingrediente: number;
+    nome: string;
+    unidade_medida?: string;
+    necessario: string;
+    disponivel: string;
+  }>;
   encaminhar_para_producao: boolean;
 }
 

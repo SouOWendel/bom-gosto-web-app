@@ -27,7 +27,8 @@ interface RecipeIngredientRow {
   id: number | null;
   name: string;
   code: string;
-  quantity: number;
+  // Texto digitado no campo (o input compartilhado emite string); converta com parseDecimal.
+  quantity: string;
   unit: string;
   unitCost: number;
 }
@@ -96,10 +97,13 @@ export class RecipeCreateComponent implements OnInit {
 
   // A quantidade é informada na mesma unidade do inventário, então o custo é direto.
   get totalCost(): number {
-    return this.ingredients.reduce(
-      (total, item) => total + (Number(item.quantity) || 0) * item.unitCost,
-      0,
-    );
+    return this.ingredients.reduce((total, item) => total + this.lineCost(item), 0);
+  }
+
+  // Custo da linha: quantidade digitada (texto) vezes o custo unitário do insumo.
+  lineCost(item: RecipeIngredientRow): number {
+    const quantity = Number(parseDecimal(String(item.quantity ?? '')));
+    return (Number.isFinite(quantity) ? quantity : 0) * item.unitCost;
   }
 
   get yieldValue(): number {
@@ -182,7 +186,7 @@ export class RecipeCreateComponent implements OnInit {
         id: ingredient?.id_ingrediente ?? null,
         name: ingredient?.nome ?? '',
         code: ingredient ? String(ingredient.id_ingrediente) : '',
-        quantity: 1,
+        quantity: '1',
         unit: ingredient?.unidade_medida ?? 'un',
         unitCost: Number(ingredient?.custo_unitario) || 0,
       },
@@ -223,7 +227,7 @@ export class RecipeCreateComponent implements OnInit {
       rendimento_quantidade: String(this.yieldValue),
       ingredientes: this.ingredients.map((item) => ({
         ingrediente: this.resolveIngredientId(item) as number,
-        quantidade_necessaria: String(item.quantity),
+        quantidade_necessaria: parseDecimal(item.quantity),
       })),
     };
 
@@ -256,7 +260,7 @@ export class RecipeCreateComponent implements OnInit {
         id: item.ingrediente,
         name: ingredient?.nome ?? `Ingrediente #${item.ingrediente}`,
         code: String(item.ingrediente),
-        quantity: Number(item.quantidade_necessaria) || 0,
+        quantity: String(Number(item.quantidade_necessaria) || ''),
         unit: ingredient?.unidade_medida ?? 'un',
         unitCost: Number(ingredient?.custo_unitario) || 0,
       };
@@ -273,8 +277,14 @@ export class RecipeCreateComponent implements OnInit {
     if (this.ingredients.some((item) => this.resolveIngredientId(item) === null)) {
       return 'Selecione ingredientes cadastrados no inventário.';
     }
-    if (this.ingredients.some((item) => !Number.isFinite(item.quantity) || item.quantity <= 0)) {
-      return 'A quantidade de cada ingrediente deve ser maior que zero.';
+    // A API guarda a quantidade com até 2 casas decimais (IngredienteReceita).
+    if (
+      this.ingredients.some((item) => {
+        const quantity = parseDecimal(String(item.quantity ?? ''));
+        return !/^\d+(\.\d{1,2})?$/.test(quantity) || Number(quantity) <= 0;
+      })
+    ) {
+      return 'A quantidade de cada ingrediente deve ser maior que zero e ter até 2 casas decimais.';
     }
     const ids = this.ingredients.map((item) => this.resolveIngredientId(item));
     if (new Set(ids).size !== ids.length) {
