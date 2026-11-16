@@ -299,3 +299,59 @@ class SeedDemonstracaoTests(APITestCase):
 		licilene.refresh_from_db()
 		self.assertEqual(licilene.status, Pedido.Status.PEDIDO_FEITO)
 		self.assertEqual(Pedido.objects.filter(cliente__nome="Licilene Alves", status=Pedido.Status.PEDIDO_FEITO).count(), 1)
+
+
+# receitas complementares do produto (RF18) sao gravadas pela API de produtos
+class ProdutoReceitasComplementaresApiTests(APITestCase):
+	def setUp(self):
+		usuario = Usuario.objects.create_user(login="teste-produto-receitas", password="senha-de-teste-123", primeiro_acesso=False)
+		self.client.force_authenticate(user=usuario)
+		self.massa = Receita.objects.create(nome="Massa de chocolate", rendimento_quantidade="1")
+		self.recheio = Receita.objects.create(nome="Recheio de brigadeiro", rendimento_quantidade="2")
+		self.cobertura = Receita.objects.create(nome="Ganache", rendimento_quantidade="1")
+
+	def test_cria_e_substitui_receitas_complementares(self):
+		resposta = self.client.post(
+			"/api/produtos/",
+			{
+				"nome": "Bolo de chocolate",
+				"preco_venda": "80.00",
+				"receita": self.massa.pk,
+				"receitas_complementares": [
+					{"receita": self.recheio.pk, "quantidade": "0.400", "unidade_medida": "kg"},
+					{"receita": self.cobertura.pk, "quantidade": "0.300", "unidade_medida": "kg"},
+				],
+			},
+			format="json",
+		)
+		self.assertEqual(resposta.status_code, status.HTTP_201_CREATED, resposta.data)
+		nomes = {linha["receita_nome"] for linha in resposta.data["receitas_complementares"]}
+		self.assertEqual(nomes, {"Recheio de brigadeiro", "Ganache"})
+
+		produto_id = resposta.data["id_produto"]
+		resposta = self.client.patch(
+			f"/api/produtos/{produto_id}/",
+			{"receitas_complementares": [{"receita": self.recheio.pk, "quantidade": "0.500", "unidade_medida": "kg"}]},
+			format="json",
+		)
+		self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+		self.assertEqual(len(resposta.data["receitas_complementares"]), 1)
+		self.assertEqual(resposta.data["receitas_complementares"][0]["quantidade"], "0.500")
+
+		# editar so o preco preserva as complementares
+		resposta = self.client.patch(f"/api/produtos/{produto_id}/", {"preco_venda": "90.00"}, format="json")
+		self.assertEqual(len(resposta.data["receitas_complementares"]), 1)
+
+	def test_recusa_principal_repetida_como_complementar(self):
+		resposta = self.client.post(
+			"/api/produtos/",
+			{
+				"nome": "Bolo",
+				"preco_venda": "50.00",
+				"receita": self.massa.pk,
+				"receitas_complementares": [{"receita": self.massa.pk, "quantidade": "1", "unidade_medida": "un"}],
+			},
+			format="json",
+		)
+		self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+		self.assertIn("receitas_complementares", resposta.data)
