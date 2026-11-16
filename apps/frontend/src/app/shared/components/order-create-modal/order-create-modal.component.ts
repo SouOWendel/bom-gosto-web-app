@@ -145,7 +145,16 @@ export class OrderCreateModalComponent {
     if (!product) {
       return null;
     }
-    const requested = Number(item.quantity.trim()) || Number(parseDecimal(item.weight)) || 0;
+    // Vários itens do mesmo produto dividem o mesmo saldo, como em _saldo_restante na API;
+    // o aviso aparece uma vez, no último item desse produto.
+    const sameProduct = this.items.filter((candidate) => candidate.productId === item.productId);
+    if (sameProduct[sameProduct.length - 1] !== item) {
+      return null;
+    }
+    const requested = sameProduct.reduce(
+      (total, candidate) => total + this.requestedAmount(candidate),
+      0,
+    );
     const available = Number(product.saldo_disponivel ?? 0);
     if (requested <= available) {
       return null;
@@ -156,6 +165,11 @@ export class OrderCreateModalComponent {
     return hasRecipe
       ? `Há ${formatQuantity(available)} em estoque; o restante (${missing}) segue para a produção.`
       : `Há ${formatQuantity(available)} em estoque e o produto não tem receita para produzir o restante.`;
+  }
+
+  // Mesmo critério da API (_quantidade_item): quantidade, ou o peso quando não há quantidade.
+  private requestedAmount(item: OrderItemForm): number {
+    return Number(item.quantity.trim()) || Number(parseDecimal(item.weight)) || 0;
   }
 
   // Soma preço x peso (quando informado) ou preço x quantidade de cada item.
