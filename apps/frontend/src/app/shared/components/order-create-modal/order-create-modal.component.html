@@ -41,7 +41,7 @@
               interna</label
             >
           </div>
-          @if (tipo === 'externo') {
+          @if (isExternal) {
             <div class="form-grid">
               <app-input-text
                 label="Nome do cliente"
@@ -70,7 +70,7 @@
         </section>
 
         <!-- Reposição interna não tem entrega nem cobrança de cliente. -->
-        @if (tipo === 'externo') {
+        @if (isExternal) {
           <section class="modal__section">
             <h3 class="modal__section-title">Entrega e pagamento</h3>
             <div class="form-grid">
@@ -211,7 +211,7 @@
               <app-button type="button" variant="outline" size="small" (click)="useItemsTotal()">
                 Usar soma
               </app-button>
-              @if (tipo === 'externo') {
+              @if (isExternal) {
                 <app-button
                   type="button"
                   variant="outline"
@@ -232,7 +232,7 @@
               [(ngModel)]="total"
               name="total"
             />
-            @if (tipo === 'externo') {
+            @if (isExternal) {
               <app-input-text
                 label="Sinal"
                 inputId="order-deposit"
