@@ -114,14 +114,26 @@
           <div class="order-modal__section-heading">
             <h3 class="modal__section-title">Itens do pedido</h3>
             <div class="order-modal__heading-actions">
-              <app-button type="button" variant="outline" size="small" (click)="openProductModal()">
-                Cadastrar produto
-              </app-button>
+              @if (!isShowcase) {
+                <app-button
+                  type="button"
+                  variant="outline"
+                  size="small"
+                  (click)="openProductModal()"
+                >
+                  Cadastrar produto
+                </app-button>
+              }
               <app-button type="button" variant="outline" size="small" (click)="addItem()">
                 <svg [lucideIcon]="'plus'" [size]="14"></svg> Adicionar item
               </app-button>
             </div>
           </div>
+          @if (isShowcase && productOptions().length === 0) {
+            <p class="order-modal__warning" role="status">
+              Nenhum produto em estoque. Pedidos de vitrine só usam produtos prontos.
+            </p>
+          }
           @for (item of items; track $index; let index = $index) {
             <div class="order-modal__item">
               <div class="form-field">
@@ -133,7 +145,7 @@
                   [(ngModel)]="item.productId"
                 >
                   <option [ngValue]="null">Selecione</option>
-                  @for (product of products(); track product.id) {
+                  @for (product of productOptions(); track product.id) {
                     <option [ngValue]="product.id">{{ product.label }}</option>
                   }
                 </select>
