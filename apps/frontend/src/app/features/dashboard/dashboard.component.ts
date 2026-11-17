@@ -242,9 +242,9 @@ export class DashboardComponent implements OnInit {
         (order.tipo === 'interno' ? 'Reposição interna' : 'Cliente não informado'),
       telefone: order.cliente_telefone ?? '',
       endereco: order.endereco_entrega ?? undefined,
-      pagamentoInfo: hasPayment(order)
-        ? `Total: ${formatCurrency(subtotal)} • Sinal: ${formatCurrency(Number(order.valor_sinal))}`
-        : `Total: ${formatCurrency(subtotal)}`,
+      pagamentoInfo:
+        `Total: ${formatCurrency(subtotal)}` +
+        (hasPayment(order) ? ` • Sinal: ${formatCurrency(Number(order.valor_sinal))}` : ''),
       botaoAcao:
         order.status === 'pedido_feito'
           ? order.subtipo === 'vitrine'
