@@ -139,14 +139,48 @@ export class OrderCreateModalComponent {
       return {
         id: product.id_produto,
         label: `${product.nome} (R$ ${product.preco_venda}) · ${stock}${suffix}`,
+        inStock: Number(product.saldo_disponivel ?? 0) > 0,
       };
     }),
   );
 
-  // Pedido externo usa primeiro o saldo pronto; o que faltar segue para a Produção (RN06).
-  // Não bloqueia o cadastro (RN03), só avisa.
+  // Vitrine vende só o que já está pronto: não produz nem cadastra produto na hora.
+  get isShowcase(): boolean {
+    return this.tipo === 'externo' && this.subtipo === 'vitrine';
+  }
+
+  // Na vitrine, só os produtos com saldo; nos demais tipos, o catálogo inteiro.
+  productOptions() {
+    return this.isShowcase ? this.products().filter((product) => product.inStock) : this.products();
+  }
+
+  // Pedido externo usa primeiro o saldo pronto; no personalizado, o que faltar segue para a
+  // Produção (RN06) e só gera aviso (RN03). Na vitrine, a falta impede o cadastro.
   stockWarning(item: OrderItemForm): string | null {
-    if (this.tipo !== 'externo' || item.productId === null) {
+    if (this.tipo !== 'externo') {
+      return null;
+    }
+    const shortage = this.stockShortage(item);
+    if (!shortage) {
+      return null;
+    }
+    const { product, available, missing } = shortage;
+    if (this.isShowcase) {
+      return `Há ${formatQuantity(available)} em estoque. Reduza a quantidade para cadastrar o pedido de vitrine.`;
+    }
+    const hasRecipe =
+      product.receita !== null || (product.receitas_complementares ?? []).length > 0;
+    return hasRecipe
+      ? `Há ${formatQuantity(available)} em estoque; o restante (${formatQuantity(missing)}) segue para a produção.`
+      : `Há ${formatQuantity(available)} em estoque e o produto não tem receita para produzir o restante.`;
+  }
+
+  // Falta de saldo do produto do item. Vários itens do mesmo produto dividem o mesmo saldo,
+  // como em _saldo_restante na API; a falta é apontada uma vez, no último item desse produto.
+  private stockShortage(
+    item: OrderItemForm,
+  ): { product: Product; available: number; missing: number } | null {
+    if (item.productId === null) {
       return null;
     }
     const product = this.productsList().find(
@@ -155,8 +189,6 @@ export class OrderCreateModalComponent {
     if (!product) {
       return null;
     }
-    // Vários itens do mesmo produto dividem o mesmo saldo, como em _saldo_restante na API;
-    // o aviso aparece uma vez, no último item desse produto.
     const sameProduct = this.items.filter((candidate) => candidate.productId === item.productId);
     if (sameProduct[sameProduct.length - 1] !== item) {
       return null;
@@ -166,15 +198,7 @@ export class OrderCreateModalComponent {
       0,
     );
     const available = Number(product.saldo_disponivel ?? 0);
-    if (requested <= available) {
-      return null;
-    }
-    const hasRecipe =
-      product.receita !== null || (product.receitas_complementares ?? []).length > 0;
-    const missing = formatQuantity(requested - available);
-    return hasRecipe
-      ? `Há ${formatQuantity(available)} em estoque; o restante (${missing}) segue para a produção.`
-      : `Há ${formatQuantity(available)} em estoque e o produto não tem receita para produzir o restante.`;
+    return requested > available ? { product, available, missing: requested - available } : null;
   }
 
   // Mesmo critério da API (_quantidade_item): quantidade, ou o peso quando não há quantidade.
@@ -205,6 +229,16 @@ export class OrderCreateModalComponent {
 
   useItemsTotal(): void {
     this.total = this.itemsTotal.toFixed(2).replace('.', ',');
+  }
+
+  // Preenche o sinal com a metade do valor total; centavo ímpar arredonda para cima.
+  useHalfAsDeposit(): void {
+    const total = Number(parseDecimal(this.total));
+    if (!Number.isFinite(total) || total <= 0) {
+      return;
+    }
+    const halfInCents = Math.ceil(Math.round(total * 100) / 2);
+    this.deposit = (halfInCents / 100).toFixed(2).replace('.', ',');
   }
 
   addItem(): void {
@@ -271,15 +305,18 @@ export class OrderCreateModalComponent {
       return;
     }
 
+    // Reposição interna não tem entrega nem pagamento: limpa o que tiver ficado
+    // preenchido antes de trocar o tipo do pedido.
+    const isExternal = this.tipo === 'externo';
     const payload: OrderCreationPayload = {
       tipo: this.tipo,
-      subtipo: this.tipo === 'externo' ? this.subtipo : null,
-      data_entrega: this.deliveryDate || null,
-      horario_entrega: this.deliveryTime || null,
+      subtipo: isExternal ? this.subtipo : null,
+      data_entrega: (isExternal && this.deliveryDate) || null,
+      horario_entrega: (isExternal && this.deliveryTime) || null,
       valor_total: parseDecimal(this.total),
       valor_sinal: parseDecimal(this.deposit),
-      endereco_entrega: this.address.trim() || null,
-      forma_pagamento: this.paymentMethod || null,
+      endereco_entrega: (isExternal && this.address.trim()) || null,
+      forma_pagamento: (isExternal && this.paymentMethod) || null,
       itens: this.items.map((item) => this.toApiItem(item)),
     };
 
@@ -345,6 +382,14 @@ export class OrderCreateModalComponent {
         return 'Informe o peso em kg, maior que zero e com até duas casas decimais.';
       }
     }
+    if (this.isShowcase) {
+      const missing = this.items
+        .map((item) => this.stockShortage(item)?.product.nome)
+        .filter((name): name is string => !!name);
+      if (missing.length > 0) {
+        return `Pedido de vitrine só usa o que há em estoque. Sem saldo suficiente: ${missing.join(', ')}.`;
+      }
+    }
     if (this.items.some((item) => item.filling.length > 100 || item.decoration.length > 200)) {
       return 'O recheio aceita até 100 caracteres e a decoração, até 200.';
     }
@@ -361,13 +406,9 @@ export class OrderCreateModalComponent {
     if (!Number.isFinite(total) || total < 0) {
       return 'Informe um valor total válido.';
     }
-    if (!Number.isFinite(deposit) || deposit < 0 || deposit > total) {
-      return 'O sinal deve estar entre zero e o valor total.';
-    }
-    // Mesmo arredondamento do backend: metade do total em centavos, arredondada para cima.
-    const halfInCents = Math.ceil(Math.round(total * 100) / 2);
-    if (this.tipo === 'externo' && deposit !== 0 && Math.round(deposit * 100) !== halfInCents) {
-      return `Para pedidos externos, o sinal deve ser zero ou metade do total (${formatCurrency(halfInCents / 100)}).`;
+    // Mesma regra da API: zero (sem sinal) ou um valor positivo menor que o total.
+    if (!Number.isFinite(deposit) || deposit < 0 || (deposit > 0 && deposit >= total)) {
+      return 'O sinal deve ser zero ou um valor positivo menor que o total.';
     }
     return null;
   }

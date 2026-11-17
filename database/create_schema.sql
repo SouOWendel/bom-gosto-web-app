@@ -50,6 +50,7 @@ CREATE TABLE Pedido (
     horario_entrega  TIME,
     valor_total      DECIMAL(10,2) NOT NULL DEFAULT 0,
     valor_sinal      DECIMAL(10,2) NOT NULL DEFAULT 0,
+    sinal_pago       BOOLEAN NOT NULL DEFAULT FALSE,
     endereco_entrega VARCHAR(200),
     forma_pagamento  VARCHAR(30),
     CONSTRAINT FK_Pedido_Cliente

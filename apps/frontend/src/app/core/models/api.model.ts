@@ -111,6 +111,7 @@ export interface Order {
   horario_entrega: string | null;
   valor_total: string;
   valor_sinal: string;
+  sinal_pago: boolean;
   endereco_entrega: string | null;
   forma_pagamento: string | null;
   itens: OrderItem[];

@@ -1,4 +1,4 @@
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 
 from django.db import transaction
 from rest_framework import serializers
@@ -16,14 +16,22 @@ from .models import (
 )
 
 
-# Reaproveita o cliente com o mesmo telefone em vez de duplicar o cadastro.
-def _cliente_por_contato(nome, telefone):
+# Reaproveita o cliente com o mesmo telefone em vez de duplicar o cadastro e guarda
+# no cliente o endereço de entrega mais recente.
+def _cliente_por_contato(nome, telefone, endereco=None):
     cliente = Cliente.objects.filter(telefone=telefone).order_by("id_cliente").first()
     if cliente is None:
-        return Cliente.objects.create(nome=nome, telefone=telefone)
+        return Cliente.objects.create(nome=nome, telefone=telefone, endereco=endereco)
+    campos = []
     if cliente.nome != nome:
         cliente.nome = nome
-        cliente.save(update_fields=["nome"])
+        campos.append("nome")
+    # Pedido sem endereço é retirada: mantém o último endereço conhecido do cliente.
+    if endereco and cliente.endereco != endereco:
+        cliente.endereco = endereco
+        campos.append("endereco")
+    if campos:
+        cliente.save(update_fields=campos)
     return cliente
 
 
@@ -243,13 +251,14 @@ class PedidoSerializer(serializers.ModelSerializer):
             "horario_entrega",
             "valor_total",
             "valor_sinal",
+            "sinal_pago",
             "endereco_entrega",
             "forma_pagamento",
             "itens",
             "contato_nome",
             "contato_telefone",
         )
-        read_only_fields = ("id_pedido", "status", "cliente_nome", "cliente_telefone")
+        read_only_fields = ("id_pedido", "status", "sinal_pago", "cliente_nome", "cliente_telefone")
 
     # Aplica as regras de tipo, contato, subtipo, itens e valores do pedido.
     def validate(self, attrs):
@@ -318,6 +327,11 @@ class PedidoSerializer(serializers.ModelSerializer):
                 {"itens": "Pedidos de vitrine devem referenciar produtos prontos."}
             )
 
+        # Vitrine vende só o que já está pronto: a soma pedida de cada produto precisa
+        # caber no saldo válido do Estoque, sem encaminhar nada para a Produção.
+        if tipo == Pedido.Tipo.EXTERNO and subtipo == Pedido.Subtipo.VITRINE:
+            self._validar_estoque_da_vitrine(itens, pedido_existente)
+
         if "itens" in attrs and not attrs["itens"]:
             raise serializers.ValidationError(
                 {"itens": "O pedido precisa ter ao menos um item."}
@@ -340,22 +354,50 @@ class PedidoSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"valor_total": "O valor total não pode ser negativo."}
             )
-        if valor_sinal < 0 or valor_sinal > valor_total:
+        # O sinal é livre: zero (sem sinal) ou um valor positivo menor que o total.
+        if valor_sinal < 0 or (valor_sinal > 0 and valor_sinal >= valor_total):
             raise serializers.ValidationError(
-                {"valor_sinal": "O sinal deve estar entre zero e o total."}
+                {"valor_sinal": "O sinal deve ser zero ou um valor positivo menor que o total."}
             )
-
-        if tipo == Pedido.Tipo.EXTERNO:
-            metade = (valor_total / Decimal("2")).quantize(
-                Decimal("0.01"),
-                rounding=ROUND_HALF_UP,
-            )
-            if valor_sinal not in (Decimal("0.00"), metade):
-                raise serializers.ValidationError(
-                    {"valor_sinal": "O sinal deve ser zero ou metade do total."}
-                )
 
         return attrs
+
+    # Soma o pedido por produto (quantidade ou peso, como em _quantidade_item da Produção)
+    # e recusa o pedido de vitrine quando algum produto não tem saldo suficiente.
+    def _validar_estoque_da_vitrine(self, itens, pedido_existente):
+        if itens is None:
+            if pedido_existente is None:
+                return
+            itens = [
+                {
+                    "produto": item.produto,
+                    "quantidade": item.quantidade,
+                    "quantidade_peso": item.quantidade_peso,
+                }
+                for item in pedido_existente.itens.select_related("produto")
+            ]
+
+        pedido_por_produto = {}
+        for item in itens:
+            produto = item.get("produto")
+            if produto is None:
+                continue
+            quantidade = Decimal(item.get("quantidade") or item.get("quantidade_peso") or 0)
+            pedido_por_produto[produto] = pedido_por_produto.get(produto, Decimal("0")) + quantidade
+
+        sem_saldo = []
+        for produto, quantidade in pedido_por_produto.items():
+            saldo = Estoque.objects.verificar_disponibilidade(produto.pk, quantidade)[
+                "quantidade_disponivel"
+            ]
+            if quantidade > saldo:
+                saldo_texto = f"{saldo.normalize():f}".replace(".", ",")
+                sem_saldo.append(f"{produto.nome} (há {saldo_texto} em estoque)")
+
+        if sem_saldo:
+            raise serializers.ValidationError(
+                {"itens": "Pedido de vitrine só usa o que há em estoque. Sem saldo suficiente: " + ", ".join(sem_saldo) + "."}
+            )
 
     # Cria o pedido e seus itens dentro de uma única transação.
     @transaction.atomic
@@ -363,7 +405,9 @@ class PedidoSerializer(serializers.ModelSerializer):
         nome = validated_data.pop("contato_nome", None)
         telefone = validated_data.pop("contato_telefone", None)
         if not validated_data.get("cliente") and nome and telefone:
-            validated_data["cliente"] = _cliente_por_contato(nome, telefone)
+            validated_data["cliente"] = _cliente_por_contato(
+                nome, telefone, validated_data.get("endereco_entrega")
+            )
         itens_data = validated_data.pop("itens", [])
         pedido = Pedido.objects.create(**validated_data)
 
@@ -378,7 +422,11 @@ class PedidoSerializer(serializers.ModelSerializer):
         nome = validated_data.pop("contato_nome", None)
         telefone = validated_data.pop("contato_telefone", None)
         if not validated_data.get("cliente") and nome and telefone:
-            validated_data["cliente"] = _cliente_por_contato(nome, telefone)
+            validated_data["cliente"] = _cliente_por_contato(
+                nome,
+                telefone,
+                validated_data.get("endereco_entrega", instance.endereco_entrega),
+            )
         # Reposição interna não tem cliente (RN18): ao virar interno, solta o vínculo.
         if validated_data.get("tipo", instance.tipo) == Pedido.Tipo.INTERNO:
             validated_data["cliente"] = None
