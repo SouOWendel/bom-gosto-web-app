@@ -93,17 +93,19 @@ CLIENTES = [
 ]
 
 # pedidos ja encerrados, adaptados de `database/insert_data.sql`
-# cliente, data, horario, total, sinal, status, itens [(produto, qtd, recheio, decoracao, peso)]
+# cliente, data, horario, total, sinal, status, itens [(produto, qtd, recheio, decoracao, peso[, preco])]
+# O preço do item é o de venda do produto, salvo quando informado (brinde sai a 0,00).
+# A diferença entre o total e a soma dos itens é só a taxa de decoração descrita no item.
 PEDIDOS_HISTORICOS = [
     ("Licilene Alves", date(2026, 9, 26), time(17, 30), "120.90", "60.45", Pedido.Status.CONCLUIDO,
      [("Bolo 1kg massa branca", 1, "delícia de limão", "Decoração (R$ 40,00)", "1.00")]),
     ("Natália", date(2026, 9, 22), time(14, 0), "40.00", "0.00", Pedido.Status.CONCLUIDO,
      [("Caseirinho", 1, "vulcão formigueiro", None, "1.00")]),
-    ("Vivi", date(2026, 9, 19), time(16, 0), "162.63", "0.00", Pedido.Status.CONCLUIDO,
+    ("Vivi", date(2026, 9, 19), time(16, 0), "160.90", "0.00", Pedido.Status.CONCLUIDO,
      [("Bolo 1kg massa branca", 1, "beijinho", "feliz aniversário mãe (bolo rosa)", "1.00"),
       ("Salgado bolinha de queijo", 50, None, None, None), ("Doce", 25, "brigadeiro", None, None),
-      ("Topper simples", 1, None, "brinde", None), ("Refrigerante", 1, None, "brinde", None)]),
-    ("Joseane", date(2026, 9, 5), time(11, 0), "51.00", "25.50", Pedido.Status.CONCLUIDO,
+      ("Topper simples", 1, None, "brinde", None, "0.00"), ("Refrigerante", 1, None, "brinde", None, "0.00")]),
+    ("Joseane", date(2026, 9, 5), time(11, 0), "45.00", "22.50", Pedido.Status.CONCLUIDO,
      [("Pote", 2, "brigadeiro", None, None), ("Pote", 1, "bannoffe", None, None)]),
     ("Márcia Regina", date(2026, 9, 4), time(10, 0), "61.20", "0.00", Pedido.Status.CONCLUIDO,
      [("Fatia", 1, "Matilda", None, "1.00"), ("Mini vulcão", 1, "ninho", None, "1.00")]),
@@ -299,7 +301,7 @@ class Command(BaseCommand):
         demos = [
             # encomenda sem produto pronto: Pedidos -> Producao (massa + recheio) -> Estoque -> entrega
             ("Licilene Alves", Pedido.Tipo.EXTERNO, Pedido.Subtipo.PERSONALIZADO, hoje + timedelta(days=2), time(15, 0),
-             "120.90", "60.45", Pedido.Status.PEDIDO_FEITO,
+             "95.00", "47.50", Pedido.Status.PEDIDO_FEITO,
              [("Bolo 1kg delícia de limão", 1, None, "Feliz aniversário", "1.00")]),
             # encomenda ja em producao que pode ser cancelada com reaproveitamento (RN12)
             ("Carlos Menezes", Pedido.Tipo.EXTERNO, Pedido.Subtipo.PERSONALIZADO, hoje + timedelta(days=1), time(15, 0),
@@ -341,13 +343,13 @@ class Command(BaseCommand):
     # substitui os itens para evitar duplicatas ou itens antigos ao repetir o seed
     def _substituir_itens(self, pedido, produtos, itens):
         pedido.itens.all().delete()
-        for produto_nome, quantidade, recheio, decoracao, peso in itens:
+        for produto_nome, quantidade, recheio, decoracao, peso, *preco in itens:
             produto = produtos[produto_nome]
             ItemPedido.objects.create(
                 pedido=pedido,
                 produto=produto,
                 quantidade=quantidade,
-                preco_unitario=produto.preco_venda,
+                preco_unitario=Decimal(preco[0]) if preco else produto.preco_venda,
                 custo_unitario=self._custo_unitario(produto),
                 recheio=recheio,
                 decoracao=decoracao,
