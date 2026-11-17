@@ -231,6 +231,16 @@ export class OrderCreateModalComponent {
     this.total = this.itemsTotal.toFixed(2).replace('.', ',');
   }
 
+  // Preenche o sinal com a metade do valor total; centavo ímpar arredonda para cima.
+  useHalfAsDeposit(): void {
+    const total = Number(parseDecimal(this.total));
+    if (!Number.isFinite(total) || total <= 0) {
+      return;
+    }
+    const halfInCents = Math.ceil(Math.round(total * 100) / 2);
+    this.deposit = (halfInCents / 100).toFixed(2).replace('.', ',');
+  }
+
   addItem(): void {
     this.items = [...this.items, this.newItem()];
   }
