@@ -101,15 +101,15 @@ PEDIDOS_HISTORICOS = [
     ("Licilene Alves", date(2026, 9, 26), time(17, 30), "120.90", "60.45", Pedido.Status.CONCLUIDO,
      [("Bolo 1kg massa branca", 1, "delícia de limão", "Decoração (R$ 40,00)", "1.00")]),
     ("Natália", date(2026, 9, 22), time(14, 0), "40.00", "0.00", Pedido.Status.CONCLUIDO,
-     [("Caseirinho", 1, "vulcão formigueiro", None, "1.00")]),
+     [("Caseirinho", 1, "vulcão formigueiro", None, None)]),
     ("Vivi", date(2026, 9, 19), time(16, 0), "160.90", "0.00", Pedido.Status.CONCLUIDO,
      [("Bolo 1kg massa branca", 1, "beijinho", "feliz aniversário mãe (bolo rosa)", "1.00"),
       ("Salgado bolinha de queijo", 50, None, None, None), ("Doce", 25, "brigadeiro", None, None),
       ("Topper simples", 1, None, "brinde", None, "0.00"), ("Refrigerante", 1, None, "brinde", None, "0.00")]),
     ("Joseane", date(2026, 9, 5), time(11, 0), "45.00", "22.50", Pedido.Status.CONCLUIDO,
-     [("Pote", 2, "brigadeiro", None, None), ("Pote", 1, "bannoffe", None, None)]),
+     [("Pote", 2, "brigadeiro", None, None), ("Pote", 1, "banoffee", None, None)]),
     ("Márcia Regina", date(2026, 9, 4), time(10, 0), "61.20", "0.00", Pedido.Status.CONCLUIDO,
-     [("Fatia", 1, "Matilda", None, "1.00"), ("Mini vulcão", 1, "ninho", None, "1.00")]),
+     [("Fatia", 1, "Matilda", None, None), ("Mini vulcão", 1, "ninho", None, None)]),
     ("Rafaela Souza", date(2026, 9, 12), time(15, 0), "115.90", "57.95", Pedido.Status.CANCELADO,
      [("Bolo 1kg massa branca", 1, "brigadeiro", "Parabéns (R$ 35,00)", "1.00")]),
 ]
@@ -307,7 +307,7 @@ class Command(BaseCommand):
             # encomenda ja em producao que pode ser cancelada com reaproveitamento (RN12)
             ("Carlos Menezes", Pedido.Tipo.EXTERNO, Pedido.Subtipo.PERSONALIZADO, hoje + timedelta(days=1), time(15, 0),
              "90.00", "45.00", Pedido.Status.EM_PRODUCAO,
-             [("Mini vulcão", 3, "ninho", None, None), ("Pote", 2, "bannoffe", None, None)]),
+             [("Mini vulcão", 3, "ninho", None, None), ("Pote", 2, "banoffee", None, None)]),
             # venda de vitrine atendida direto pelo estoque (consumir-estoque)
             ("Natália", Pedido.Tipo.EXTERNO, Pedido.Subtipo.VITRINE, hoje, time(10, 30),
              "55.20", "0.00", Pedido.Status.PEDIDO_FEITO,
