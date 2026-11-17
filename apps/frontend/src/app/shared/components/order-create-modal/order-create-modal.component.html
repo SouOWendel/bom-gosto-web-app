@@ -211,9 +211,16 @@
               <app-button type="button" variant="outline" size="small" (click)="useItemsTotal()">
                 Usar soma
               </app-button>
-              <app-button type="button" variant="outline" size="small" (click)="useHalfAsDeposit()">
-                Sinal de 50%
-              </app-button>
+              @if (tipo === 'externo') {
+                <app-button
+                  type="button"
+                  variant="outline"
+                  size="small"
+                  (click)="useHalfAsDeposit()"
+                >
+                  Sinal de 50%
+                </app-button>
+              }
             </span>
           </div>
           <div class="form-grid">
@@ -225,14 +232,16 @@
               [(ngModel)]="total"
               name="total"
             />
-            <app-input-text
-              label="Sinal"
-              inputId="order-deposit"
-              icon="banknote"
-              mask="currency"
-              [(ngModel)]="deposit"
-              name="deposit"
-            />
+            @if (tipo === 'externo') {
+              <app-input-text
+                label="Sinal"
+                inputId="order-deposit"
+                icon="banknote"
+                mask="currency"
+                [(ngModel)]="deposit"
+                name="deposit"
+              />
+            }
           </div>
           @if (totalDiffersFromItems) {
             <p class="order-modal__warning" role="status">

@@ -314,7 +314,7 @@ export class OrderCreateModalComponent {
       data_entrega: (isExternal && this.deliveryDate) || null,
       horario_entrega: (isExternal && this.deliveryTime) || null,
       valor_total: parseDecimal(this.total),
-      valor_sinal: parseDecimal(this.deposit),
+      valor_sinal: isExternal ? parseDecimal(this.deposit) : '0',
       endereco_entrega: (isExternal && this.address.trim()) || null,
       forma_pagamento: (isExternal && this.paymentMethod) || null,
       itens: this.items.map((item) => this.toApiItem(item)),
@@ -407,7 +407,11 @@ export class OrderCreateModalComponent {
       return 'Informe um valor total válido.';
     }
     // Mesma regra da API: zero (sem sinal) ou um valor positivo menor que o total.
-    if (!Number.isFinite(deposit) || deposit < 0 || (deposit > 0 && deposit >= total)) {
+    // Na reposição o campo fica oculto e o sinal enviado é zero, então não há o que conferir.
+    if (
+      this.tipo === 'externo' &&
+      (!Number.isFinite(deposit) || deposit < 0 || (deposit > 0 && deposit >= total))
+    ) {
       return 'O sinal deve ser zero ou um valor positivo menor que o total.';
     }
     return null;
