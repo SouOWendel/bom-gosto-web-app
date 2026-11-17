@@ -326,6 +326,11 @@ class PedidoSerializer(serializers.ModelSerializer):
                 {"itens": "Pedidos de vitrine devem referenciar produtos prontos."}
             )
 
+        # Vitrine vende só o que já está pronto: a soma pedida de cada produto precisa
+        # caber no saldo válido do Estoque, sem encaminhar nada para a Produção.
+        if tipo == Pedido.Tipo.EXTERNO and subtipo == Pedido.Subtipo.VITRINE:
+            self._validar_estoque_da_vitrine(itens, pedido_existente)
+
         if "itens" in attrs and not attrs["itens"]:
             raise serializers.ValidationError(
                 {"itens": "O pedido precisa ter ao menos um item."}
@@ -355,6 +360,43 @@ class PedidoSerializer(serializers.ModelSerializer):
             )
 
         return attrs
+
+    # Soma o pedido por produto (quantidade ou peso, como em _quantidade_item da Produção)
+    # e recusa o pedido de vitrine quando algum produto não tem saldo suficiente.
+    def _validar_estoque_da_vitrine(self, itens, pedido_existente):
+        if itens is None:
+            if pedido_existente is None:
+                return
+            itens = [
+                {
+                    "produto": item.produto,
+                    "quantidade": item.quantidade,
+                    "quantidade_peso": item.quantidade_peso,
+                }
+                for item in pedido_existente.itens.select_related("produto")
+            ]
+
+        pedido_por_produto = {}
+        for item in itens:
+            produto = item.get("produto")
+            if produto is None:
+                continue
+            quantidade = Decimal(item.get("quantidade") or item.get("quantidade_peso") or 0)
+            pedido_por_produto[produto] = pedido_por_produto.get(produto, Decimal("0")) + quantidade
+
+        sem_saldo = []
+        for produto, quantidade in pedido_por_produto.items():
+            saldo = Estoque.objects.verificar_disponibilidade(produto.pk, quantidade)[
+                "quantidade_disponivel"
+            ]
+            if quantidade > saldo:
+                saldo_texto = f"{saldo.normalize():f}".replace(".", ",")
+                sem_saldo.append(f"{produto.nome} (há {saldo_texto} em estoque)")
+
+        if sem_saldo:
+            raise serializers.ValidationError(
+                {"itens": "Pedido de vitrine só usa o que há em estoque. Sem saldo suficiente: " + ", ".join(sem_saldo) + "."}
+            )
 
     # Cria o pedido e seus itens dentro de uma única transação.
     @transaction.atomic
