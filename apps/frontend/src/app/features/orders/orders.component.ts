@@ -176,12 +176,7 @@ export class OrdersComponent implements OnInit {
     ).length;
     const pendingBalance = orders
       .filter((order) => order.status !== 'cancelado' && order.status !== 'retirada')
-      .reduce(
-        (total, order) =>
-          total +
-          Math.max(0, toNumber(order.apiOrder.valor_total) - toNumber(order.apiOrder.valor_sinal)),
-        0,
-      );
+      .reduce((total, order) => total + this.balanceDue(order.apiOrder), 0);
     const productionValue = inProduction.reduce(
       (total, order) => total + toNumber(order.apiOrder.valor_total),
       0,
@@ -687,7 +682,7 @@ export class OrdersComponent implements OnInit {
       return `${baseNames[index]}${parts.length ? ` (${parts.join(' · ')})` : ''}`;
     });
     const total = toNumber(order.valor_total);
-    const balance = Math.max(0, total - toNumber(order.valor_sinal));
+    const balance = this.balanceDue(order);
     const status = this.toViewStatus(order.status);
     const statusDetail: Record<ApiOrder['status'], string> = {
       pedido_feito: 'Aguardando validação',
@@ -740,7 +735,18 @@ export class OrdersComponent implements OnInit {
     return item.receita !== null ? `Receita #${item.receita}` : 'Item sem produto vinculado';
   }
 
+  // Reposição interna não tem cliente nem pagamento: não há saldo a receber.
+  private balanceDue(order: ApiOrder): number {
+    if (order.tipo === 'interno') {
+      return 0;
+    }
+    return Math.max(0, toNumber(order.valor_total) - toNumber(order.valor_sinal));
+  }
+
   private paymentLabel(order: ApiOrder): string {
+    if (order.tipo === 'interno') {
+      return 'Sem pagamento';
+    }
     const method = this.paymentMethodLabel(order.forma_pagamento);
     const deposit = toNumber(order.valor_sinal);
     if (deposit <= 0) {
