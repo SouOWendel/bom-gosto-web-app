@@ -396,13 +396,9 @@ export class OrderCreateModalComponent {
     if (!Number.isFinite(total) || total < 0) {
       return 'Informe um valor total válido.';
     }
-    if (!Number.isFinite(deposit) || deposit < 0 || deposit > total) {
-      return 'O sinal deve estar entre zero e o valor total.';
-    }
-    // Mesmo arredondamento do backend: metade do total em centavos, arredondada para cima.
-    const halfInCents = Math.ceil(Math.round(total * 100) / 2);
-    if (this.tipo === 'externo' && deposit !== 0 && Math.round(deposit * 100) !== halfInCents) {
-      return `Para pedidos externos, o sinal deve ser zero ou metade do total (${formatCurrency(halfInCents / 100)}).`;
+    // Mesma regra da API: zero (sem sinal) ou um valor positivo menor que o total.
+    if (!Number.isFinite(deposit) || deposit < 0 || (deposit > 0 && deposit >= total)) {
+      return 'O sinal deve ser zero ou um valor positivo menor que o total.';
     }
     return null;
   }

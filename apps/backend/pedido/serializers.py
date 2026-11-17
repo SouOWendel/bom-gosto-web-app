@@ -1,4 +1,4 @@
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 
 from django.db import transaction
 from rest_framework import serializers
@@ -348,20 +348,11 @@ class PedidoSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"valor_total": "O valor total não pode ser negativo."}
             )
-        if valor_sinal < 0 or valor_sinal > valor_total:
+        # O sinal é livre: zero (sem sinal) ou um valor positivo menor que o total.
+        if valor_sinal < 0 or (valor_sinal > 0 and valor_sinal >= valor_total):
             raise serializers.ValidationError(
-                {"valor_sinal": "O sinal deve estar entre zero e o total."}
+                {"valor_sinal": "O sinal deve ser zero ou um valor positivo menor que o total."}
             )
-
-        if tipo == Pedido.Tipo.EXTERNO:
-            metade = (valor_total / Decimal("2")).quantize(
-                Decimal("0.01"),
-                rounding=ROUND_HALF_UP,
-            )
-            if valor_sinal not in (Decimal("0.00"), metade):
-                raise serializers.ValidationError(
-                    {"valor_sinal": "O sinal deve ser zero ou metade do total."}
-                )
 
         return attrs
 
