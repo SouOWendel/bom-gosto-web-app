@@ -58,6 +58,8 @@ interface OrderRow {
   modality: string;
   detail: string;
   action: string;
+  // Dica mostrada ao passar o mouse no botão de ação.
+  actionHint: string | null;
   apiOrder: ApiOrder;
   analysis: ProductionAnalysis | null;
 }
@@ -105,15 +107,23 @@ export class OrdersComponent implements OnInit {
   readonly pageSize = 6;
   readonly formatQuantity = formatQuantity;
 
-  // Iniciar a produção de um pedido externo pressupõe o sinal recebido. É só um lembrete:
-  // o pagamento continua sendo registrado em Finanças, não pelo status (RN13).
+  // Por enquanto, iniciar a produção de um pedido externo marca o sinal como pago
+  // (regra provisória do MVP; o registro em Finanças da RN13 fica para depois).
   depositReminder(order: OrderRow): string | null {
-    if (order.apiOrder.tipo !== 'externo') {
+    return this.depositNotice(order.apiOrder);
+  }
+
+  private depositNotice(order: ApiOrder): string | null {
+    if (
+      order.tipo !== 'externo' ||
+      order.subtipo === 'vitrine' ||
+      order.status !== 'pedido_feito'
+    ) {
       return null;
     }
-    const deposit = toNumber(order.apiOrder.valor_sinal);
+    const deposit = toNumber(order.valor_sinal);
     return deposit > 0
-      ? `Confirme que o sinal de ${formatCurrency(deposit)} foi recebido antes de iniciar.`
+      ? `Ao iniciar a produção, o sinal de ${formatCurrency(deposit)} será marcado como pago.`
       : 'Nenhum sinal registrado neste pedido. Confirme o pagamento com o cliente antes de iniciar.';
   }
   @ViewChild(CancelProductionModalComponent)
@@ -711,6 +721,7 @@ export class OrdersComponent implements OnInit {
           ? `${statusDetail[order.status]} · Saldo ${formatCurrency(balance)}`
           : statusDetail[order.status],
       action: this.actionLabel(order),
+      actionHint: this.depositNotice(order),
       apiOrder: order,
       analysis: order.analise ?? null,
     };
@@ -732,7 +743,11 @@ export class OrdersComponent implements OnInit {
   private paymentLabel(order: ApiOrder): string {
     const method = this.paymentMethodLabel(order.forma_pagamento);
     const deposit = toNumber(order.valor_sinal);
-    return deposit > 0 ? `Sinal ${formatCurrency(deposit)} · ${method}` : method;
+    if (deposit <= 0) {
+      return method;
+    }
+    const paid = order.sinal_pago ? ' pago' : '';
+    return `Sinal ${formatCurrency(deposit)}${paid} · ${method}`;
   }
 
   private paymentMethodLabel(method: string | null): string {

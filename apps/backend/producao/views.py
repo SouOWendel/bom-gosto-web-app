@@ -58,7 +58,10 @@ class IniciarProducaoView(APIView):
                 nome = item.receita.nome if item.receita_id else "do item"
                 return Response({"itens": f"A receita {nome} não tem produto vinculado; vincule-a a um produto em Produtos."}, status=status.HTTP_400_BAD_REQUEST)
         pedido.status = Pedido.Status.EM_PRODUCAO
-        pedido.save(update_fields=["status"])
+        # Por enquanto, iniciar a produção já registra o sinal como pago.
+        if pedido.valor_sinal > 0:
+            pedido.sinal_pago = True
+        pedido.save(update_fields=["status", "sinal_pago"])
         return Response(PedidoSerializer(pedido, context={"request": request}).data)
 
 

@@ -269,6 +269,7 @@
                       variant="primary"
                       size="small"
                       [disabled]="operationInProgress()"
+                      [attr.title]="order.actionHint"
                       (click)="completeOrder(order)"
                     >
                       {{ order.action }}

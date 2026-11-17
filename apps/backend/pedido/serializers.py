@@ -251,13 +251,14 @@ class PedidoSerializer(serializers.ModelSerializer):
             "horario_entrega",
             "valor_total",
             "valor_sinal",
+            "sinal_pago",
             "endereco_entrega",
             "forma_pagamento",
             "itens",
             "contato_nome",
             "contato_telefone",
         )
-        read_only_fields = ("id_pedido", "status", "cliente_nome", "cliente_telefone")
+        read_only_fields = ("id_pedido", "status", "sinal_pago", "cliente_nome", "cliente_telefone")
 
     # Aplica as regras de tipo, contato, subtipo, itens e valores do pedido.
     def validate(self, attrs):
