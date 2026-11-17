@@ -316,7 +316,7 @@ class Command(BaseCommand):
             # Tem data e horário só para aparecer na agenda de produção; o modal não pede entrega na reposição.
             (None, Pedido.Tipo.INTERNO, None, hoje + timedelta(days=1), time(8, 0),
              "0.00", "0.00", Pedido.Status.PEDIDO_FEITO,
-             [("Doce", 50, None, None, None)]),
+             [("Doce", 50, None, None, None, "0.00")]),
         ]
         for nome, tipo, subtipo, data_entrega, horario, total, sinal, status, itens in demos:
             cliente = clientes[nome] if nome else None
