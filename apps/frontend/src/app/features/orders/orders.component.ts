@@ -205,7 +205,7 @@ export class OrdersComponent implements OnInit {
           orders.filter((order) => order.status !== 'cancelado' && order.status !== 'retirada')
             .length,
         ),
-        subtext: 'Dados carregados da API',
+        subtext: 'Sem contar os cancelados',
         icon: 'trending-up',
         variant: 'neutro',
       },
