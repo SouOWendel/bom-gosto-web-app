@@ -83,13 +83,13 @@ LOTES = [
 ]
 
 CLIENTES = [
-    ("Licilene Alves", "(11) 97654-3210", "Rua das Acácias, 120"),
-    ("Natália", "(11) 98123-1485", "Av. Brasil, 845"),
-    ("Vivi", "(11) 97456-1003", "Rua Santa Clara, 33"),
-    ("Joseane", "(11) 98765-4321", "Rua Alberto Borges Soveral, 50"),
-    ("Márcia Regina", "(11) 99321-1358", "Rua do Comércio, 77"),
-    ("Rafaela Souza", "(11) 96543-2201", "Rua Paraná, 410"),
-    ("Carlos Menezes", "(11) 94567-8890", "Av. Independência, 1500"),
+    ("Licilene Alves", "11976543210", "Rua das Acácias, 120"),
+    ("Natália", "11981231485", "Av. Brasil, 845"),
+    ("Vivi", "11974561003", "Rua Santa Clara, 33"),
+    ("Joseane", "11987654321", "Rua Alberto Borges Soveral, 50"),
+    ("Márcia Regina", "11993211358", "Rua do Comércio, 77"),
+    ("Rafaela Souza", "11965432201", "Rua Paraná, 410"),
+    ("Carlos Menezes", "11945678890", "Av. Independência, 1500"),
 ]
 
 # pedidos ja encerrados, adaptados de `database/insert_data.sql`
@@ -251,10 +251,17 @@ class Command(BaseCommand):
     def _carregar_clientes(self):
         clientes = {}
         for nome, telefone, endereco in CLIENTES:
-            cliente, _ = Cliente.objects.update_or_create(
-                telefone=telefone,
-                defaults={"nome": nome, "endereco": endereco},
+            # O modal envia só os dígitos. Seeds antigos gravaram "(11) 97654-3210";
+            # esse cadastro é reaproveitado e passa a usar só os dígitos, sem duplicar o cliente.
+            formatado = f"({telefone[:2]}) {telefone[2:7]}-{telefone[7:]}"
+            cliente = (
+                Cliente.objects.filter(telefone__in=(telefone, formatado)).order_by("id_cliente").first()
+                or Cliente(telefone=telefone)
             )
+            cliente.nome = nome
+            cliente.telefone = telefone
+            cliente.endereco = endereco
+            cliente.save()
             clientes[nome] = cliente
         return clientes
 
