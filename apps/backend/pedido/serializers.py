@@ -16,14 +16,22 @@ from .models import (
 )
 
 
-# Reaproveita o cliente com o mesmo telefone em vez de duplicar o cadastro.
-def _cliente_por_contato(nome, telefone):
+# Reaproveita o cliente com o mesmo telefone em vez de duplicar o cadastro e guarda
+# no cliente o endereço de entrega mais recente.
+def _cliente_por_contato(nome, telefone, endereco=None):
     cliente = Cliente.objects.filter(telefone=telefone).order_by("id_cliente").first()
     if cliente is None:
-        return Cliente.objects.create(nome=nome, telefone=telefone)
+        return Cliente.objects.create(nome=nome, telefone=telefone, endereco=endereco)
+    campos = []
     if cliente.nome != nome:
         cliente.nome = nome
-        cliente.save(update_fields=["nome"])
+        campos.append("nome")
+    # Pedido sem endereço é retirada: mantém o último endereço conhecido do cliente.
+    if endereco and cliente.endereco != endereco:
+        cliente.endereco = endereco
+        campos.append("endereco")
+    if campos:
+        cliente.save(update_fields=campos)
     return cliente
 
 
@@ -363,7 +371,9 @@ class PedidoSerializer(serializers.ModelSerializer):
         nome = validated_data.pop("contato_nome", None)
         telefone = validated_data.pop("contato_telefone", None)
         if not validated_data.get("cliente") and nome and telefone:
-            validated_data["cliente"] = _cliente_por_contato(nome, telefone)
+            validated_data["cliente"] = _cliente_por_contato(
+                nome, telefone, validated_data.get("endereco_entrega")
+            )
         itens_data = validated_data.pop("itens", [])
         pedido = Pedido.objects.create(**validated_data)
 
@@ -378,7 +388,11 @@ class PedidoSerializer(serializers.ModelSerializer):
         nome = validated_data.pop("contato_nome", None)
         telefone = validated_data.pop("contato_telefone", None)
         if not validated_data.get("cliente") and nome and telefone:
-            validated_data["cliente"] = _cliente_por_contato(nome, telefone)
+            validated_data["cliente"] = _cliente_por_contato(
+                nome,
+                telefone,
+                validated_data.get("endereco_entrega", instance.endereco_entrega),
+            )
         # Reposição interna não tem cliente (RN18): ao virar interno, solta o vínculo.
         if validated_data.get("tipo", instance.tipo) == Pedido.Tipo.INTERNO:
             validated_data["cliente"] = None
