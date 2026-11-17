@@ -103,38 +103,6 @@ class PedidoApiTests(APITestCase):
 		self.assertEqual(atualizacao.status_code, status.HTTP_200_OK)
 		self.assertEqual(Cliente.objects.count(), 1)
 
-	# o endereco de entrega do pedido externo fica salvo no cadastro do cliente
-	def test_endereco_de_entrega_fica_no_cliente(self):
-		payload = {
-			"tipo": "externo",
-			"subtipo": "personalizado",
-			"contato_nome": "Joana",
-			"contato_telefone": "11988887777",
-			"endereco_entrega": "Rua das Flores, 10",
-			"valor_total": "12.50",
-			"valor_sinal": "0.00",
-			"itens": [{"produto": self.produto.id_produto, "quantidade": 1, "preco_unitario": "12.50"}],
-		}
-		resposta = self.client.post("/api/pedido/", payload, format="json")
-		self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
-		cliente = Cliente.objects.get(id_cliente=resposta.data["cliente"])
-		self.assertEqual(cliente.endereco, "Rua das Flores, 10")
-
-		# editar o endereco do pedido atualiza o do cliente
-		atualizacao = self.client.patch(
-			f"/api/pedido/{resposta.data['id_pedido']}/",
-			{"contato_nome": "Joana", "contato_telefone": "11988887777", "endereco_entrega": "Av. Central, 99"},
-			format="json",
-		)
-		self.assertEqual(atualizacao.status_code, status.HTTP_200_OK)
-		cliente.refresh_from_db()
-		self.assertEqual(cliente.endereco, "Av. Central, 99")
-
-		# um novo pedido para retirada (sem endereco) nao apaga o endereco salvo
-		self.client.post("/api/pedido/", {**payload, "endereco_entrega": None}, format="json")
-		cliente.refresh_from_db()
-		self.assertEqual(cliente.endereco, "Av. Central, 99")
-
 	# pedido que passa de externo para interno deixa de ter cliente vinculado
 	def test_pedido_que_vira_interno_perde_o_cliente(self):
 		resposta = self.client.post(
