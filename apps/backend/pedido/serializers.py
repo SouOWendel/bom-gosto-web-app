@@ -359,6 +359,12 @@ class PedidoSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"valor_sinal": "O sinal deve ser zero ou um valor positivo menor que o total."}
             )
+        # Reposição interna não tem cliente nem pagamento. Um sinal aqui seria marcado
+        # como pago ao iniciar a produção e entraria nos pagamentos pendentes.
+        if tipo == Pedido.Tipo.INTERNO and valor_sinal > 0:
+            raise serializers.ValidationError(
+                {"valor_sinal": "Pedidos internos não devem ter sinal."}
+            )
 
         return attrs
 
