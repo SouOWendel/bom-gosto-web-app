@@ -271,15 +271,18 @@ export class OrderCreateModalComponent {
       return;
     }
 
+    // Reposição interna não tem entrega nem pagamento: limpa o que tiver ficado
+    // preenchido antes de trocar o tipo do pedido.
+    const isExternal = this.tipo === 'externo';
     const payload: OrderCreationPayload = {
       tipo: this.tipo,
-      subtipo: this.tipo === 'externo' ? this.subtipo : null,
-      data_entrega: this.deliveryDate || null,
-      horario_entrega: this.deliveryTime || null,
+      subtipo: isExternal ? this.subtipo : null,
+      data_entrega: (isExternal && this.deliveryDate) || null,
+      horario_entrega: (isExternal && this.deliveryTime) || null,
       valor_total: parseDecimal(this.total),
       valor_sinal: parseDecimal(this.deposit),
-      endereco_entrega: this.address.trim() || null,
-      forma_pagamento: this.paymentMethod || null,
+      endereco_entrega: (isExternal && this.address.trim()) || null,
+      forma_pagamento: (isExternal && this.paymentMethod) || null,
       itens: this.items.map((item) => this.toApiItem(item)),
     };
 
