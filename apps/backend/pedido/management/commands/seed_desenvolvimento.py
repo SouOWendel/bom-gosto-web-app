@@ -1,3 +1,4 @@
+from collections import Counter
 from datetime import date, time, timedelta
 from decimal import Decimal
 import secrets
@@ -318,11 +319,7 @@ class Command(BaseCommand):
         ]
         for nome, tipo, subtipo, data_entrega, horario, total, sinal, status, itens in demos:
             cliente = clientes[nome] if nome else None
-            pedido = (
-                Pedido.objects.filter(cliente=cliente, tipo=tipo, subtipo=subtipo, horario_entrega=horario)
-                .order_by("id_pedido")
-                .first()
-            )
+            pedido = self._localizar_pedido_demo(cliente, tipo, subtipo, horario, produtos, itens)
             if pedido is not None and not resetar:
                 continue
             if pedido is None:
@@ -339,6 +336,21 @@ class Command(BaseCommand):
             pedido.forma_pagamento = "pix" if cliente else None
             pedido.save()
             self._substituir_itens(pedido, produtos, itens)
+
+    # A data do roteiro muda a cada dia, então não serve de chave. Cliente, tipo e horário
+    # sozinhos casariam com um pedido real do mesmo cliente, que o --resetar-demo sobrescreveria;
+    # por isso o pedido também precisa ter exatamente os produtos do roteiro.
+    def _localizar_pedido_demo(self, cliente, tipo, subtipo, horario, produtos, itens):
+        esperados = Counter(produtos[produto_nome].pk for produto_nome, *_ in itens)
+        candidatos = (
+            Pedido.objects.filter(cliente=cliente, tipo=tipo, subtipo=subtipo, horario_entrega=horario)
+            .prefetch_related("itens")
+            .order_by("id_pedido")
+        )
+        for pedido in candidatos:
+            if Counter(item.produto_id for item in pedido.itens.all()) == esperados:
+                return pedido
+        return None
 
     # substitui os itens para evitar duplicatas ou itens antigos ao repetir o seed
     def _substituir_itens(self, pedido, produtos, itens):
