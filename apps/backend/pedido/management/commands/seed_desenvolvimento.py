@@ -111,6 +111,18 @@ PEDIDOS_HISTORICOS = [
      [("Bolo 1kg massa branca", 1, "brigadeiro", "Parabéns (R$ 35,00)", "1.00")]),
 ]
 
+# Iniciar a produção marca o sinal como pago (regra provisória do MVP; ver RN13).
+# Pedidos que já passaram desse ponto entram no seed com o sinal pago.
+STATUS_COM_SINAL_PAGO = {
+    Pedido.Status.EM_PRODUCAO,
+    Pedido.Status.PRODUCAO_CONCLUIDA,
+    Pedido.Status.CONCLUIDO,
+}
+
+
+def _sinal_pago(tipo, sinal, status):
+    return tipo == Pedido.Tipo.EXTERNO and Decimal(sinal) > 0 and status in STATUS_COM_SINAL_PAGO
+
 
 class Command(BaseCommand):
     help = "Carrega dados de exemplo seguindo o fluxo Inventário → Receitas → Produtos → Estoque → Pedidos."
@@ -260,6 +272,7 @@ class Command(BaseCommand):
                     "status": status,
                     "valor_total": Decimal(total),
                     "valor_sinal": Decimal(sinal),
+                    "sinal_pago": _sinal_pago(Pedido.Tipo.EXTERNO, sinal, status),
                     "endereco_entrega": cliente.endereco,
                     "forma_pagamento": "pix",
                 },
@@ -311,6 +324,8 @@ class Command(BaseCommand):
             pedido.data_entrega = data_entrega
             pedido.valor_total = Decimal(total)
             pedido.valor_sinal = Decimal(sinal)
+            # O reset volta o pedido ao status do roteiro; o sinal pago de um ensaio anterior sai junto.
+            pedido.sinal_pago = _sinal_pago(tipo, sinal, status)
             pedido.endereco_entrega = cliente.endereco if cliente else None
             pedido.forma_pagamento = "pix" if cliente else None
             pedido.save()
