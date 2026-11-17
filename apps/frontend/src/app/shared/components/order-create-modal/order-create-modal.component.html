@@ -69,65 +69,75 @@
           }
         </section>
 
-        <section class="modal__section">
-          <h3 class="modal__section-title">Entrega e pagamento</h3>
-          <div class="form-grid">
-            <app-input-text
-              label="Data de entrega"
-              inputId="order-delivery-date"
-              type="date"
-              icon="calendar"
-              [(ngModel)]="deliveryDate"
-              name="deliveryDate"
-            />
-            <app-input-text
-              label="Horário"
-              inputId="order-delivery-time"
-              type="time"
-              icon="clock"
-              [(ngModel)]="deliveryTime"
-              name="deliveryTime"
-            />
-            <app-input-text
-              label="Endereço (opcional)"
-              inputId="order-address"
-              icon="map-pin"
-              [(ngModel)]="address"
-              name="address"
-            />
-            <label class="form-field">
-              <span class="form-field__label">Forma de pagamento</span>
-              <select class="form-control" name="paymentMethod" [(ngModel)]="paymentMethod">
-                <option value="pix">Pix</option>
-                <option value="cartao">Cartão</option>
-                <option value="dinheiro">Dinheiro</option>
-                <option value="pendente">A definir</option>
-              </select>
-            </label>
-          </div>
-        </section>
+        <!-- Reposição interna não tem entrega nem cobrança de cliente. -->
+        @if (tipo === 'externo') {
+          <section class="modal__section">
+            <h3 class="modal__section-title">Entrega e pagamento</h3>
+            <div class="form-grid">
+              <app-input-text
+                label="Data de entrega"
+                inputId="order-delivery-date"
+                type="date"
+                icon="calendar"
+                [(ngModel)]="deliveryDate"
+                name="deliveryDate"
+              />
+              <app-input-text
+                label="Horário"
+                inputId="order-delivery-time"
+                type="time"
+                icon="clock"
+                [(ngModel)]="deliveryTime"
+                name="deliveryTime"
+              />
+              <app-input-text
+                label="Endereço (opcional)"
+                inputId="order-address"
+                icon="map-pin"
+                [(ngModel)]="address"
+                name="address"
+              />
+              <label class="form-field">
+                <span class="form-field__label">Forma de pagamento</span>
+                <select class="form-control" name="paymentMethod" [(ngModel)]="paymentMethod">
+                  <option value="pix">Pix</option>
+                  <option value="cartao">Cartão</option>
+                  <option value="dinheiro">Dinheiro</option>
+                  <option value="pendente">A definir</option>
+                </select>
+              </label>
+            </div>
+          </section>
+        }
 
         <section class="modal__section">
           <div class="order-modal__section-heading">
             <h3 class="modal__section-title">Itens do pedido</h3>
-            <app-button type="button" variant="outline" size="small" (click)="addItem()">
-              <svg [lucideIcon]="'plus'" [size]="14"></svg> Adicionar item
-            </app-button>
+            <div class="order-modal__heading-actions">
+              @if (!isShowcase) {
+                <app-button
+                  type="button"
+                  variant="outline"
+                  size="small"
+                  (click)="openProductModal()"
+                >
+                  Cadastrar produto
+                </app-button>
+              }
+              <app-button type="button" variant="outline" size="small" (click)="addItem()">
+                <svg [lucideIcon]="'plus'" [size]="14"></svg> Adicionar item
+              </app-button>
+            </div>
           </div>
+          @if (isShowcase && productOptions().length === 0) {
+            <p class="order-modal__warning" role="status">
+              Nenhum produto em estoque. Pedidos de vitrine só usam produtos prontos.
+            </p>
+          }
           @for (item of items; track $index; let index = $index) {
             <div class="order-modal__item">
               <div class="form-field">
-                <div class="order-modal__product-label">
-                  <label class="form-field__label" [for]="'item-product-' + index">Produto</label>
-                  <app-button
-                    type="button"
-                    variant="ghost"
-                    size="small"
-                    (click)="openProductModal(index)"
-                  >
-                    + Cadastrar produto
-                  </app-button>
-                </div>
+                <label class="form-field__label" [for]="'item-product-' + index">Produto</label>
                 <select
                   class="form-control"
                   [id]="'item-product-' + index"
@@ -135,7 +145,7 @@
                   [(ngModel)]="item.productId"
                 >
                   <option [ngValue]="null">Selecione</option>
-                  @for (product of products(); track product.id) {
+                  @for (product of productOptions(); track product.id) {
                     <option [ngValue]="product.id">{{ product.label }}</option>
                   }
                 </select>
@@ -201,6 +211,9 @@
               <app-button type="button" variant="outline" size="small" (click)="useItemsTotal()">
                 Usar soma
               </app-button>
+              <app-button type="button" variant="outline" size="small" (click)="useHalfAsDeposit()">
+                Sinal de 50%
+              </app-button>
             </span>
           </div>
           <div class="form-grid">
@@ -244,7 +257,7 @@
   </section>
 </div>
 
-@if (creatingProductFor() !== null) {
+@if (isProductModalOpen()) {
   <app-product-create-modal
     [recipes]="recipes()"
     [apiError]="productError()"

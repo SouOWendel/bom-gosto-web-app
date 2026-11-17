@@ -103,6 +103,8 @@ class Pedido(models.Model):
     horario_entrega = models.TimeField(null=True, blank=True)
     valor_total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     valor_sinal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    # Iniciar a produção pressupõe o sinal recebido (regra provisória do MVP; ver RN13).
+    sinal_pago = models.BooleanField(default=False)
     endereco_entrega = models.CharField(max_length=200, null=True, blank=True)
     forma_pagamento = models.CharField(max_length=30, null=True, blank=True)
 

@@ -242,7 +242,12 @@ export class DashboardComponent implements OnInit {
       telefone: order.cliente_telefone ?? '',
       endereco: order.endereco_entrega ?? undefined,
       pagamentoInfo: `Total: ${formatCurrency(subtotal)} • Sinal: ${formatCurrency(Number(order.valor_sinal))}`,
-      botaoAcao: order.status === 'pedido_feito' ? 'Iniciar Preparo' : undefined,
+      botaoAcao:
+        order.status === 'pedido_feito'
+          ? order.subtipo === 'vitrine'
+            ? 'Consumir estoque'
+            : 'Iniciar Preparo'
+          : undefined,
     };
   }
 

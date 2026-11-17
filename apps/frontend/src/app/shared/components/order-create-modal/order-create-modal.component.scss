@@ -49,11 +49,11 @@
   background: var(--color-surface-muted);
 }
 
-// Rótulo do produto com o atalho de cadastro rápido ao lado.
-.order-modal__product-label {
+// Atalho de cadastro rápido de produto ao lado de "Adicionar item".
+.order-modal__heading-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-2);
 }
 

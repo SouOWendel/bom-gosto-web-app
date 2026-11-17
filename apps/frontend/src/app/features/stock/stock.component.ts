@@ -60,7 +60,7 @@ export class StockComponent implements OnInit {
       {
         label: 'Produtos armazenados',
         value: `${lots.length} lotes`,
-        subtext: 'Lotes retornados pela API',
+        subtext: 'Lotes de produtos prontos',
         icon: 'package',
         variant: 'destaque',
       },

@@ -23,6 +23,7 @@ function createOrder(id: number, status: Order['status']): Order {
     horario_entrega: '12:00',
     valor_total: '100.00',
     valor_sinal: '50.00',
+    sinal_pago: false,
     endereco_entrega: null,
     forma_pagamento: 'pix',
     itens: [{ produto: id, receita: null, quantidade: 1, preco_unitario: '100.00' }],
