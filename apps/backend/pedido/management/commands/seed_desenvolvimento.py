@@ -14,19 +14,19 @@ from producao.models import IngredienteReceita
 from producao.services import recalcular_custo_receita
 from usuario.models import Usuario
 
-# carrega os dados de exemplo na mesma ordem do fluxo da confeitaria:
-#   1. inventario (ingredientes)
-#   2. receitas (ficha tecnica com ingredientes do inventario)
-#   3. produtos (itens vendaveis ligados a uma receita)
-#   4. estoque (lotes de produto pronto na vitrine)
-#   5. pedidos (historico e roteiro de demonstracao)
-# cada etapa depende apenas das anteriores; tudo roda em uma transacao
-# o comando e idempotente: registros sao localizados pelo nome/contato e atualizados
-# sem --resetar-demo, saldos, lotes e pedidos do roteiro ja movimentados sao preservados
+# Carrega os dados de exemplo na mesma ordem do fluxo da confeitaria:
+#   1. Inventário (ingredientes).
+#   2. Receitas (ficha técnica com ingredientes do inventário).
+#   3. Produtos (itens vendáveis ligados a uma receita).
+#   4. Estoque (lotes de produto pronto na vitrine).
+#   5. Pedidos (histórico e roteiro de demonstração).
+# Cada etapa depende só das anteriores, e tudo roda numa transação.
+# O comando pode ser repetido: os registros são localizados pelo nome ou contato e atualizados.
+# Sem --resetar-demo, saldos, lotes e pedidos do roteiro já movimentados são preservados.
 
 
-# nome, unidade, quantidade, custo unitario, dias para vencer, quantidade minima
-# as validades cobrem os tres niveis do semaforo (RN17) e ha insumos abaixo do minimo
+# Campos: nome, unidade, quantidade, custo unitário, dias para vencer, quantidade mínima.
+# As validades cobrem os três níveis do semáforo (RN17), e há insumos abaixo do mínimo.
 INGREDIENTES = [
     ("Farinha de trigo", "kg", "5.00", "4.50", 60, "2.00"),
     ("Açúcar refinado", "kg", "3.00", "5.00", 14, "1.00"),
@@ -41,7 +41,7 @@ INGREDIENTES = [
     ("Coco ralado", "kg", "0.50", "28.00", 40, "0.20"),
 ]
 
-# nome, rendimento, composicao [(ingrediente, quantidade na unidade do inventario)]
+# Campos: nome, rendimento, composição [(ingrediente, quantidade na unidade do inventário)].
 RECEITAS = [
     ("Massa branca", "1.00", [("Farinha de trigo", "1.00"), ("Açúcar refinado", "0.50"), ("Manteiga", "0.20"), ("Ovos", "4.00")]),
     ("Recheio de beijinho", "1.00", [("Leite condensado", "2.00"), ("Coco ralado", "0.10"), ("Manteiga", "0.03")]),
@@ -52,7 +52,7 @@ RECEITAS = [
     ("Banoffee de pote", "10.00", [("Banana prata", "1.50"), ("Leite condensado", "2.00"), ("Creme de leite", "2.00"), ("Açúcar refinado", "0.20")]),
 ]
 
-# nome, preco de venda, receita principal (None para itens de revenda/brinde)
+# Campos: nome, preço de venda, receita principal (None para revenda ou brinde).
 PRODUTOS = [
     ("Bolo 1kg massa branca", "80.90", "Massa branca"),
     ("Caseirinho", "40.00", "Caseirinho vulcão"),
@@ -67,15 +67,15 @@ PRODUTOS = [
     ("Bolo 1kg beijinho", "95.00", "Massa branca"),
 ]
 
-# produto, receita complementar, quantidade por unidade do produto (na unidade do rendimento), unidade
-# a massa vem da receita principal; o recheio entra como receita complementar (RF18)
+# Campos: produto, receita complementar, quantidade por unidade do produto (na unidade do rendimento), unidade.
+# A massa vem da receita principal; o recheio entra como receita complementar (RF18).
 RECEITAS_COMPLEMENTARES = [
     ("Bolo 1kg delícia de limão", "Recheio delícia de limão", "0.40", "kg"),
     ("Bolo 1kg beijinho", "Recheio de beijinho", "0.40", "kg"),
 ]
 
-# produto, quantidade, dias para vencer, custo do lote
-# o bolo do roteiro fica sem saldo para que o pedido seja encaminhado a Producao (RN06)
+# Campos: produto, quantidade, dias para vencer, custo do lote.
+# O bolo do roteiro fica sem saldo para que o pedido seja encaminhado à Produção (RN06).
 LOTES = [
     ("Doce", "40.00", 2, "18.00"),
     ("Salgado bolinha de queijo", "30.00", 0, "12.00"),
@@ -93,8 +93,8 @@ CLIENTES = [
     ("Carlos Menezes", "11945678890", "Av. Independência, 1500"),
 ]
 
-# pedidos ja encerrados, adaptados de `database/insert_data.sql`
-# cliente, data, horario, total, sinal, status, itens [(produto, qtd, recheio, decoracao, peso[, preco])]
+# Pedidos já encerrados, adaptados de `database/insert_data.sql`.
+# Campos: cliente, data, horário, total, sinal, status, itens [(produto, qtd, recheio, decoração, peso[, preço])].
 # O preço do item é o de venda do produto, salvo quando informado (brinde sai a 0,00).
 # A diferença entre o total e a soma dos itens é só a taxa de decoração descrita no item.
 PEDIDOS_HISTORICOS = [
@@ -156,7 +156,7 @@ class Command(BaseCommand):
             f"{len(produtos)} produtos, {len(LOTES)} lotes e {len(PEDIDOS_HISTORICOS)} pedidos históricos."
         ))
 
-    # 1. Inventario: sem --resetar-demo, saldos ja consumidos em ensaios anteriores sao preservados
+    # 1. Inventário: sem --resetar-demo, saldos já consumidos em ensaios anteriores são preservados.
     def _carregar_ingredientes(self, hoje, resetar):
         ingredientes = {}
         for nome, unidade, quantidade, custo, dias, minimo in INGREDIENTES:
@@ -175,13 +175,13 @@ class Command(BaseCommand):
                     setattr(ingrediente, campo, valor)
                 ingrediente.save()
             elif ingrediente.unidade_medida != unidade:
-                # a unidade nao depende do ensaio; corrige registros antigos sem resetar saldos
+                # A unidade não depende do ensaio: corrige registros antigos sem resetar saldos.
                 ingrediente.unidade_medida = unidade
                 ingrediente.save(update_fields=["unidade_medida"])
             ingredientes[nome] = ingrediente
         return ingredientes
 
-    # 2. Receitas: grava a ficha tecnica e calcula o custo pelo mesmo servico usado na API
+    # 2. Receitas: grava a ficha técnica e calcula o custo pelo mesmo serviço usado na API.
     def _carregar_receitas(self, ingredientes):
         receitas = {}
         for nome, rendimento, composicao in RECEITAS:
@@ -203,7 +203,7 @@ class Command(BaseCommand):
             receitas[nome] = receita
         return receitas
 
-    # 3. Produtos: cada item vendavel aponta para a receita usada na Producao
+    # 3. Produtos: cada item vendável aponta para a receita usada na Produção.
     def _carregar_produtos(self, receitas):
         produtos = {}
         for nome, preco, receita_nome in PRODUTOS:
@@ -223,12 +223,12 @@ class Command(BaseCommand):
             )
         return produtos
 
-    # 4. Estoque: lotes de vitrine com alertas de validade variados
+    # 4. Estoque: lotes de vitrine com alertas de validade variados.
     def _carregar_lotes(self, produtos, hoje, resetar):
         if resetar:
             Estoque.objects.filter(produto__in=produtos.values()).delete()
-            # produtos criados por cancelamentos com reaproveitamento (RN12) nao tem receita
-            # nem pedidos; sao removidos para que cada ensaio comece do mesmo estado
+            # Produtos criados por cancelamentos com reaproveitamento (RN12) não têm receita
+            # nem pedidos. São removidos para que cada ensaio comece do mesmo estado.
             reaproveitados = Produto.objects.filter(receita__isnull=True, itens_pedido__isnull=True).exclude(
                 pk__in=[produto.pk for produto in produtos.values()]
             )
@@ -250,7 +250,7 @@ class Command(BaseCommand):
                 "Use --resetar-demo para limpar os lotes de ensaio."
             ))
 
-    # 5a. Clientes: o telefone identifica o cadastro, como na criacao de pedidos pela API
+    # 5a. Clientes: o telefone identifica o cadastro, como na criação de pedidos pela API.
     def _carregar_clientes(self):
         clientes = {}
         for nome, telefone, endereco in CLIENTES:
@@ -268,7 +268,7 @@ class Command(BaseCommand):
             clientes[nome] = cliente
         return clientes
 
-    # 5b. Pedidos historicos: ja encerrados, nao movimentam inventario nem estoque
+    # 5b. Pedidos históricos: já encerrados, não movimentam inventário nem estoque.
     def _carregar_pedidos_historicos(self, clientes, produtos):
         for nome, data_entrega, horario, total, sinal, status, itens in PEDIDOS_HISTORICOS:
             cliente = clientes[nome]
@@ -288,31 +288,32 @@ class Command(BaseCommand):
                 },
             )
             self._substituir_itens(pedido, produtos, itens)
-            # todo pedido cancelado tem o registro correspondente em /api/cancelamento/
+            # Todo pedido cancelado tem o registro correspondente em /api/cancelamento/.
             if status == Pedido.Status.CANCELADO:
                 Cancelamento.objects.get_or_create(
                     pedido=pedido,
                     defaults={"destino": "descarte", "data_cancelamento": data_entrega},
                 )
 
-    # 5c. Pedidos do roteiro de demonstracao, um para cada caminho do fluxo
-    # sem --resetar-demo, o andamento de um ensaio anterior e preservado
+    # 5c. Pedidos do roteiro de demonstração, um para cada caminho do fluxo.
+    # Sem --resetar-demo, o andamento de um ensaio anterior é preservado.
     def _carregar_pedidos_demo(self, clientes, produtos, hoje, resetar):
-        # cliente (None = reposicao interna), tipo, subtipo, entrega, horario, total, sinal, status, itens
+        # Campos: cliente (None = reposição interna), tipo, subtipo, entrega, horário, total, sinal, status, itens.
         demos = [
-            # encomenda sem produto pronto: Pedidos -> Producao (massa + recheio) -> Estoque -> entrega
+            # Encomenda sem produto pronto: Pedidos -> Produção (massa + recheio) -> Estoque -> entrega.
             ("Licilene Alves", Pedido.Tipo.EXTERNO, Pedido.Subtipo.PERSONALIZADO, hoje + timedelta(days=2), time(15, 0),
              "95.00", "47.50", Pedido.Status.PEDIDO_FEITO,
              [("Bolo 1kg delícia de limão", 1, None, "Feliz aniversário", "1.00")]),
-            # encomenda ja em producao que pode ser cancelada com reaproveitamento (RN12)
+            # Encomenda já em produção, que pode ser cancelada com reaproveitamento (RN12).
             ("Carlos Menezes", Pedido.Tipo.EXTERNO, Pedido.Subtipo.PERSONALIZADO, hoje + timedelta(days=1), time(15, 0),
              "90.00", "45.00", Pedido.Status.EM_PRODUCAO,
              [("Mini vulcão", 3, "ninho", None, None), ("Pote", 2, "banoffee", None, None)]),
-            # venda de vitrine atendida direto pelo estoque (consumir-estoque)
+            # Venda de vitrine atendida direto pelo estoque (consumir-estoque).
             ("Natália", Pedido.Tipo.EXTERNO, Pedido.Subtipo.VITRINE, hoje, time(10, 30),
              "55.20", "0.00", Pedido.Status.PEDIDO_FEITO,
              [("Doce", 10, None, None, None), ("Fatia", 1, None, None, None)]),
-            # reposicao interna da vitrine: Producao gera lote e o pedido e concluido
+            # Reposição interna da vitrine: a Produção gera o lote e o pedido é concluído.
+            # Tem data e horário só para aparecer na agenda de produção; o modal não pede entrega na reposição.
             (None, Pedido.Tipo.INTERNO, None, hoje + timedelta(days=1), time(8, 0),
              "0.00", "0.00", Pedido.Status.PEDIDO_FEITO,
              [("Doce", 50, None, None, None)]),
@@ -352,7 +353,7 @@ class Command(BaseCommand):
                 return pedido
         return None
 
-    # substitui os itens para evitar duplicatas ou itens antigos ao repetir o seed
+    # Substitui os itens para não duplicar nem manter itens antigos ao repetir o seed.
     def _substituir_itens(self, pedido, produtos, itens):
         pedido.itens.all().delete()
         for produto_nome, quantidade, recheio, decoracao, peso, *preco in itens:
@@ -368,8 +369,8 @@ class Command(BaseCommand):
                 quantidade_peso=Decimal(peso) if peso else None,
             )
 
-    # custo de referencia por unidade: receita principal mais as complementares (RF18),
-    # na mesma proporcao usada pela Producao
+    # Custo de referência por unidade: receita principal mais as complementares (RF18),
+    # na mesma proporção usada pela Produção.
     def _custo_unitario(self, produto):
         partes = []
         if produto.receita is not None:
@@ -386,7 +387,7 @@ class Command(BaseCommand):
         )
         return custo.quantize(Decimal("0.01"))
 
-    # a senha temporaria so e exibida quando o usuario de exemplo e criado pela primeira vez
+    # A senha temporária só é exibida quando o usuário de exemplo é criado pela primeira vez.
     def _carregar_usuario(self):
         usuario, criado = Usuario.objects.get_or_create(
             login="confeiteira",
