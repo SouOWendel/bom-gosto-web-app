@@ -514,6 +514,13 @@ export class OrdersComponent implements OnInit {
         );
         return;
       }
+      // Vitrine nunca vai para a Produção: sem saldo pronto, não há o que atender.
+      if (order.apiOrder.subtipo === 'vitrine' && analysis.encaminhar_para_producao) {
+        this.handleActionError(
+          'Não há produto pronto suficiente no estoque para atender este pedido de vitrine.',
+        );
+        return;
+      }
       const mode =
         order.apiOrder.tipo === 'externo' && !analysis.encaminhar_para_producao
           ? 'estoque'
@@ -755,7 +762,8 @@ export class OrdersComponent implements OnInit {
   private actionLabel(order: ApiOrder): string {
     switch (order.status) {
       case 'pedido_feito':
-        return 'Iniciar produção';
+        // Vitrine sai direto do estoque pronto, sem passar pela Produção.
+        return order.subtipo === 'vitrine' ? 'Consumir estoque' : 'Iniciar produção';
       case 'em_producao':
         return 'Concluir produção';
       case 'producao_concluida':
