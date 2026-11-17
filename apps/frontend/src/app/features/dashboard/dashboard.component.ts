@@ -15,6 +15,7 @@ import { DomainApiService } from '../../core/services/domain-api.service';
 import { ORDER_STATUS_LABELS } from '../../core/models/order-status';
 import { formatCurrency } from '../../core/utils/format';
 import { OrderCategory, orderCategory, orderItemName } from '../../core/utils/order-category';
+import { hasPayment } from '../../core/utils/order-payment';
 
 export type CategoriaPedido = OrderCategory;
 export type StatusPedido = 'confirmado' | 'em_producao' | 'pronto' | 'entregue';
@@ -241,7 +242,9 @@ export class DashboardComponent implements OnInit {
         (order.tipo === 'interno' ? 'Reposição interna' : 'Cliente não informado'),
       telefone: order.cliente_telefone ?? '',
       endereco: order.endereco_entrega ?? undefined,
-      pagamentoInfo: `Total: ${formatCurrency(subtotal)} • Sinal: ${formatCurrency(Number(order.valor_sinal))}`,
+      pagamentoInfo:
+        `Total: ${formatCurrency(subtotal)}` +
+        (hasPayment(order) ? ` • Sinal: ${formatCurrency(Number(order.valor_sinal))}` : ''),
       botaoAcao:
         order.status === 'pedido_feito'
           ? order.subtipo === 'vitrine'

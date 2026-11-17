@@ -144,9 +144,14 @@ export class OrderCreateModalComponent {
     }),
   );
 
+  // Só o pedido de cliente tem contato, entrega e pagamento; a reposição interna não.
+  get isExternal(): boolean {
+    return this.tipo === 'externo';
+  }
+
   // Vitrine vende só o que já está pronto: não produz nem cadastra produto na hora.
   get isShowcase(): boolean {
-    return this.tipo === 'externo' && this.subtipo === 'vitrine';
+    return this.isExternal && this.subtipo === 'vitrine';
   }
 
   // Na vitrine, só os produtos com saldo; nos demais tipos, o catálogo inteiro.
@@ -157,7 +162,7 @@ export class OrderCreateModalComponent {
   // Pedido externo usa primeiro o saldo pronto; no personalizado, o que faltar segue para a
   // Produção (RN06) e só gera aviso (RN03). Na vitrine, a falta impede o cadastro.
   stockWarning(item: OrderItemForm): string | null {
-    if (this.tipo !== 'externo') {
+    if (!this.isExternal) {
       return null;
     }
     const shortage = this.stockShortage(item);
@@ -307,20 +312,19 @@ export class OrderCreateModalComponent {
 
     // Reposição interna não tem entrega nem pagamento: limpa o que tiver ficado
     // preenchido antes de trocar o tipo do pedido.
-    const isExternal = this.tipo === 'externo';
     const payload: OrderCreationPayload = {
       tipo: this.tipo,
-      subtipo: isExternal ? this.subtipo : null,
-      data_entrega: (isExternal && this.deliveryDate) || null,
-      horario_entrega: (isExternal && this.deliveryTime) || null,
+      subtipo: this.isExternal ? this.subtipo : null,
+      data_entrega: (this.isExternal && this.deliveryDate) || null,
+      horario_entrega: (this.isExternal && this.deliveryTime) || null,
       valor_total: parseDecimal(this.total),
-      valor_sinal: parseDecimal(this.deposit),
-      endereco_entrega: (isExternal && this.address.trim()) || null,
-      forma_pagamento: (isExternal && this.paymentMethod) || null,
+      valor_sinal: this.isExternal ? parseDecimal(this.deposit) : '0',
+      endereco_entrega: (this.isExternal && this.address.trim()) || null,
+      forma_pagamento: (this.isExternal && this.paymentMethod) || null,
       itens: this.items.map((item) => this.toApiItem(item)),
     };
 
-    if (this.tipo === 'externo' && (this.contactName.trim() || this.contactPhone.trim())) {
+    if (this.isExternal && (this.contactName.trim() || this.contactPhone.trim())) {
       payload.contato_nome = this.contactName.trim();
       payload.contato_telefone = this.contactPhone.replace(/\D/g, '');
     }
@@ -360,10 +364,10 @@ export class OrderCreateModalComponent {
   }
 
   private validate(): string | null {
-    if (this.tipo === 'externo' && (!this.contactName.trim() || !this.contactPhone.trim())) {
+    if (this.isExternal && (!this.contactName.trim() || !this.contactPhone.trim())) {
       return 'Informe o nome e o telefone do cliente.';
     }
-    if (this.tipo === 'externo' && this.contactPhone.replace(/\D/g, '').length < 10) {
+    if (this.isExternal && this.contactPhone.replace(/\D/g, '').length < 10) {
       return 'Informe o telefone com DDD.';
     }
     if (this.items.some((item) => item.productId === null)) {
@@ -402,11 +406,15 @@ export class OrderCreateModalComponent {
       return 'Informe um preço unitário válido para cada item.';
     }
     const total = Number(parseDecimal(this.total));
-    const deposit = Number(parseDecimal(this.deposit));
     if (!Number.isFinite(total) || total < 0) {
       return 'Informe um valor total válido.';
     }
+    // Na reposição o campo fica oculto e o sinal enviado é zero, então não há o que conferir.
+    if (!this.isExternal) {
+      return null;
+    }
     // Mesma regra da API: zero (sem sinal) ou um valor positivo menor que o total.
+    const deposit = Number(parseDecimal(this.deposit));
     if (!Number.isFinite(deposit) || deposit < 0 || (deposit > 0 && deposit >= total)) {
       return 'O sinal deve ser zero ou um valor positivo menor que o total.';
     }

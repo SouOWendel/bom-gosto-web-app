@@ -31,6 +31,7 @@ import { DomainApiService } from '../../core/services/domain-api.service';
 import { TablePaginationComponent } from '../../shared/components/table-pagination/table-pagination.component';
 import { apiErrorMessage } from '../../core/utils/api-error';
 import { formatCurrency, formatDate, formatQuantity, toNumber } from '../../core/utils/format';
+import { hasPayment } from '../../core/utils/order-payment';
 import { ORDER_STATUS_LABELS } from '../../core/models/order-status';
 
 type OrderStatus = 'retirada' | 'producao' | 'pendente' | 'cancelado';
@@ -114,11 +115,7 @@ export class OrdersComponent implements OnInit {
   }
 
   private depositNotice(order: ApiOrder): string | null {
-    if (
-      order.tipo !== 'externo' ||
-      order.subtipo === 'vitrine' ||
-      order.status !== 'pedido_feito'
-    ) {
+    if (!hasPayment(order) || order.subtipo === 'vitrine' || order.status !== 'pedido_feito') {
       return null;
     }
     const deposit = toNumber(order.valor_sinal);
@@ -176,12 +173,7 @@ export class OrdersComponent implements OnInit {
     ).length;
     const pendingBalance = orders
       .filter((order) => order.status !== 'cancelado' && order.status !== 'retirada')
-      .reduce(
-        (total, order) =>
-          total +
-          Math.max(0, toNumber(order.apiOrder.valor_total) - toNumber(order.apiOrder.valor_sinal)),
-        0,
-      );
+      .reduce((total, order) => total + this.balanceDue(order.apiOrder), 0);
     const productionValue = inProduction.reduce(
       (total, order) => total + toNumber(order.apiOrder.valor_total),
       0,
@@ -687,7 +679,7 @@ export class OrdersComponent implements OnInit {
       return `${baseNames[index]}${parts.length ? ` (${parts.join(' · ')})` : ''}`;
     });
     const total = toNumber(order.valor_total);
-    const balance = Math.max(0, total - toNumber(order.valor_sinal));
+    const balance = this.balanceDue(order);
     const status = this.toViewStatus(order.status);
     const statusDetail: Record<ApiOrder['status'], string> = {
       pedido_feito: 'Aguardando validação',
@@ -740,7 +732,17 @@ export class OrdersComponent implements OnInit {
     return item.receita !== null ? `Receita #${item.receita}` : 'Item sem produto vinculado';
   }
 
+  private balanceDue(order: ApiOrder): number {
+    if (!hasPayment(order)) {
+      return 0;
+    }
+    return Math.max(0, toNumber(order.valor_total) - toNumber(order.valor_sinal));
+  }
+
   private paymentLabel(order: ApiOrder): string {
+    if (!hasPayment(order)) {
+      return 'Sem pagamento';
+    }
     const method = this.paymentMethodLabel(order.forma_pagamento);
     const deposit = toNumber(order.valor_sinal);
     if (deposit <= 0) {

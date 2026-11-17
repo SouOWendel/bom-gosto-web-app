@@ -59,7 +59,8 @@ class IniciarProducaoView(APIView):
                 return Response({"itens": f"A receita {nome} não tem produto vinculado; vincule-a a um produto em Produtos."}, status=status.HTTP_400_BAD_REQUEST)
         pedido.status = Pedido.Status.EM_PRODUCAO
         # Por enquanto, iniciar a produção já registra o sinal como pago.
-        if pedido.valor_sinal > 0:
+        # Reposição interna não tem pagamento, então nunca recebe sinal.
+        if pedido.tipo == Pedido.Tipo.EXTERNO and pedido.valor_sinal > 0:
             pedido.sinal_pago = True
         pedido.save(update_fields=["status", "sinal_pago"])
         return Response(PedidoSerializer(pedido, context={"request": request}).data)
